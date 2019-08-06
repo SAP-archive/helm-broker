@@ -8,12 +8,12 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/kyma-project/kyma/components/helm-broker/internal/bind"
-	"github.com/kyma-project/kyma/components/helm-broker/internal/broker"
-	"github.com/kyma-project/kyma/components/helm-broker/internal/config"
-	"github.com/kyma-project/kyma/components/helm-broker/internal/helm"
-	"github.com/kyma-project/kyma/components/helm-broker/internal/storage"
-	"github.com/kyma-project/kyma/components/helm-broker/platform/logger"
+	"github.com/kyma-project/helm-broker/internal/bind"
+	"github.com/kyma-project/helm-broker/internal/broker"
+	"github.com/kyma-project/helm-broker/internal/config"
+	"github.com/kyma-project/helm-broker/internal/helm"
+	"github.com/kyma-project/helm-broker/internal/storage"
+	"github.com/kyma-project/helm-broker/platform/logger"
 	"github.com/sirupsen/logrus"
 
 	"k8s.io/client-go/kubernetes"

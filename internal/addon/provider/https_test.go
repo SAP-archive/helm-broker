@@ -12,8 +12,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/kyma-project/kyma/components/helm-broker/internal/addon"
-	"github.com/kyma-project/kyma/components/helm-broker/internal/addon/provider"
+	"github.com/kyma-project/helm-broker/internal/addon"
+	"github.com/kyma-project/helm-broker/internal/addon/provider"
 )
 
 func TestHTTPRepositoryIndexReader(t *testing.T) {

@@ -9,9 +9,9 @@ import (
 	"github.com/coreos/pkg/capnslog"
 	"github.com/stretchr/testify/require"
 
-	"github.com/kyma-project/kyma/components/helm-broker/internal/storage"
-	"github.com/kyma-project/kyma/components/helm-broker/internal/storage/driver/etcd"
-	"github.com/kyma-project/kyma/components/helm-broker/internal/storage/driver/memory"
+	"github.com/kyma-project/helm-broker/internal/storage"
+	"github.com/kyma-project/helm-broker/internal/storage/driver/etcd"
+	"github.com/kyma-project/helm-broker/internal/storage/driver/memory"
 )
 
 var allDrivers = map[storage.DriverType]func() storage.ConfigList{

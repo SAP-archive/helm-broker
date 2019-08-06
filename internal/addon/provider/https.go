@@ -10,7 +10,7 @@ import (
 
 	cleanhttp "github.com/hashicorp/go-cleanhttp"
 	getter "github.com/hashicorp/go-getter"
-	"github.com/kyma-project/kyma/components/helm-broker/internal/addon"
+	"github.com/kyma-project/helm-broker/internal/addon"
 	"k8s.io/apimachinery/pkg/util/rand"
 )
 

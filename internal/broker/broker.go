@@ -7,9 +7,9 @@ import (
 	"k8s.io/helm/pkg/proto/hapi/chart"
 	rls "k8s.io/helm/pkg/proto/hapi/services"
 
-	"github.com/kyma-project/kyma/components/helm-broker/internal"
-	"github.com/kyma-project/kyma/components/helm-broker/internal/bind"
-	"github.com/kyma-project/kyma/components/helm-broker/internal/platform/idprovider"
+	"github.com/kyma-project/helm-broker/internal"
+	"github.com/kyma-project/helm-broker/internal/bind"
+	"github.com/kyma-project/helm-broker/internal/platform/idprovider"
 )
 
 // be aware that after regenerating mocks, manual steps are required

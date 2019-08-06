@@ -3,7 +3,7 @@ package provider
 import (
 	"io"
 
-	"github.com/kyma-project/kyma/components/helm-broker/internal/addon"
+	"github.com/kyma-project/helm-broker/internal/addon"
 )
 
 // AddonClient defines abstraction to get and unmarshal raw index and addon into Models

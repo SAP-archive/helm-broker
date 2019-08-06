@@ -3,7 +3,7 @@ package broker
 import (
 	"github.com/sirupsen/logrus"
 
-	"github.com/kyma-project/kyma/components/helm-broker/internal"
+	"github.com/kyma-project/helm-broker/internal"
 )
 
 func NewWithIDProvider(bs addonStorage, cs chartStorage, os operationStorage, is instanceStorage, ibd instanceBindDataStorage,

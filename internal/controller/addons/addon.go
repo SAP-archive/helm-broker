@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/kyma-project/kyma/components/helm-broker/internal"
-	"github.com/kyma-project/kyma/components/helm-broker/pkg/apis/addons/v1alpha1"
+	"github.com/kyma-project/helm-broker/internal"
+	"github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
 	"k8s.io/helm/pkg/proto/hapi/chart"
 )
 

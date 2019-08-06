@@ -1,6 +1,6 @@
 package controller
 
-import "github.com/kyma-project/kyma/components/helm-broker/pkg/apis/addons/v1alpha1"
+import "github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
 
 type protection struct{}
 

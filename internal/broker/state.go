@@ -3,7 +3,7 @@ package broker
 import (
 	"github.com/pkg/errors"
 
-	"github.com/kyma-project/kyma/components/helm-broker/internal"
+	"github.com/kyma-project/helm-broker/internal"
 )
 
 type instanceStateService struct {

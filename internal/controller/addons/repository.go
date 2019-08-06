@@ -3,7 +3,7 @@ package addons
 import (
 	"fmt"
 
-	addonsv1alpha1 "github.com/kyma-project/kyma/components/helm-broker/pkg/apis/addons/v1alpha1"
+	addonsv1alpha1 "github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
 )
 
 // RepositoryController is a wraper for StatusRepository

@@ -1,7 +1,7 @@
 package automock
 
 import (
-	"github.com/kyma-project/kyma/components/helm-broker/internal"
+	"github.com/kyma-project/helm-broker/internal"
 	"github.com/stretchr/testify/mock"
 )
 

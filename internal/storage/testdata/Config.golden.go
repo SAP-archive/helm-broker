@@ -1,6 +1,6 @@
 package testdata
 
-import "github.com/kyma-project/kyma/components/helm-broker/internal/storage"
+import "github.com/kyma-project/helm-broker/internal/storage"
 
 func GoldenConfigMemorySingleAll() storage.ConfigList {
 	return storage.ConfigList{

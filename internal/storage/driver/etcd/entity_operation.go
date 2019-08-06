@@ -11,10 +11,10 @@ import (
 	"github.com/coreos/etcd/clientv3/namespace"
 	"github.com/pkg/errors"
 
-	"github.com/kyma-project/kyma/components/helm-broker/platform/ptr"
-	yTime "github.com/kyma-project/kyma/components/helm-broker/platform/time"
+	"github.com/kyma-project/helm-broker/platform/ptr"
+	yTime "github.com/kyma-project/helm-broker/platform/time"
 
-	"github.com/kyma-project/kyma/components/helm-broker/internal"
+	"github.com/kyma-project/helm-broker/internal"
 )
 
 // NewInstanceOperation returns new instance of InstanceOperation storage.

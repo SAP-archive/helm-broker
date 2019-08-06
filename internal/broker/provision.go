@@ -8,7 +8,7 @@ import (
 	"sync"
 
 	jsonhash "github.com/komkom/go-jsonhash"
-	"github.com/kyma-project/kyma/components/helm-broker/internal"
+	"github.com/kyma-project/helm-broker/internal"
 	"github.com/pkg/errors"
 	osb "github.com/pmorie/go-open-service-broker-client/v2"
 	"github.com/sirupsen/logrus"

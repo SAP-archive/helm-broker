@@ -3,12 +3,12 @@ package main
 import (
 	"flag"
 
-	"github.com/kyma-project/kyma/components/helm-broker/internal/assetstore"
-	"github.com/kyma-project/kyma/components/helm-broker/internal/controller"
-	"github.com/kyma-project/kyma/components/helm-broker/internal/storage"
+	"github.com/kyma-project/helm-broker/internal/assetstore"
+	"github.com/kyma-project/helm-broker/internal/controller"
+	"github.com/kyma-project/helm-broker/internal/storage"
 
-	envs "github.com/kyma-project/kyma/components/helm-broker/internal/config"
-	"github.com/kyma-project/kyma/components/helm-broker/platform/logger"
+	envs "github.com/kyma-project/helm-broker/internal/config"
+	"github.com/kyma-project/helm-broker/platform/logger"
 	"github.com/sirupsen/logrus"
 
 	"sigs.k8s.io/controller-runtime/pkg/client/config"

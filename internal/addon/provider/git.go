@@ -12,8 +12,8 @@ import (
 	"io/ioutil"
 
 	getter "github.com/hashicorp/go-getter"
-	"github.com/kyma-project/kyma/components/helm-broker/internal/addon"
-	"github.com/kyma-project/kyma/components/helm-broker/internal/assetstore"
+	"github.com/kyma-project/helm-broker/internal/addon"
+	"github.com/kyma-project/helm-broker/internal/assetstore"
 	"github.com/mholt/archiver"
 	exerr "github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/rand"

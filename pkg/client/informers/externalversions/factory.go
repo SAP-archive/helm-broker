@@ -7,9 +7,9 @@ import (
 	sync "sync"
 	time "time"
 
-	versioned "github.com/kyma-project/kyma/components/helm-broker/pkg/client/clientset/versioned"
-	addons "github.com/kyma-project/kyma/components/helm-broker/pkg/client/informers/externalversions/addons"
-	internalinterfaces "github.com/kyma-project/kyma/components/helm-broker/pkg/client/informers/externalversions/internalinterfaces"
+	versioned "github.com/kyma-project/helm-broker/pkg/client/clientset/versioned"
+	addons "github.com/kyma-project/helm-broker/pkg/client/informers/externalversions/addons"
+	internalinterfaces "github.com/kyma-project/helm-broker/pkg/client/informers/externalversions/internalinterfaces"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"

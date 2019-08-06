@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/kyma-project/kyma/components/helm-broker/internal/addon"
+	"github.com/kyma-project/helm-broker/internal/addon"
 	"github.com/sirupsen/logrus"
 )
 

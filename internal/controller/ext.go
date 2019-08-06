@@ -2,9 +2,9 @@ package controller
 
 import (
 	"github.com/Masterminds/semver"
-	"github.com/kyma-project/kyma/components/helm-broker/internal"
-	"github.com/kyma-project/kyma/components/helm-broker/internal/addon"
-	"github.com/kyma-project/kyma/components/helm-broker/internal/addon/provider"
+	"github.com/kyma-project/helm-broker/internal"
+	"github.com/kyma-project/helm-broker/internal/addon"
+	"github.com/kyma-project/helm-broker/internal/addon/provider"
 	"k8s.io/helm/pkg/proto/hapi/chart"
 )
 
