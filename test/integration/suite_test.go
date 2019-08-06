@@ -28,7 +28,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 
-	dtv1alpha1 "github.com/kyma-project/kyma/components/cms-controller-manager/pkg/apis/cms/v1alpha1"
 	"github.com/kyma-project/helm-broker/internal/assetstore"
 	"github.com/kyma-project/helm-broker/internal/assetstore/automock"
 	"github.com/kyma-project/helm-broker/internal/bind"
@@ -39,6 +38,7 @@ import (
 	"github.com/kyma-project/helm-broker/internal/storage/testdata"
 	"github.com/kyma-project/helm-broker/pkg/apis"
 	"github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
+	dtv1alpha1 "github.com/kyma-project/kyma/components/cms-controller-manager/pkg/apis/cms/v1alpha1"
 )
 
 const (
