@@ -1,6 +1,6 @@
 package automock
 
-import "github.com/kyma-project/kyma/components/helm-broker/internal"
+import "github.com/kyma-project/helm-broker/internal"
 import "github.com/stretchr/testify/mock"
 import "github.com/pmorie/go-open-service-broker-client/v2"
 

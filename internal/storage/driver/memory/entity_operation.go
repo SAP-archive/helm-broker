@@ -5,9 +5,9 @@ import (
 
 	"github.com/pkg/errors"
 
-	yTime "github.com/kyma-project/kyma/components/helm-broker/platform/time"
+	yTime "github.com/kyma-project/helm-broker/platform/time"
 
-	"github.com/kyma-project/kyma/components/helm-broker/internal"
+	"github.com/kyma-project/helm-broker/internal"
 )
 
 // NewInstanceOperation returns new instance of InstanceOperation storage.

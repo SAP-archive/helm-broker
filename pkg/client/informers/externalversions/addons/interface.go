@@ -3,8 +3,8 @@
 package addons
 
 import (
-	v1alpha1 "github.com/kyma-project/kyma/components/helm-broker/pkg/client/informers/externalversions/addons/v1alpha1"
-	internalinterfaces "github.com/kyma-project/kyma/components/helm-broker/pkg/client/informers/externalversions/internalinterfaces"
+	v1alpha1 "github.com/kyma-project/helm-broker/pkg/client/informers/externalversions/addons/v1alpha1"
+	internalinterfaces "github.com/kyma-project/helm-broker/pkg/client/informers/externalversions/internalinterfaces"
 )
 
 // Interface provides access to each of this group's versions.

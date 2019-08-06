@@ -7,7 +7,7 @@ import (
 	"context"
 
 	"github.com/kubernetes-incubator/service-catalog/pkg/apis/servicecatalog/v1beta1"
-	"github.com/kyma-project/kyma/components/helm-broker/internal/controller/automock"
+	"github.com/kyma-project/helm-broker/internal/controller/automock"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

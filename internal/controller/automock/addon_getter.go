@@ -2,7 +2,7 @@
 
 package automock
 
-import addon "github.com/kyma-project/kyma/components/helm-broker/internal/addon"
+import addon "github.com/kyma-project/helm-broker/internal/addon"
 
 import mock "github.com/stretchr/testify/mock"
 

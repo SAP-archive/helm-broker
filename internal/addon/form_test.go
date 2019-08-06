@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/Masterminds/semver"
-	"github.com/kyma-project/kyma/components/helm-broker/internal"
+	"github.com/kyma-project/helm-broker/internal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/helm/pkg/proto/hapi/chart"

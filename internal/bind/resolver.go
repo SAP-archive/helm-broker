@@ -10,7 +10,7 @@ import (
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/util/jsonpath"
 
-	"github.com/kyma-project/kyma/components/helm-broker/internal"
+	"github.com/kyma-project/helm-broker/internal"
 )
 
 // Resolver implements resolver for chart values.

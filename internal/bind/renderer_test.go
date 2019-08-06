@@ -6,9 +6,9 @@ import (
 	"testing"
 
 	google_protobuf "github.com/golang/protobuf/ptypes/timestamp"
-	"github.com/kyma-project/kyma/components/helm-broker/internal"
-	"github.com/kyma-project/kyma/components/helm-broker/internal/bind"
-	"github.com/kyma-project/kyma/components/helm-broker/internal/bind/automock"
+	"github.com/kyma-project/helm-broker/internal"
+	"github.com/kyma-project/helm-broker/internal/bind"
+	"github.com/kyma-project/helm-broker/internal/bind/automock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"

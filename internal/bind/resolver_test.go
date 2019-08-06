@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/kyma-project/kyma/components/helm-broker/internal"
-	"github.com/kyma-project/kyma/components/helm-broker/internal/bind"
+	"github.com/kyma-project/helm-broker/internal"
+	"github.com/kyma-project/helm-broker/internal/bind"
 	"github.com/renstrom/dedent"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

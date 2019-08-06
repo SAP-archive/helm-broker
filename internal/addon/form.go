@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/Masterminds/semver"
-	"github.com/kyma-project/kyma/components/helm-broker/internal"
+	"github.com/kyma-project/helm-broker/internal"
 	"github.com/pkg/errors"
 	"k8s.io/helm/pkg/proto/hapi/chart"
 )

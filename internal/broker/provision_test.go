@@ -13,11 +13,11 @@ import (
 	"k8s.io/helm/pkg/proto/hapi/chart"
 	rls "k8s.io/helm/pkg/proto/hapi/services"
 
-	"github.com/kyma-project/kyma/components/helm-broker/internal"
-	"github.com/kyma-project/kyma/components/helm-broker/internal/bind"
-	"github.com/kyma-project/kyma/components/helm-broker/internal/broker"
-	"github.com/kyma-project/kyma/components/helm-broker/internal/broker/automock"
-	"github.com/kyma-project/kyma/components/helm-broker/platform/logger/spy"
+	"github.com/kyma-project/helm-broker/internal"
+	"github.com/kyma-project/helm-broker/internal/bind"
+	"github.com/kyma-project/helm-broker/internal/broker"
+	"github.com/kyma-project/helm-broker/internal/broker/automock"
+	"github.com/kyma-project/helm-broker/platform/logger/spy"
 )
 
 func newProvisionServiceTestSuite(t *testing.T) *provisionServiceTestSuite {

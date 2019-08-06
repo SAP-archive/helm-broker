@@ -3,9 +3,9 @@
 package fake
 
 import (
-	clientset "github.com/kyma-project/kyma/components/helm-broker/pkg/client/clientset/versioned"
-	addonsv1alpha1 "github.com/kyma-project/kyma/components/helm-broker/pkg/client/clientset/versioned/typed/addons/v1alpha1"
-	fakeaddonsv1alpha1 "github.com/kyma-project/kyma/components/helm-broker/pkg/client/clientset/versioned/typed/addons/v1alpha1/fake"
+	clientset "github.com/kyma-project/helm-broker/pkg/client/clientset/versioned"
+	addonsv1alpha1 "github.com/kyma-project/helm-broker/pkg/client/clientset/versioned/typed/addons/v1alpha1"
+	fakeaddonsv1alpha1 "github.com/kyma-project/helm-broker/pkg/client/clientset/versioned/typed/addons/v1alpha1/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"

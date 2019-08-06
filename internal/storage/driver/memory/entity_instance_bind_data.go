@@ -3,7 +3,7 @@ package memory
 import (
 	"errors"
 
-	"github.com/kyma-project/kyma/components/helm-broker/internal"
+	"github.com/kyma-project/helm-broker/internal"
 )
 
 // NewInstanceBindData returns new instance of BindData storage.

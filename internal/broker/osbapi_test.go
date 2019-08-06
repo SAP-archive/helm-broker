@@ -17,14 +17,14 @@ import (
 	"github.com/stretchr/testify/require"
 	rls "k8s.io/helm/pkg/proto/hapi/services"
 
-	"github.com/kyma-project/kyma/components/helm-broker/platform/ptr"
+	"github.com/kyma-project/helm-broker/platform/ptr"
 
-	"github.com/kyma-project/kyma/components/helm-broker/internal"
-	"github.com/kyma-project/kyma/components/helm-broker/internal/bind"
-	"github.com/kyma-project/kyma/components/helm-broker/internal/broker"
-	"github.com/kyma-project/kyma/components/helm-broker/internal/broker/automock"
-	"github.com/kyma-project/kyma/components/helm-broker/internal/platform/logger/spy"
-	"github.com/kyma-project/kyma/components/helm-broker/internal/storage"
+	"github.com/kyma-project/helm-broker/internal"
+	"github.com/kyma-project/helm-broker/internal/bind"
+	"github.com/kyma-project/helm-broker/internal/broker"
+	"github.com/kyma-project/helm-broker/internal/broker/automock"
+	"github.com/kyma-project/helm-broker/internal/platform/logger/spy"
+	"github.com/kyma-project/helm-broker/internal/storage"
 )
 
 func newOSBAPITestSuite(t *testing.T) *osbapiTestSuite {

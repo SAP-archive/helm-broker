@@ -11,8 +11,8 @@ import (
 
 	"k8s.io/helm/pkg/chartutil"
 
-	"github.com/kyma-project/kyma/components/helm-broker/internal/addon"
-	"github.com/kyma-project/kyma/components/helm-broker/platform/logger/spy"
+	"github.com/kyma-project/helm-broker/internal/addon"
+	"github.com/kyma-project/helm-broker/platform/logger/spy"
 )
 
 // TestLoaderLoad processes given test case addon and compares it to the

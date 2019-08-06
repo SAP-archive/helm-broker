@@ -3,9 +3,9 @@ package controller
 import (
 	"fmt"
 
-	add "github.com/kyma-project/kyma/components/helm-broker/internal/addon"
-	"github.com/kyma-project/kyma/components/helm-broker/internal/controller/addons"
-	"github.com/kyma-project/kyma/components/helm-broker/pkg/apis/addons/v1alpha1"
+	add "github.com/kyma-project/helm-broker/internal/addon"
+	"github.com/kyma-project/helm-broker/internal/controller/addons"
+	"github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )

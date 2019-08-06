@@ -7,8 +7,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/kyma-project/kyma/components/helm-broker/internal"
-	"github.com/kyma-project/kyma/components/helm-broker/internal/addon"
+	"github.com/kyma-project/helm-broker/internal"
+	"github.com/kyma-project/helm-broker/internal/addon"
 
 	"github.com/Masterminds/semver"
 	"github.com/ghodss/yaml"
