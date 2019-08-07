@@ -10,6 +10,7 @@ import (
 	"github.com/kyma-project/helm-broker/internal/assetstore"
 	"github.com/kyma-project/helm-broker/internal/config"
 	"github.com/kyma-project/helm-broker/internal/controller/broker"
+	"github.com/kyma-project/helm-broker/internal/controller/docs"
 	"github.com/kyma-project/helm-broker/internal/storage"
 	"github.com/kyma-project/helm-broker/pkg/apis"
 	"github.com/kyma-project/kyma/components/cms-controller-manager/pkg/apis/cms/v1alpha1"
@@ -41,7 +42,13 @@ func SetupAndStartController(cfg *rest.Config, ctrCfg *config.ControllerConfig, 
 	fatalOnError(v1alpha1.AddToScheme(mgr.GetScheme()), "while adding CMS scheme")
 
 	// Setup dependencies
-	docsProvider := NewDocsProvider(mgr.GetClient())
+
+	var docsProvider docsFacade
+	docsProvider = docs.NewProvider(mgr.GetClient())
+	if !ctrCfg.DocumentationEnabled {
+		docsProvider = &docs.DummyProvider{}
+	}
+
 	brokerSyncer := broker.NewServiceBrokerSyncer(mgr.GetClient(), ctrCfg.ClusterServiceBrokerName, lg)
 	sbFacade := broker.NewBrokersFacade(mgr.GetClient(), brokerSyncer, ctrCfg.Namespace, ctrCfg.ServiceName, lg)
 	csbFacade := broker.NewClusterBrokersFacade(mgr.GetClient(), brokerSyncer, ctrCfg.Namespace, ctrCfg.ServiceName, ctrCfg.ClusterServiceBrokerName, lg)

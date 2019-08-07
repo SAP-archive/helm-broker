@@ -12,16 +12,19 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/kubernetes-incubator/service-catalog/pkg/apis/servicecatalog/v1beta1"
 	"github.com/kyma-project/helm-broker/internal"
+	"github.com/kyma-project/helm-broker/internal/addon"
 	"github.com/kyma-project/helm-broker/internal/controller/automock"
 	"github.com/kyma-project/helm-broker/pkg/apis"
 	"github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
 	"github.com/kyma-project/helm-broker/platform/logger/spy"
+	cms "github.com/kyma-project/kyma/components/cms-controller-manager/pkg/apis/cms/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/helm/pkg/proto/hapi/chart"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -444,6 +447,86 @@ func fixDeletedClusterAddonsConfiguration() *v1alpha1.ClusterAddonsConfiguration
 							},
 						},
 					},
+				},
+			},
+		},
+	}
+}
+
+func fixAddonWithDocsURL(id, name, url, docsURL string) addon.CompleteAddon {
+	chartName := fmt.Sprintf("chart-%s", name)
+	chartVersion := semver.MustParse("1.0.0")
+	return addon.CompleteAddon{
+		Addon: &internal.Addon{
+			ID:            internal.AddonID(id),
+			Name:          internal.AddonName(name),
+			Description:   "simple description",
+			Version:       *semver.MustParse("0.0.1"),
+			RepositoryURL: url,
+			Plans: map[internal.AddonPlanID]internal.AddonPlan{
+				internal.AddonPlanID(fmt.Sprintf("plan-%s", name)): {
+					ChartRef: internal.ChartRef{
+						Name:    internal.ChartName(chartName),
+						Version: *chartVersion,
+					},
+				},
+			},
+			Docs: []internal.AddonDocs{
+				{
+					Template: cms.CommonDocsTopicSpec{
+						Sources: []cms.Source{
+							{
+								URL: docsURL,
+							},
+						},
+					},
+				},
+			},
+		},
+		Charts: []*chart.Chart{
+			{
+				Metadata: &chart.Metadata{
+					Name:    chartName,
+					Version: chartVersion.String(),
+				},
+			},
+		},
+	}
+}
+
+func fixAddonWithEmptyDocs(id, name, url string) addon.CompleteAddon {
+	chartName := fmt.Sprintf("chart-%s", name)
+	chartVersion := semver.MustParse("1.0.0")
+	return addon.CompleteAddon{
+		Addon: &internal.Addon{
+			ID:            internal.AddonID(id),
+			Name:          internal.AddonName(name),
+			Description:   "simple description",
+			Version:       *semver.MustParse("0.0.1"),
+			RepositoryURL: url,
+			Plans: map[internal.AddonPlanID]internal.AddonPlan{
+				internal.AddonPlanID(fmt.Sprintf("plan-%s", name)): {
+					ChartRef: internal.ChartRef{
+						Name:    internal.ChartName(chartName),
+						Version: *chartVersion,
+					},
+				},
+			},
+			Docs: []internal.AddonDocs{
+				{
+					Template: cms.CommonDocsTopicSpec{
+						Sources: []cms.Source{
+							{},
+						},
+					},
+				},
+			},
+		},
+		Charts: []*chart.Chart{
+			{
+				Metadata: &chart.Metadata{
+					Name:    chartName,
+					Version: chartVersion.String(),
 				},
 			},
 		},

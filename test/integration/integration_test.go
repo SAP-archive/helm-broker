@@ -6,12 +6,11 @@ import (
 	"testing"
 
 	"github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestGetCatalogHappyPath(t *testing.T) {
 	// given
-	suite := newTestSuite(t)
+	suite := newTestSuite(t, true)
 	defer suite.tearDown()
 
 	for name, c := range map[string]struct {
@@ -34,20 +33,10 @@ func TestGetCatalogHappyPath(t *testing.T) {
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
-			var repository *gitRepo
-			if c.kind == sourceGit {
-				repo, err := newGitRepository(t, addonSource)
-				assert.NoError(t, err)
-
-				defer repo.removeTmpDir()
-				repository = repo
-			}
-
 			suite.assertNoServicesInCatalogEndpoint("ns/stage")
 
 			// when
-			source := newSource(c.kind, suite, repository, []string{redisAndAccTestRepo})
-			suite.createAddonsConfiguration("stage", c.addonName, source)
+			suite.createAddonsConfiguration("stage", c.addonName, []string{redisAndAccTestRepo}, c.kind)
 
 			// then
 			suite.waitForAddonsConfigurationPhase("stage", c.addonName, v1alpha1.AddonsConfigurationReady)
@@ -56,14 +45,13 @@ func TestGetCatalogHappyPath(t *testing.T) {
 			suite.assertNoServicesInCatalogEndpoint("cluster")
 
 			// when
-			suite.createAddonsConfiguration("prod", c.addonName, source)
+			suite.createAddonsConfiguration("prod", c.addonName, []string{redisAndAccTestRepo}, c.kind)
 			suite.waitForAddonsConfigurationPhase("prod", c.addonName, v1alpha1.AddonsConfigurationReady)
 			suite.waitForServicesInCatalogEndpoint("ns/prod", []string{c.redisID, c.testID})
 
 			// when
-			source.removeURL(redisAndAccTestRepo)
-			suite.updateAddonsConfigurationRepositories("stage", c.addonName, source)
-			suite.updateAddonsConfigurationRepositories("prod", c.addonName, source)
+			suite.updateAddonsConfigurationRepositories("stage", c.addonName, []string{}, c.kind)
+			suite.updateAddonsConfigurationRepositories("prod", c.addonName, []string{}, c.kind)
 
 			// then
 			suite.waitForEmptyCatalogResponse("ns/stage")
@@ -89,28 +77,17 @@ func TestGetCatalogHappyPath(t *testing.T) {
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
-			var repository *gitRepo
-			if c.kind == sourceGit {
-				repo, err := newGitRepository(t, addonSource)
-				assert.NoError(t, err)
-
-				defer repo.removeTmpDir()
-				repository = repo
-			}
-
 			suite.assertNoServicesInCatalogEndpoint("cluster")
 
 			// when
-			source := newSource(c.kind, suite, repository, []string{redisRepo})
-			suite.createClusterAddonsConfiguration(c.addonName, source)
+			suite.createClusterAddonsConfiguration(c.addonName, []string{redisRepo}, c.kind)
 
 			// then
 			suite.waitForClusterAddonsConfigurationPhase(c.addonName, v1alpha1.AddonsConfigurationReady)
 			suite.waitForServicesInCatalogEndpoint("cluster", []string{c.redisID})
 
 			// when
-			source.removeURL(redisRepo)
-			suite.updateClusterAddonsConfigurationRepositories(c.addonName, source)
+			suite.updateClusterAddonsConfigurationRepositories(c.addonName, []string{}, c.kind)
 
 			// then
 			suite.waitForEmptyCatalogResponse("cluster")
@@ -120,7 +97,7 @@ func TestGetCatalogHappyPath(t *testing.T) {
 
 func TestAddonsConflicts(t *testing.T) {
 	// given
-	suite := newTestSuite(t)
+	suite := newTestSuite(t, true)
 	defer suite.tearDown()
 
 	for name, c := range map[string]struct {
@@ -140,22 +117,13 @@ func TestAddonsConflicts(t *testing.T) {
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
-			var repository *gitRepo
-			if c.kind == sourceGit {
-				repo, err := newGitRepository(t, addonSource)
-				assert.NoError(t, err)
-
-				defer repo.removeTmpDir()
-				repository = repo
-			}
 			first := "first-" + c.kind
 			second := "second-" + c.kind
 			third := "third-" + c.kind
 
 			// when
 			//  - create an addons configuration with repo with redis addon
-			source := newSource(c.kind, suite, repository, []string{redisRepo})
-			suite.createAddonsConfiguration("stage", first, source)
+			suite.createAddonsConfiguration("stage", first, []string{redisRepo}, c.kind)
 
 			// then
 			//  - wait for readiness and wait for service redis at the catalog endpoint
@@ -164,8 +132,7 @@ func TestAddonsConflicts(t *testing.T) {
 
 			// when
 			// - create second addons configuration with a repo with redis and acc-test addons
-			sourceFull := newSource(c.kind, suite, repository, []string{redisAndAccTestRepo})
-			suite.createAddonsConfiguration("stage", second, sourceFull)
+			suite.createAddonsConfiguration("stage", second, []string{redisAndAccTestRepo}, c.kind)
 
 			// then
 			// - expect phase "failed", still redis service at the catalog endpoint
@@ -174,8 +141,7 @@ func TestAddonsConflicts(t *testing.T) {
 
 			// when
 			// - remove repo with redis from the first (cluster) addon
-			source.removeURL(redisRepo)
-			suite.updateAddonsConfigurationRepositories("stage", first, source)
+			suite.updateAddonsConfigurationRepositories("stage", first, []string{}, c.kind)
 
 			// then
 			// - expect for readiness and 2 services at the catalog endpoint
@@ -184,8 +150,7 @@ func TestAddonsConflicts(t *testing.T) {
 
 			// when
 			// - create third addons configuration with a repo with acc-test addons
-			sourceTesting := newSource(c.kind, suite, repository, []string{accTestRepo})
-			suite.createAddonsConfiguration("stage", third, sourceTesting)
+			suite.createAddonsConfiguration("stage", third, []string{accTestRepo}, c.kind)
 
 			// then
 			// - expect failed (because of the conflict)
@@ -219,22 +184,13 @@ func TestAddonsConflicts(t *testing.T) {
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
-			var repository *gitRepo
-			if c.kind == sourceGit {
-				repo, err := newGitRepository(t, addonSource)
-				assert.NoError(t, err)
-
-				defer repo.removeTmpDir()
-				repository = repo
-			}
 			first := "first-" + c.kind
 			second := "second-" + c.kind
 			third := "third-" + c.kind
 
 			// when
 			//  - create an cluster addons configuration with repo with redis addon
-			source := newSource(c.kind, suite, repository, []string{redisRepo})
-			suite.createClusterAddonsConfiguration(first, source)
+			suite.createClusterAddonsConfiguration(first, []string{redisRepo}, c.kind)
 
 			// then
 			//  - wait for readiness and wait for service redis at the catalog endpoint
@@ -243,8 +199,7 @@ func TestAddonsConflicts(t *testing.T) {
 
 			// when
 			// - create second cluster addons configuration with a repo with redis and acc-test addons
-			sourceFull := newSource(c.kind, suite, repository, []string{redisAndAccTestRepo})
-			suite.createClusterAddonsConfiguration(second, sourceFull)
+			suite.createClusterAddonsConfiguration(second, []string{redisAndAccTestRepo}, c.kind)
 
 			// then
 			// - expect phase "failed", still redis service at the catalog endpoint
@@ -253,8 +208,7 @@ func TestAddonsConflicts(t *testing.T) {
 
 			// when
 			// - remove repo with redis from the first (cluster) addon
-			source.removeURL(redisRepo)
-			suite.updateClusterAddonsConfigurationRepositories(first, source)
+			suite.updateClusterAddonsConfigurationRepositories(first, []string{}, c.kind)
 
 			// then
 			// - expect for readiness and 2 services at the catalog endpoint
@@ -263,8 +217,7 @@ func TestAddonsConflicts(t *testing.T) {
 
 			// when
 			// - create third cluster addons configuration with a repo with acc-test addons
-			sourceTesting := newSource(c.kind, suite, repository, []string{accTestRepo})
-			suite.createClusterAddonsConfiguration(third, sourceTesting)
+			suite.createClusterAddonsConfiguration(third, []string{accTestRepo}, c.kind)
 
 			// then
 			// - expect failed (because of the conflict)
@@ -284,7 +237,7 @@ func TestAddonsConflicts(t *testing.T) {
 
 func TestDocsTopic(t *testing.T) {
 	// given
-	suite := newTestSuite(t)
+	suite := newTestSuite(t, true)
 	defer suite.tearDown()
 
 	for name, c := range map[string]struct {
@@ -304,26 +257,15 @@ func TestDocsTopic(t *testing.T) {
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
-			var repository *gitRepo
-			if c.kind == sourceGit {
-				repo, err := newGitRepository(t, addonSource)
-				assert.NoError(t, err)
-
-				defer repo.removeTmpDir()
-				repository = repo
-			}
-
 			// when
-			source := newSource(c.kind, suite, repository, []string{redisAndAccTestRepo})
-			suite.createAddonsConfiguration("stage", c.addonName, source)
+			suite.createAddonsConfiguration("stage", c.addonName, []string{redisAndAccTestRepo}, c.kind)
 
 			// then
 			suite.waitForAddonsConfigurationPhase("stage", c.addonName, v1alpha1.AddonsConfigurationReady)
 			suite.assertDocsTopicExist("stage", c.docsTopicID)
 
 			// when
-			source.replaceURL(redisRepo)
-			suite.updateAddonsConfigurationRepositories("stage", c.addonName, source)
+			suite.updateAddonsConfigurationRepositories("stage", c.addonName, []string{redisRepo}, c.kind)
 
 			// then
 			suite.assertDocsTopicListIsEmpty()
@@ -347,29 +289,42 @@ func TestDocsTopic(t *testing.T) {
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
-			var repository *gitRepo
-			if c.kind == sourceGit {
-				repo, err := newGitRepository(t, addonSource)
-				assert.NoError(t, err)
-
-				defer repo.removeTmpDir()
-				repository = repo
-			}
-
-			// when
-			source := newSource(c.kind, suite, repository, []string{redisAndAccTestRepo})
-			suite.createClusterAddonsConfiguration(c.addonName, source)
+			suite.createClusterAddonsConfiguration(c.addonName, []string{redisAndAccTestRepo}, c.kind)
 
 			// then
 			suite.waitForClusterAddonsConfigurationPhase(c.addonName, v1alpha1.AddonsConfigurationReady)
 			suite.assertClusterDocsTopicExist(c.docsTopicID)
 
 			// when
-			source.replaceURL(redisRepo)
-			suite.updateClusterAddonsConfigurationRepositories(c.addonName, source)
+			suite.updateClusterAddonsConfigurationRepositories(c.addonName, []string{redisRepo}, c.kind)
 
 			// then
 			suite.assertClusterDocsTopicListIsEmpty()
 		})
 	}
+}
+
+func TestDisabledDocs(t *testing.T) {
+	suite := newTestSuite(t, false)
+	defer suite.tearDown()
+
+	t.Run("namespaced", func(t *testing.T) {
+		suite.assertNoServicesInCatalogEndpoint("ns/stage")
+
+		// when
+		suite.createAddonsConfiguration("stage", "addon1", []string{accTestRepo}, sourceHTTP)
+
+		// then
+		suite.waitForAddonsConfigurationPhase("stage", "addon1", v1alpha1.AddonsConfigurationReady)
+	})
+
+	t.Run("cluster", func(t *testing.T) {
+		suite.assertNoServicesInCatalogEndpoint("cluster")
+
+		// when
+		suite.createClusterAddonsConfiguration("addon1", []string{accTestRepo}, sourceHTTP)
+
+		// then
+		suite.waitForClusterAddonsConfigurationPhase("addon1", v1alpha1.AddonsConfigurationReady)
+	})
 }

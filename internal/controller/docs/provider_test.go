@@ -1,4 +1,4 @@
-package controller
+package docs
 
 import (
 	"context"
@@ -20,7 +20,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
-func TestDocsProvider_EnsureClusterDocsTopic(t *testing.T) {
+func TestProvider_EnsureClusterDocsTopic(t *testing.T) {
 	// given
 	err := v1alpha1.AddToScheme(scheme.Scheme)
 	require.NoError(t, err)
@@ -35,7 +35,7 @@ func TestDocsProvider_EnsureClusterDocsTopic(t *testing.T) {
 		t.Run(tn, func(t *testing.T) {
 			c := fake.NewFakeClient()
 			cdt := fixClusterDocsTopic(id)
-			docsProvider := NewDocsProvider(c)
+			docsProvider := NewProvider(c)
 
 			// when
 			err = docsProvider.EnsureClusterDocsTopic(tc.givenAddon.Addon)
@@ -49,7 +49,7 @@ func TestDocsProvider_EnsureClusterDocsTopic(t *testing.T) {
 	}
 }
 
-func TestDocsProvider_EnsureClusterDocsTopic_UpdateIfExist(t *testing.T) {
+func TestProvider_EnsureClusterDocsTopic_UpdateIfExist(t *testing.T) {
 	// given
 	err := v1alpha1.AddToScheme(scheme.Scheme)
 	require.NoError(t, err)
@@ -60,7 +60,7 @@ func TestDocsProvider_EnsureClusterDocsTopic_UpdateIfExist(t *testing.T) {
 	addonWithEmptyDocsURL.Addon.Docs[0].Template.Description = "new description"
 
 	c := fake.NewFakeClient(cdt)
-	docsProvider := NewDocsProvider(c)
+	docsProvider := NewProvider(c)
 
 	// when
 	err = docsProvider.EnsureClusterDocsTopic(addonWithEmptyDocsURL.Addon)
@@ -80,7 +80,7 @@ func TestDocsProvider_EnsureClusterDocsTopicRemoved(t *testing.T) {
 	const id = "123"
 	cdt := fixClusterDocsTopic(id)
 	c := fake.NewFakeClient(cdt)
-	docsProvider := NewDocsProvider(c)
+	docsProvider := NewProvider(c)
 
 	// when
 	err = docsProvider.EnsureClusterDocsTopicRemoved(id)
@@ -99,7 +99,7 @@ func TestDocsProvider_EnsureClusterDocsTopicRemoved_NotExists(t *testing.T) {
 	const id = "123"
 	cdt := fixClusterDocsTopic(id)
 	c := fake.NewFakeClient()
-	docsProvider := NewDocsProvider(c)
+	docsProvider := NewProvider(c)
 
 	// when
 	err = docsProvider.EnsureClusterDocsTopicRemoved(id)
@@ -124,7 +124,7 @@ func TestDocsProvider_EnsureDocsTopic(t *testing.T) {
 	} {
 		t.Run(tn, func(t *testing.T) {
 			c := fake.NewFakeClient(dt)
-			docsProvider := NewDocsProvider(c)
+			docsProvider := NewProvider(c)
 
 			// when
 			err = docsProvider.EnsureDocsTopic(tc.givenAddon.Addon, dt.Namespace)
@@ -150,7 +150,7 @@ func TestDocsProvider_EnsureDocsTopic_UpdateIfExist(t *testing.T) {
 	addonWithEmptyDocsURL.Addon.Docs[0].Template.Description = "new description"
 
 	c := fake.NewFakeClient(dt)
-	docsProvider := NewDocsProvider(c)
+	docsProvider := NewProvider(c)
 
 	// when
 	err = docsProvider.EnsureDocsTopic(addonWithEmptyDocsURL.Addon, dt.Namespace)
@@ -170,7 +170,7 @@ func TestDocsProvider_EnsureDocsTopicRemoved(t *testing.T) {
 
 	dt := fixDocsTopic()
 	c := fake.NewFakeClient(dt)
-	docsProvider := NewDocsProvider(c)
+	docsProvider := NewProvider(c)
 
 	// when
 	err = docsProvider.EnsureDocsTopicRemoved(dt.Name, dt.Namespace)
@@ -189,7 +189,7 @@ func TestDocsProvider_EnsureDocsTopicRemoved_NotExists(t *testing.T) {
 
 	dt := fixDocsTopic()
 	c := fake.NewFakeClient()
-	docsProvider := NewDocsProvider(c)
+	docsProvider := NewProvider(c)
 
 	// when
 	err = docsProvider.EnsureDocsTopicRemoved(dt.Name, dt.Namespace)
