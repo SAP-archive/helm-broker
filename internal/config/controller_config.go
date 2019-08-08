@@ -34,6 +34,7 @@ type ControllerConfig struct {
 	Storage                  []storage.Config `valid:"required"`
 	DevelopMode              bool
 	UploadServiceURL         string `default:"http://assetstore-asset-upload-service.kyma-system.svc.cluster.local:3000"`
+	DocumentationEnabled     bool
 }
 
 // LoadControllerConfig method has following strategy:

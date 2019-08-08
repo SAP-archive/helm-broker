@@ -1,4 +1,4 @@
-package controller
+package docs
 
 import (
 	"context"
@@ -14,14 +14,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// DocsProvider allows to maintain the addons documentation
-type DocsProvider struct {
+// Provider allows to maintain the addons documentation
+type Provider struct {
 	dynamicClient client.Client
 }
 
-// NewDocsProvider creates a new DocsProvider
-func NewDocsProvider(dynamicClient client.Client) *DocsProvider {
-	return &DocsProvider{
+// NewProvider creates a new Provider
+func NewProvider(dynamicClient client.Client) *Provider {
+	return &Provider{
 		dynamicClient: dynamicClient,
 	}
 }
@@ -32,7 +32,7 @@ const (
 )
 
 // EnsureClusterDocsTopic creates ClusterDocsTopic for a given addon or updates it in case it already exists
-func (d *DocsProvider) EnsureClusterDocsTopic(addon *internal.Addon) error {
+func (d *Provider) EnsureClusterDocsTopic(addon *internal.Addon) error {
 	addon.Docs[0].Template.Sources = d.defaultDocsSourcesURLs(addon)
 	cdt := &v1alpha1.ClusterDocsTopic{
 		ObjectMeta: v1.ObjectMeta{
@@ -60,7 +60,7 @@ func (d *DocsProvider) EnsureClusterDocsTopic(addon *internal.Addon) error {
 }
 
 // EnsureClusterDocsTopicRemoved removes ClusterDocsTopic for a given addon
-func (d *DocsProvider) EnsureClusterDocsTopicRemoved(id string) error {
+func (d *Provider) EnsureClusterDocsTopicRemoved(id string) error {
 	cdt := &v1alpha1.ClusterDocsTopic{
 		ObjectMeta: v1.ObjectMeta{
 			Name: id,
@@ -74,7 +74,7 @@ func (d *DocsProvider) EnsureClusterDocsTopicRemoved(id string) error {
 }
 
 // EnsureDocsTopic creates ClusterDocsTopic for a given addon or updates it in case it already exists
-func (d *DocsProvider) EnsureDocsTopic(addon *internal.Addon, namespace string) error {
+func (d *Provider) EnsureDocsTopic(addon *internal.Addon, namespace string) error {
 	addon.Docs[0].Template.Sources = d.defaultDocsSourcesURLs(addon)
 	dt := &v1alpha1.DocsTopic{
 		ObjectMeta: v1.ObjectMeta{
@@ -103,7 +103,7 @@ func (d *DocsProvider) EnsureDocsTopic(addon *internal.Addon, namespace string) 
 }
 
 // EnsureDocsTopicRemoved removes ClusterDocsTopic for a given addon
-func (d *DocsProvider) EnsureDocsTopicRemoved(id string, namespace string) error {
+func (d *Provider) EnsureDocsTopicRemoved(id string, namespace string) error {
 	dt := &v1alpha1.DocsTopic{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      id,
@@ -117,7 +117,7 @@ func (d *DocsProvider) EnsureDocsTopicRemoved(id string, namespace string) error
 	return nil
 }
 
-func (d *DocsProvider) defaultDocsSourcesURLs(addon *internal.Addon) []v1alpha1.Source {
+func (d *Provider) defaultDocsSourcesURLs(addon *internal.Addon) []v1alpha1.Source {
 	// we use repositoryURL as the default sourceURL if its not provided
 	var sources []v1alpha1.Source
 	for _, source := range addon.Docs[0].Template.Sources {
@@ -129,7 +129,7 @@ func (d *DocsProvider) defaultDocsSourcesURLs(addon *internal.Addon) []v1alpha1.
 	return sources
 }
 
-func (d *DocsProvider) updateClusterDocsTopic(addon *internal.Addon) error {
+func (d *Provider) updateClusterDocsTopic(addon *internal.Addon) error {
 	cdt := &v1alpha1.ClusterDocsTopic{}
 	if err := d.dynamicClient.Get(context.Background(), types.NamespacedName{Name: string(addon.ID)}, cdt); err != nil {
 		return errors.Wrapf(err, "while getting ClusterDocsTopic %s", addon.ID)
@@ -146,7 +146,7 @@ func (d *DocsProvider) updateClusterDocsTopic(addon *internal.Addon) error {
 	return nil
 }
 
-func (d *DocsProvider) updateDocsTopic(addon *internal.Addon, namespace string) error {
+func (d *Provider) updateDocsTopic(addon *internal.Addon, namespace string) error {
 	dt := &v1alpha1.DocsTopic{}
 	if err := d.dynamicClient.Get(context.Background(), types.NamespacedName{Name: string(addon.ID), Namespace: namespace}, dt); err != nil {
 		return errors.Wrapf(err, "while getting DocsTopic %s", addon.ID)

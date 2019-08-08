@@ -56,9 +56,12 @@ const (
 	redisRepo           = "index-redis.yaml"
 	accTestRepo         = "index-acc-testing.yaml"
 	redisAndAccTestRepo = "index.yaml"
+
+	sourceHTTP = "http"
+	sourceGit  = "git"
 )
 
-func newTestSuite(t *testing.T) *testSuite {
+func newTestSuite(t *testing.T, docsEnabled bool) *testSuite {
 	sch, err := v1alpha1.SchemeBuilder.Build()
 	require.NoError(t, err)
 	require.NoError(t, apis.AddToScheme(sch))
@@ -94,10 +97,17 @@ func newTestSuite(t *testing.T) *testSuite {
 	restConfig, err := environment.Start()
 	require.NoError(t, err)
 	_, err = envtest.InstallCRDs(restConfig, envtest.CRDInstallOptions{
-		Paths:              []string{"crds/"},
+		Paths:              []string{"crds/hb/", "crds/sc/"},
 		ErrorIfPathMissing: true,
 	})
 	require.NoError(t, err)
+	if docsEnabled {
+		_, err = envtest.InstallCRDs(restConfig, envtest.CRDInstallOptions{
+			Paths:              []string{"crds/docs/"},
+			ErrorIfPathMissing: true,
+		})
+		require.NoError(t, err)
+	}
 
 	uploadClient := &automock.Client{}
 	uploadClient.On("Upload", mock.AnythingOfType("string"), mock.Anything).Return(assetstore.UploadedFile{}, nil)
@@ -106,6 +116,7 @@ func newTestSuite(t *testing.T) *testSuite {
 		DevelopMode:              true, // DevelopMode allows "http" urls
 		ClusterServiceBrokerName: "helm-broker",
 		TmpDir:                   cfg.TmpDir,
+		DocumentationEnabled:     docsEnabled,
 	}, ":8001", sFact, uploadClient, logger.WithField("svc", "broker"))
 
 	stopCh := make(chan struct{})
@@ -118,6 +129,10 @@ func newTestSuite(t *testing.T) *testSuite {
 	// create a client for managing (cluster) addons configurations
 	dynamicClient, err := client.New(restConfig, client.Options{Scheme: sch})
 
+	// initialize git repositoryDirName
+	gitRepository, err := newGitRepository(t, addonSource)
+	require.NoError(t, err)
+
 	return &testSuite{
 		t: t,
 
@@ -126,7 +141,8 @@ func newTestSuite(t *testing.T) *testSuite {
 		server:        server,
 		k8sClient:     k8sClientset,
 
-		stopCh: stopCh,
+		stopCh:        stopCh,
+		gitRepository: gitRepository,
 	}
 }
 
@@ -144,9 +160,10 @@ func newOSBClient(url string) (osb.Client, error) {
 }
 
 type testSuite struct {
-	t          *testing.T
-	server     *httptest.Server
-	repoServer *httptest.Server
+	t             *testing.T
+	server        *httptest.Server
+	repoServer    *httptest.Server
+	gitRepository *gitRepo
 
 	osbClient     osb.Client
 	dynamicClient client.Client
@@ -159,6 +176,7 @@ func (ts *testSuite) tearDown() {
 	ts.server.Close()
 	ts.repoServer.Close()
 	close(ts.stopCh)
+	ts.gitRepository.removeTmpDir()
 }
 
 func (ts *testSuite) assertNoServicesInCatalogEndpoint(prefix string) {
@@ -279,7 +297,7 @@ func (ts *testSuite) deleteClusterAddonsConfiguration(name string) {
 		}}))
 }
 
-func (ts *testSuite) createAddonsConfiguration(namespace, name string, source *repositorySource) {
+func (ts *testSuite) createAddonsConfiguration(namespace, name string, urls []string, repoKind string) {
 	err := ts.dynamicClient.Create(context.TODO(), &v1alpha1.AddonsConfiguration{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      name,
@@ -287,7 +305,7 @@ func (ts *testSuite) createAddonsConfiguration(namespace, name string, source *r
 		},
 		Spec: v1alpha1.AddonsConfigurationSpec{
 			CommonAddonsConfigurationSpec: v1alpha1.CommonAddonsConfigurationSpec{
-				Repositories: source.generateAddonRepositories(),
+				Repositories: ts.createSpecRepositories(urls, repoKind),
 			},
 		},
 	})
@@ -297,36 +315,55 @@ func (ts *testSuite) createAddonsConfiguration(namespace, name string, source *r
 	}
 }
 
-func (ts *testSuite) createClusterAddonsConfiguration(name string, source *repositorySource) {
-	err := ts.dynamicClient.Create(context.TODO(), &v1alpha1.ClusterAddonsConfiguration{
+func (ts *testSuite) createClusterAddonsConfiguration(name string, urls []string, repoKind string) {
+	ts.dynamicClient.Create(context.TODO(), &v1alpha1.ClusterAddonsConfiguration{
 		ObjectMeta: v1.ObjectMeta{
 			Name: name,
 		},
 		Spec: v1alpha1.ClusterAddonsConfigurationSpec{
 			CommonAddonsConfigurationSpec: v1alpha1.CommonAddonsConfigurationSpec{
-				Repositories: source.generateAddonRepositories(),
+				Repositories: ts.createSpecRepositories(urls, repoKind),
 			},
 		},
 	})
-
-	if err != nil {
-		ts.t.Logf("Failed during creating ClusterAddonsConfiguration: %s", err)
-	}
 }
 
-func (ts *testSuite) updateAddonsConfigurationRepositories(namespace, name string, source *repositorySource) {
-	var addonsConfiguration v1alpha1.AddonsConfiguration
-	require.NoError(ts.t, ts.dynamicClient.Get(context.TODO(), types.NamespacedName{Name: name, Namespace: namespace}, &addonsConfiguration))
+func (ts *testSuite) createSpecRepositories(urls []string, repoKind string) []v1alpha1.SpecRepository {
+	// v1alpha1.SpecRepository cannot be null, needs to be empty array
+	if len(urls) == 0 {
+		return []v1alpha1.SpecRepository{{}}
+	}
+	var repositories []v1alpha1.SpecRepository
+	for _, url := range urls {
 
-	addonsConfiguration.Spec.Repositories = source.generateAddonRepositories()
+		var fullURL string
+		switch repoKind {
+		case sourceHTTP:
+			fullURL = ts.repoServer.URL + "/" + url
+		case sourceGit:
+			fullURL = "git::" + ts.gitRepository.path(url)
+		default:
+			ts.t.Fatalf("Unsupported source kind: %s", repoKind)
+		}
+
+		repositories = append(repositories, v1alpha1.SpecRepository{URL: fullURL})
+	}
+	return repositories
+}
+
+func (ts *testSuite) updateAddonsConfigurationRepositories(namespace, name string, urls []string, repoKind string) {
+	var addonsConfiguration v1alpha1.AddonsConfiguration
+	require.NoError(ts.t, ts.dynamicClient.Get(context.TODO(), types.NamespacedName{Namespace: namespace, Name: name}, &addonsConfiguration))
+
+	addonsConfiguration.Spec.Repositories = ts.createSpecRepositories(urls, repoKind)
 	require.NoError(ts.t, ts.dynamicClient.Update(context.TODO(), &addonsConfiguration))
 }
 
-func (ts *testSuite) updateClusterAddonsConfigurationRepositories(name string, source *repositorySource) {
+func (ts *testSuite) updateClusterAddonsConfigurationRepositories(name string, urls []string, repoKind string) {
 	var clusterAddonsConfiguration v1alpha1.ClusterAddonsConfiguration
 	require.NoError(ts.t, ts.dynamicClient.Get(context.TODO(), types.NamespacedName{Name: name}, &clusterAddonsConfiguration))
 
-	clusterAddonsConfiguration.Spec.Repositories = source.generateAddonRepositories()
+	clusterAddonsConfiguration.Spec.Repositories = ts.createSpecRepositories(urls, repoKind)
 	require.NoError(ts.t, ts.dynamicClient.Update(context.TODO(), &clusterAddonsConfiguration))
 }
 

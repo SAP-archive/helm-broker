@@ -69,3 +69,8 @@ type clusterDocsProvider interface {
 type clusterBrokerSyncer interface {
 	Sync() error
 }
+
+type docsFacade interface {
+	clusterDocsProvider
+	docsProvider
+}
