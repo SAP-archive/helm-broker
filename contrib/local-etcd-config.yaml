@@ -1,0 +1,8 @@
+  tillerTLSInsecure: true
+  storage:
+    - driver: etcd
+      provide:
+        all: ~
+      etcd:
+        endpoints:
+          - http://127.0.0.1:2379

@@ -9,14 +9,15 @@ global:
   image:
     pullPolicy: IfNotPresent
   # paths to docker images
-  containerRegistry:
-    path: eu.gcr.io/kyma-project
-  alpine_net:
-    dir: test-infra/
+  alpine_kubectl:
+    image: eu.gcr.io/kyma-project/test-infra/alpine-kubectl
     version: v20190325-ff66a3a
   helm_broker:
-    dir: develop/
-    version: db792c33
+    image: eu.gcr.io/kyma-project/develop/helm-broker
+    version: 2f5ab382
+  helm_controller:
+    image: eu.gcr.io/kyma-project/develop/helm-controller
+    version: 2f5ab382
   # helm broker service parameters
   service:
     type: NodePort
@@ -29,6 +30,7 @@ global:
 
 broker:
   tillerTLSInsecure: true
+  tillerTLSEnabled: false
 
 ctrl:
   # enable/disable docs topics support for helm controller

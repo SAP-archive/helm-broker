@@ -72,11 +72,8 @@ func newTestSuite(t *testing.T, docsEnabled bool) *testSuite {
 	k8sClientset := kubernetes.NewSimpleClientset()
 
 	cfg := &config.Config{
-		TmpDir:                   os.TempDir(),
-		Namespace:                "kyma-system",
-		Storage:                  testdata.GoldenConfigMemorySingleAll(),
-		DevelopMode:              true,
-		ClusterServiceBrokerName: "helm-broker",
+		TmpDir:  os.TempDir(),
+		Storage: testdata.GoldenConfigMemorySingleAll(),
 	}
 	storageConfig := storage.ConfigList(cfg.Storage)
 	sFact, err := storage.NewFactory(&storageConfig)
