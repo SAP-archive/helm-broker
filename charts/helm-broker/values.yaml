@@ -1,0 +1,35 @@
+global:
+  # develop mode allows use insecure (http) url for addons configuration
+  isDevelopMode: false
+  # image pull policy for helm broker init container
+  initImage:
+    # valid values are "IfNotPresent", "Never", and "Always"
+    pullPolicy: IfNotPresent
+  # image pull policy for helm broker broker/controller containers
+  image:
+    pullPolicy: IfNotPresent
+  # paths to docker images
+  containerRegistry:
+    path: eu.gcr.io/kyma-project
+  alpine_net:
+    dir: test-infra/
+    version: v20190325-ff66a3a
+  helm_broker:
+    dir: develop/
+    version: db792c33
+  # helm broker service parameters
+  service:
+    type: NodePort
+    externalPort: 80
+    internalPort: 8081
+  # etcd port uses by helm broker
+  etcdClientPort: 2379
+  # temporary directory size limit uses in broker/controller containers
+  tmpDirSizeLimit: 1Gi
+
+broker:
+  tillerTLSInsecure: true
+
+ctrl:
+  # enable/disable documentation component for helm broker addons
+  documentationEnabled: false
