@@ -1,3 +1,3 @@
 name: helm-broker
-description: Helm service-broker deployment chart.
+description: Helm broker deployment chart.
 version: 0.1.0

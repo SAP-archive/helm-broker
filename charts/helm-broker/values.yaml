@@ -31,5 +31,5 @@ broker:
   tillerTLSInsecure: true
 
 ctrl:
-  # enable/disable documentation component for helm broker addons
+  # enable/disable docs topics support for helm controller
   documentationEnabled: false
