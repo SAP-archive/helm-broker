@@ -28,17 +28,21 @@ func NewClient(cfg Config, log *logrus.Entry) *Client {
 		InsecureSkipVerify: cfg.TillerTLSInsecure,
 	}
 
-	tlscfg, err := tlsutil.ClientConfig(tlsopts)
-	if err != nil {
-		log.Fatalf("Unable create helm client. Error: %v", err)
-	}
-
-	return &Client{
+	client := &Client{
 		tillerHost:        cfg.TillerHost,
 		tillerConnTimeout: int64(cfg.TillerConnectionTimeout),
 		log:               log.WithField("service", "helm_client"),
-		tlscfg:            tlscfg,
+		tlsEnabled:        cfg.TillerTLSEnabled,
 	}
+	if cfg.TillerTLSEnabled {
+		tlscfg, err := tlsutil.ClientConfig(tlsopts)
+		if err != nil {
+			log.Fatalf("Unable create helm client. Error: %v", err)
+		}
+		client.tlscfg = tlscfg
+	}
+
+	return client
 }
 
 // Client provide communication with Tiller
@@ -46,6 +50,7 @@ type Client struct {
 	tillerHost        string
 	tillerConnTimeout int64
 	tlscfg            *tls.Config
+	tlsEnabled        bool
 	log               *logrus.Entry
 }
 
@@ -82,5 +87,9 @@ func (cli *Client) helmClient() helmDeleteInstaller {
 	//
 	// helm.ConnectTimeout option is REQUIRED, because of this issue:
 	// https://github.com/kubernetes/helm/issues/3658
-	return helm.NewClient(helm.Host(cli.tillerHost), helm.ConnectTimeout(cli.tillerConnTimeout), helm.WithTLS(cli.tlscfg))
+	opts := []helm.Option{helm.Host(cli.tillerHost), helm.ConnectTimeout(cli.tillerConnTimeout)}
+	if cli.tlsEnabled {
+		opts = append(opts, helm.WithTLS(cli.tlscfg))
+	}
+	return helm.NewClient(opts...)
 }

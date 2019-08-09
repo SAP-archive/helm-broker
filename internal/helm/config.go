@@ -9,4 +9,5 @@ type Config struct {
 	TillerTLSKey            string        `envconfig:"default=/etc/certs/tls.key"`
 	TillerTLSCrt            string        `envconfig:"default=/etc/certs/tls.crt"`
 	TillerTLSInsecure       bool          `envconfig:"default=false"`
+	TillerTLSEnabled        bool          `envconfig:"default=true"`
 }
