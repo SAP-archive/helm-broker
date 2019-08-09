@@ -67,7 +67,8 @@ func TestClientInstallSuccess(t *testing.T) {
 		certFile: certFile,
 		keyFile:  keyFile,
 	}
-	fakeTiller.SetUp(t)
+	fakeTiller.SetUpWithTLS(t)
+	defer fakeTiller.TearDown(t)
 
 	cVals := internal.ChartValues{
 		"test-param": "value-test",
@@ -79,6 +80,7 @@ func TestClientInstallSuccess(t *testing.T) {
 		TillerTLSCrt:            certFile,
 		TillerTLSKey:            keyFile,
 		TillerTLSInsecure:       true,
+		TillerTLSEnabled:        true,
 	}, spy.NewLogDummy())
 
 	// when
@@ -101,8 +103,31 @@ func TestClientInstallSuccess(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, fakeTiller.GotInstReleaseReq.Values, &chart.Config{Raw: string(b)})
 
-	// clean-up
-	fakeTiller.TearDown(t)
+}
+
+func TestClientInstallWithoutTLSSuccess(t *testing.T) {
+	// given
+	fakeTiller := &fakeTillerSvc{}
+	fakeTiller.SetUp(t)
+	defer fakeTiller.TearDown(t)
+
+	cVals := internal.ChartValues{
+		"test-param": "value-test",
+	}
+
+	hClient := helm.NewClient(helm.Config{
+		TillerHost:              fakeTiller.Host,
+		TillerConnectionTimeout: time.Second,
+		TillerTLSEnabled:        false,
+	}, spy.NewLogDummy())
+
+	// when
+	_, err := hClient.Install(fixChart(), cVals, "r-name", "ns-name")
+
+	// then
+	assert.NoError(t, err)
+
+	require.NotNil(t, fakeTiller.GotInstReleaseReq)
 }
 
 func TestClientDeleteSuccess(t *testing.T) {
@@ -110,13 +135,16 @@ func TestClientDeleteSuccess(t *testing.T) {
 		certFile: certFile,
 		keyFile:  keyFile,
 	}
-	fakeTiller.SetUp(t)
+	fakeTiller.SetUpWithTLS(t)
+	defer fakeTiller.TearDown(t)
+
 	hClient := helm.NewClient(helm.Config{
 		TillerHost:              fakeTiller.Host,
 		TillerConnectionTimeout: time.Second,
 		TillerTLSCrt:            certFile,
 		TillerTLSKey:            keyFile,
 		TillerTLSInsecure:       true,
+		TillerTLSEnabled:        true,
 	}, spy.NewLogDummy())
 
 	// when
@@ -127,9 +155,6 @@ func TestClientDeleteSuccess(t *testing.T) {
 
 	assert.NotNil(t, fakeTiller.GotDelReleaseReq)
 	assert.Equal(t, fakeTiller.GotDelReleaseReq.Name, "r-name")
-
-	// clean-up
-	fakeTiller.TearDown(t)
 }
 
 type fakeTillerSvc struct {
@@ -146,7 +171,7 @@ type fakeTillerSvc struct {
 	serverClosed chan struct{}
 }
 
-func (s *fakeTillerSvc) SetUp(t *testing.T) {
+func (s *fakeTillerSvc) SetUpWithTLS(t *testing.T) {
 	s.serverClosed = make(chan struct{}, 1)
 	lis, err := net.Listen("tcp", ":0")
 	require.NoError(t, err)
@@ -156,6 +181,22 @@ func (s *fakeTillerSvc) SetUp(t *testing.T) {
 	require.NoError(t, err)
 
 	s.grpcSvc = grpc.NewServer(grpc.Creds(credentials))
+	services.RegisterReleaseServiceServer(s.grpcSvc, s)
+
+	go func() {
+		s.serverErr = s.grpcSvc.Serve(lis)
+		close(s.serverClosed)
+	}()
+}
+
+func (s *fakeTillerSvc) SetUp(t *testing.T) {
+	s.serverClosed = make(chan struct{}, 1)
+	lis, err := net.Listen("tcp", ":0")
+	require.NoError(t, err)
+
+	s.Host = lis.Addr().String()
+
+	s.grpcSvc = grpc.NewServer()
 	services.RegisterReleaseServiceServer(s.grpcSvc, s)
 
 	go func() {
