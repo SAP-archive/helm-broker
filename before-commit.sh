@@ -27,7 +27,7 @@ fi
 ##
 # GO BUILD
 ##
-binaries=("broker" "controller" "indexbuilder" "targz" "cm2cac")
+binaries=("broker" "controller" "indexbuilder" "targz")
 buildEnv=""
 if [ "$1" == "$CI_FLAG" ]; then
 	# build binary statically for linux architecture

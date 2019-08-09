@@ -43,7 +43,6 @@ build-image: pull-licenses
 	cp broker deploy/broker/helm-broker
 	cp targz deploy/tools/targz
 	cp indexbuilder deploy/tools/indexbuilder
-	cp cm2cac deploy/tools/cm2cac
 	cp controller deploy/controller/controller
 
 	docker build -t $(APP_NAME) deploy/broker
@@ -75,7 +74,6 @@ clean:
 	rm -f broker
 	rm -f targz
 	rm -f indexbuilder
-	rm -f cm2cac
 
 .PHONY: path-to-referenced-charts
 path-to-referenced-charts:
