@@ -3,8 +3,8 @@ package controller
 import (
 	"github.com/Masterminds/semver"
 	"github.com/kyma-project/helm-broker/internal"
-	"github.com/kyma-project/helm-broker/internal/addon"
-	"github.com/kyma-project/helm-broker/internal/addon/provider"
+	addonsDTO "github.com/kyma-project/helm-broker/internal/addons"
+	"github.com/kyma-project/helm-broker/internal/addons/provider"
 	"k8s.io/helm/pkg/proto/hapi/chart"
 )
 
@@ -30,8 +30,8 @@ type addonGetterFactory interface {
 //go:generate mockery -name=addonGetter -output=automock -outpkg=automock -case=underscore
 type addonGetter interface {
 	Cleanup() error
-	GetCompleteAddon(entry addon.EntryDTO) (addon.CompleteAddon, error)
-	GetIndex() (*addon.IndexDTO, error)
+	GetCompleteAddon(entry addonsDTO.EntryDTO) (addonsDTO.AddonDTO, error)
+	GetIndex() (*addonsDTO.IndexDTO, error)
 }
 
 //go:generate mockery -name=brokerFacade -output=automock -outpkg=automock -case=underscore
@@ -59,18 +59,7 @@ type clusterBrokerFacade interface {
 	Delete() error
 }
 
-//go:generate mockery -name=clusterDocsProvider -output=automock -outpkg=automock -case=underscore
-type clusterDocsProvider interface {
-	EnsureClusterDocsTopic(addon *internal.Addon) error
-	EnsureClusterDocsTopicRemoved(id string) error
-}
-
 //go:generate mockery -name=clusterBrokerSyncer -output=automock -outpkg=automock -case=underscore
 type clusterBrokerSyncer interface {
 	Sync() error
-}
-
-type docsFacade interface {
-	clusterDocsProvider
-	docsProvider
 }

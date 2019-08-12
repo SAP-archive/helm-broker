@@ -1,4 +1,4 @@
-package addon
+package addons
 
 import (
 	"fmt"

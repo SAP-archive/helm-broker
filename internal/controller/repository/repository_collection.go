@@ -1,4 +1,4 @@
-package addons
+package repository
 
 import (
 	"fmt"
@@ -6,25 +6,25 @@ import (
 	addonsv1alpha1 "github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
 )
 
-// RepositoryCollection keeps and process collection of RepositoryController
-type RepositoryCollection struct {
-	Repositories []*RepositoryController
+// Collection keeps and process collection of Repository
+type Collection struct {
+	Repositories []*Repository
 }
 
 // NewRepositoryCollection returns pointer to RepositoryCollection
-func NewRepositoryCollection() *RepositoryCollection {
-	return &RepositoryCollection{
-		Repositories: []*RepositoryController{},
+func NewRepositoryCollection() *Collection {
+	return &Collection{
+		Repositories: []*Repository{},
 	}
 }
 
-// AddRepository adds new RepositoryController to RepositoryCollection
-func (rc *RepositoryCollection) AddRepository(repo *RepositoryController) {
+// AddRepository adds new Repository to RepositoryCollection
+func (rc *Collection) AddRepository(repo *Repository) {
 	rc.Repositories = append(rc.Repositories, repo)
 }
 
-func (rc *RepositoryCollection) addons() []*AddonController {
-	addons := []*AddonController{}
+func (rc *Collection) addons() []*Entry {
+	var addons []*Entry
 
 	for _, repo := range rc.Repositories {
 		for _, addon := range repo.Addons {
@@ -35,8 +35,8 @@ func (rc *RepositoryCollection) addons() []*AddonController {
 	return addons
 }
 
-func (rc *RepositoryCollection) completeAddons() []*AddonController {
-	addons := []*AddonController{}
+func (rc *Collection) completeAddons() []*Entry {
+	var addons []*Entry
 
 	for _, addon := range rc.addons() {
 		if !addon.IsComplete() {
@@ -49,8 +49,8 @@ func (rc *RepositoryCollection) completeAddons() []*AddonController {
 }
 
 // ReadyAddons returns all addons from all repositories which ready status
-func (rc *RepositoryCollection) ReadyAddons() []*AddonController {
-	addons := []*AddonController{}
+func (rc *Collection) ReadyAddons() []*Entry {
+	var addons []*Entry
 
 	for _, addon := range rc.addons() {
 		if !addon.IsReady() {
@@ -63,7 +63,7 @@ func (rc *RepositoryCollection) ReadyAddons() []*AddonController {
 }
 
 // IsRepositoriesFailed informs if any of repositories in collection is in failed status
-func (rc *RepositoryCollection) IsRepositoriesFailed() bool {
+func (rc *Collection) IsRepositoriesFailed() bool {
 	for _, repository := range rc.Repositories {
 		if repository.IsFailed() {
 			return true
@@ -84,7 +84,7 @@ type idConflictData struct {
 
 // ReviseAddonDuplicationInRepository checks all completed addons (addons without fetch/load error)
 // they have no ID conflict with other addons in other or the same repository
-func (rc *RepositoryCollection) ReviseAddonDuplicationInRepository() {
+func (rc *Collection) ReviseAddonDuplicationInRepository() {
 	ids := make(map[string]idConflictData)
 
 	for _, addon := range rc.completeAddons() {
@@ -93,7 +93,7 @@ func (rc *RepositoryCollection) ReviseAddonDuplicationInRepository() {
 		} else {
 			ids[addon.ID] = idConflictData{
 				repositoryURL: addon.URL,
-				addonsName:    fmt.Sprintf("%s:%s", addon.Addon.Name, addon.Addon.Version),
+				addonsName:    fmt.Sprintf("%s:%s", addon.Entry.Name, addon.Entry.Version),
 			}
 		}
 	}
@@ -101,7 +101,7 @@ func (rc *RepositoryCollection) ReviseAddonDuplicationInRepository() {
 
 // ReviseAddonDuplicationInStorage checks all completed addons (addons without fetch/load error)
 // they have no name:version conflict with other AddonConfiguration
-func (rc *RepositoryCollection) ReviseAddonDuplicationInStorage(acList *addonsv1alpha1.AddonsConfigurationList) {
+func (rc *Collection) ReviseAddonDuplicationInStorage(acList *addonsv1alpha1.AddonsConfigurationList) {
 	for _, addon := range rc.completeAddons() {
 		rc.findExistingAddon(addon, acList)
 	}
@@ -109,34 +109,34 @@ func (rc *RepositoryCollection) ReviseAddonDuplicationInStorage(acList *addonsv1
 
 // ReviseAddonDuplicationInClusterStorage checks all completed addons (addons without fetch/load error)
 // they have no name:version conflict with other AddonConfiguration
-func (rc *RepositoryCollection) ReviseAddonDuplicationInClusterStorage(acList *addonsv1alpha1.ClusterAddonsConfigurationList) {
+func (rc *Collection) ReviseAddonDuplicationInClusterStorage(acList *addonsv1alpha1.ClusterAddonsConfigurationList) {
 	for _, addon := range rc.completeAddons() {
 		rc.findExistingClusterAddon(addon, acList)
 	}
 }
 
-func (rc *RepositoryCollection) findExistingAddon(addon *AddonController, list *addonsv1alpha1.AddonsConfigurationList) {
+func (rc *Collection) findExistingAddon(addon *Entry, list *addonsv1alpha1.AddonsConfigurationList) {
 	for _, existAddonConfiguration := range list.Items {
 		for _, repo := range existAddonConfiguration.Status.Repositories {
 			if rc.addonAlreadyRegistered(*addon, rc.filterReadyAddons(repo)) {
-				addon.ConflictWithAlreadyRegisteredAddons(fmt.Errorf("[ConfigurationName: %s, url: %s, addons: %s:%s]", existAddonConfiguration.Name, repo.URL, addon.Addon.Name, addon.Addon.Version))
+				addon.ConflictWithAlreadyRegisteredAddons(fmt.Errorf("[ConfigurationName: %s, url: %s, addons: %s:%s]", existAddonConfiguration.Name, repo.URL, addon.Entry.Name, addon.Entry.Version))
 			}
 		}
 	}
 }
 
-func (rc *RepositoryCollection) findExistingClusterAddon(addon *AddonController, list *addonsv1alpha1.ClusterAddonsConfigurationList) {
+func (rc *Collection) findExistingClusterAddon(addon *Entry, list *addonsv1alpha1.ClusterAddonsConfigurationList) {
 	for _, existAddonConfiguration := range list.Items {
 		for _, repo := range existAddonConfiguration.Status.Repositories {
 			if rc.addonAlreadyRegistered(*addon, rc.filterReadyAddons(repo)) {
-				addon.ConflictWithAlreadyRegisteredAddons(fmt.Errorf("[ConfigurationName: %s, url: %s, addons: %s:%s]", existAddonConfiguration.Name, repo.URL, addon.Addon.Name, addon.Addon.Version))
+				addon.ConflictWithAlreadyRegisteredAddons(fmt.Errorf("[ConfigurationName: %s, url: %s, addons: %s:%s]", existAddonConfiguration.Name, repo.URL, addon.Entry.Name, addon.Entry.Version))
 			}
 		}
 	}
 }
 
-func (rc *RepositoryCollection) filterReadyAddons(repository addonsv1alpha1.StatusRepository) []addonsv1alpha1.Addon {
-	addons := []addonsv1alpha1.Addon{}
+func (rc *Collection) filterReadyAddons(repository addonsv1alpha1.StatusRepository) []addonsv1alpha1.Addon {
+	var addons []addonsv1alpha1.Addon
 
 	for _, add := range repository.Addons {
 		if add.Status == addonsv1alpha1.AddonStatusReady {
@@ -147,9 +147,9 @@ func (rc *RepositoryCollection) filterReadyAddons(repository addonsv1alpha1.Stat
 	return addons
 }
 
-func (rc *RepositoryCollection) addonAlreadyRegistered(addon AddonController, addons []addonsv1alpha1.Addon) bool {
+func (rc *Collection) addonAlreadyRegistered(addon Entry, addons []addonsv1alpha1.Addon) bool {
 	for _, existAddon := range addons {
-		if addon.Addon.Name == existAddon.Name && addon.Addon.Version == existAddon.Version {
+		if addon.Entry.Name == existAddon.Name && addon.Entry.Version == existAddon.Version {
 			return true
 		}
 	}

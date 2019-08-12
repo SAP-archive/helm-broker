@@ -31,50 +31,12 @@ const (
 	hbLabelKey  = "helm-broker.kyma-project.io/addon-docs"
 )
 
-// EnsureClusterDocsTopic creates ClusterDocsTopic for a given addon or updates it in case it already exists
-func (d *Provider) EnsureClusterDocsTopic(addon *internal.Addon) error {
-	addon.Docs[0].Template.Sources = d.defaultDocsSourcesURLs(addon)
-	cdt := &v1alpha1.ClusterDocsTopic{
-		ObjectMeta: v1.ObjectMeta{
-			Name: string(addon.ID),
-			Labels: map[string]string{
-				cmsLabelKey: "service-catalog",
-				hbLabelKey:  "true",
-			},
-		},
-		Spec: v1alpha1.ClusterDocsTopicSpec{CommonDocsTopicSpec: addon.Docs[0].Template},
-	}
-
-	err := d.dynamicClient.Create(context.Background(), cdt)
-	switch {
-	case err == nil:
-	case apiErrors.IsAlreadyExists(err):
-		if err := d.updateClusterDocsTopic(addon); err != nil {
-			return errors.Wrapf(err, "while ClusterDocsTopic %s already exists", addon.ID)
-		}
-	default:
-		return errors.Wrapf(err, "while creating ClusterDocsTopic %s", addon.ID)
-	}
-
-	return nil
-}
-
-// EnsureClusterDocsTopicRemoved removes ClusterDocsTopic for a given addon
-func (d *Provider) EnsureClusterDocsTopicRemoved(id string) error {
-	cdt := &v1alpha1.ClusterDocsTopic{
-		ObjectMeta: v1.ObjectMeta{
-			Name: id,
-		},
-	}
-	err := d.dynamicClient.Delete(context.Background(), cdt)
-	if err != nil && !apiErrors.IsNotFound(err) {
-		return errors.Wrapf(err, "while deleting ClusterDocsTopic %s", id)
-	}
-	return nil
-}
-
 // EnsureDocsTopic creates ClusterDocsTopic for a given addon or updates it in case it already exists
 func (d *Provider) EnsureDocsTopic(addon *internal.Addon, namespace string) error {
+	if internal.Namespace(namespace) == internal.ClusterWide {
+		return d.ensureClusterDocsTopic(addon)
+	}
+
 	addon.Docs[0].Template.Sources = d.defaultDocsSourcesURLs(addon)
 	dt := &v1alpha1.DocsTopic{
 		ObjectMeta: v1.ObjectMeta{
@@ -104,6 +66,9 @@ func (d *Provider) EnsureDocsTopic(addon *internal.Addon, namespace string) erro
 
 // EnsureDocsTopicRemoved removes ClusterDocsTopic for a given addon
 func (d *Provider) EnsureDocsTopicRemoved(id string, namespace string) error {
+	if internal.Namespace(namespace) == internal.ClusterWide {
+		return d.ensureClusterDocsTopicRemoved(id)
+	}
 	dt := &v1alpha1.DocsTopic{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      id,
@@ -113,6 +78,48 @@ func (d *Provider) EnsureDocsTopicRemoved(id string, namespace string) error {
 	err := d.dynamicClient.Delete(context.Background(), dt)
 	if err != nil && !apiErrors.IsNotFound(err) {
 		return errors.Wrapf(err, "while deleting DocsTopic %s", id)
+	}
+	return nil
+}
+
+// ensureClusterDocsTopic creates ClusterDocsTopic for a given addon or updates it in case it already exists
+func (d *Provider) ensureClusterDocsTopic(addon *internal.Addon) error {
+	addon.Docs[0].Template.Sources = d.defaultDocsSourcesURLs(addon)
+	cdt := &v1alpha1.ClusterDocsTopic{
+		ObjectMeta: v1.ObjectMeta{
+			Name: string(addon.ID),
+			Labels: map[string]string{
+				cmsLabelKey: "service-catalog",
+				hbLabelKey:  "true",
+			},
+		},
+		Spec: v1alpha1.ClusterDocsTopicSpec{CommonDocsTopicSpec: addon.Docs[0].Template},
+	}
+
+	err := d.dynamicClient.Create(context.Background(), cdt)
+	switch {
+	case err == nil:
+	case apiErrors.IsAlreadyExists(err):
+		if err := d.updateClusterDocsTopic(addon); err != nil {
+			return errors.Wrapf(err, "while ClusterDocsTopic %s already exists", addon.ID)
+		}
+	default:
+		return errors.Wrapf(err, "while creating ClusterDocsTopic %s", addon.ID)
+	}
+
+	return nil
+}
+
+// ensureClusterDocsTopicRemoved removes ClusterDocsTopic for a given addon
+func (d *Provider) ensureClusterDocsTopicRemoved(id string) error {
+	cdt := &v1alpha1.ClusterDocsTopic{
+		ObjectMeta: v1.ObjectMeta{
+			Name: id,
+		},
+	}
+	err := d.dynamicClient.Delete(context.Background(), cdt)
+	if err != nil && !apiErrors.IsNotFound(err) {
+		return errors.Wrapf(err, "while deleting ClusterDocsTopic %s", id)
 	}
 	return nil
 }

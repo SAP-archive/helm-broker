@@ -10,7 +10,7 @@ import (
 
 	cleanhttp "github.com/hashicorp/go-cleanhttp"
 	getter "github.com/hashicorp/go-getter"
-	"github.com/kyma-project/helm-broker/internal/addon"
+	"github.com/kyma-project/helm-broker/internal/addons"
 	"k8s.io/apimachinery/pkg/util/rand"
 )
 
@@ -67,7 +67,7 @@ func (h *HTTPGetter) IndexReader() (io.ReadCloser, error) {
 }
 
 // AddonLoadInfo returns information how to load addon
-func (h *HTTPGetter) AddonLoadInfo(name addon.Name, version addon.Version) (LoadType, string, error) {
+func (h *HTTPGetter) AddonLoadInfo(name addons.Name, version addons.Version) (LoadType, string, error) {
 	rawURL, err := h.AddonDocURL(name, version)
 	if err != nil {
 		return UnknownLoadType, "", err
@@ -86,7 +86,7 @@ func (h *HTTPGetter) AddonLoadInfo(name addon.Name, version addon.Version) (Load
 }
 
 // AddonDocURL returns url for addon documentation
-func (h *HTTPGetter) AddonDocURL(name addon.Name, version addon.Version) (string, error) {
+func (h *HTTPGetter) AddonDocURL(name addons.Name, version addons.Version) (string, error) {
 	return fmt.Sprintf("%s%s-%s.tgz", h.repoURL, name, version), nil
 }
 

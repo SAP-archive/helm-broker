@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/kyma-project/helm-broker/internal/addon"
+	"github.com/kyma-project/helm-broker/internal/addons"
 	"github.com/sirupsen/logrus"
 )
 
@@ -19,7 +19,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	loader := addon.NewLoader(dir, logger)
+	loader := addons.NewLoader(dir, logger)
 
 	if len(os.Args) < 2 {
 		fmt.Println("Provide path to a addon")

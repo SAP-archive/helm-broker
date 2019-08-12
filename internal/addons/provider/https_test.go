@@ -12,8 +12,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/kyma-project/helm-broker/internal/addon"
-	"github.com/kyma-project/helm-broker/internal/addon/provider"
+	"github.com/kyma-project/helm-broker/internal/addons"
+	"github.com/kyma-project/helm-broker/internal/addons/provider"
 )
 
 func TestHTTPRepositoryIndexReader(t *testing.T) {
@@ -54,9 +54,9 @@ func TestHTTPRepositoryIndexReader(t *testing.T) {
 func TestHTTPRepositoryAddonLoadInfo(t *testing.T) {
 	// given
 	const (
-		expAddonName  addon.Name    = "addon_name"
-		expAddonVer   addon.Version = "1.2.3"
-		expContentGen string        = "expected content - addon"
+		expAddonName  addons.Name    = "addon_name"
+		expAddonVer   addons.Version = "1.2.3"
+		expContentGen string         = "expected content - addon"
 	)
 
 	mux := http.NewServeMux()
@@ -93,8 +93,8 @@ func TestHTTPRepositoryAddonLoadInfo(t *testing.T) {
 func TestHTTPRepositoryAddonDocURL(t *testing.T) {
 	// given
 	const (
-		addonName addon.Name    = "addon_name"
-		addonVer  addon.Version = "1.2.3"
+		addonName addons.Name    = "addon_name"
+		addonVer  addons.Version = "1.2.3"
 	)
 
 	mux := http.NewServeMux()

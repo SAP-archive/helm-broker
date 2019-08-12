@@ -1,4 +1,4 @@
-package addon
+package addons
 
 import (
 	"k8s.io/helm/pkg/proto/hapi/chart"
@@ -28,8 +28,8 @@ type EntryDTO struct {
 	Version     Version `json:"version"`
 }
 
-// CompleteAddon aggregates a addon with his chart(s)
-type CompleteAddon struct {
+// AddonDTO aggregates a addon with his chart(s)
+type AddonDTO struct {
 	Addon  *internal.Addon
 	Charts []*chart.Chart
 }

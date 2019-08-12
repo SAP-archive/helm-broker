@@ -8,7 +8,7 @@ import (
 
 	"github.com/Masterminds/semver"
 	"github.com/kyma-project/helm-broker/internal"
-	"github.com/kyma-project/helm-broker/internal/addon"
+	"github.com/kyma-project/helm-broker/internal/addons"
 	"github.com/kyma-project/kyma/components/cms-controller-manager/pkg/apis/cms/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -27,7 +27,7 @@ func TestProvider_EnsureClusterDocsTopic(t *testing.T) {
 	const id = "123"
 
 	for tn, tc := range map[string]struct {
-		givenAddon addon.CompleteAddon
+		givenAddon addons.AddonDTO
 	}{
 		"URL set":   {fixAddonWithDocsURL(id, "test", "url", "url2")},
 		"empty URL": {fixAddonWithEmptyDocs(id, "test", "url")},
@@ -38,7 +38,7 @@ func TestProvider_EnsureClusterDocsTopic(t *testing.T) {
 			docsProvider := NewProvider(c)
 
 			// when
-			err = docsProvider.EnsureClusterDocsTopic(tc.givenAddon.Addon)
+			err = docsProvider.EnsureDocsTopic(tc.givenAddon.Addon, "")
 			require.NoError(t, err)
 
 			// then
@@ -63,7 +63,7 @@ func TestProvider_EnsureClusterDocsTopic_UpdateIfExist(t *testing.T) {
 	docsProvider := NewProvider(c)
 
 	// when
-	err = docsProvider.EnsureClusterDocsTopic(addonWithEmptyDocsURL.Addon)
+	err = docsProvider.EnsureDocsTopic(addonWithEmptyDocsURL.Addon, "")
 	require.NoError(t, err)
 
 	// then
@@ -83,7 +83,7 @@ func TestDocsProvider_EnsureClusterDocsTopicRemoved(t *testing.T) {
 	docsProvider := NewProvider(c)
 
 	// when
-	err = docsProvider.EnsureClusterDocsTopicRemoved(id)
+	err = docsProvider.EnsureDocsTopicRemoved(id, "")
 	require.NoError(t, err)
 
 	// then
@@ -102,7 +102,7 @@ func TestDocsProvider_EnsureClusterDocsTopicRemoved_NotExists(t *testing.T) {
 	docsProvider := NewProvider(c)
 
 	// when
-	err = docsProvider.EnsureClusterDocsTopicRemoved(id)
+	err = docsProvider.EnsureDocsTopicRemoved(id, "")
 	require.NoError(t, err)
 
 	// then
@@ -117,7 +117,7 @@ func TestDocsProvider_EnsureDocsTopic(t *testing.T) {
 	dt := fixDocsTopic()
 
 	for tn, tc := range map[string]struct {
-		givenAddon addon.CompleteAddon
+		givenAddon addons.AddonDTO
 	}{
 		"URL set":   {fixAddonWithDocsURL(dt.Name, "test", "url", "url2")},
 		"empty URL": {fixAddonWithEmptyDocs(dt.Name, "test", "url")},
@@ -218,10 +218,10 @@ func fixDocsTopic() *v1alpha1.ClusterDocsTopic {
 	}
 }
 
-func fixAddonWithDocsURL(id, name, url, docsURL string) addon.CompleteAddon {
+func fixAddonWithDocsURL(id, name, url, docsURL string) addons.AddonDTO {
 	chartName := fmt.Sprintf("chart-%s", name)
 	chartVersion := semver.MustParse("1.0.0")
-	return addon.CompleteAddon{
+	return addons.AddonDTO{
 		Addon: &internal.Addon{
 			ID:            internal.AddonID(id),
 			Name:          internal.AddonName(name),
@@ -259,10 +259,10 @@ func fixAddonWithDocsURL(id, name, url, docsURL string) addon.CompleteAddon {
 	}
 }
 
-func fixAddonWithEmptyDocs(id, name, url string) addon.CompleteAddon {
+func fixAddonWithEmptyDocs(id, name, url string) addons.AddonDTO {
 	chartName := fmt.Sprintf("chart-%s", name)
 	chartVersion := semver.MustParse("1.0.0")
-	return addon.CompleteAddon{
+	return addons.AddonDTO{
 		Addon: &internal.Addon{
 			ID:            internal.AddonID(id),
 			Name:          internal.AddonName(name),
