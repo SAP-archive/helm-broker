@@ -3,8 +3,7 @@ package controller
 import (
 	"github.com/Masterminds/semver"
 	"github.com/kyma-project/helm-broker/internal"
-	addonsDTO "github.com/kyma-project/helm-broker/internal/addons"
-	"github.com/kyma-project/helm-broker/internal/addons/provider"
+	"github.com/kyma-project/helm-broker/internal/addon/provider"
 	"k8s.io/helm/pkg/proto/hapi/chart"
 )
 
@@ -30,8 +29,8 @@ type addonGetterFactory interface {
 //go:generate mockery -name=addonGetter -output=automock -outpkg=automock -case=underscore
 type addonGetter interface {
 	Cleanup() error
-	GetCompleteAddon(entry addonsDTO.EntryDTO) (addonsDTO.AddonDTO, error)
-	GetIndex() (*addonsDTO.IndexDTO, error)
+	GetCompleteAddon(entry internal.EntryDTO) (internal.AddonDTO, error)
+	GetIndex() (*internal.IndexDTO, error)
 }
 
 //go:generate mockery -name=brokerFacade -output=automock -outpkg=automock -case=underscore

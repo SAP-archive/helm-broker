@@ -11,7 +11,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/kyma-project/helm-broker/internal"
-	"github.com/kyma-project/helm-broker/internal/addons"
+	"github.com/kyma-project/helm-broker/internal/addon"
 )
 
 func main() {
@@ -33,7 +33,7 @@ func main() {
 		l.Panicln(errors.Wrap(err, "while listing source dir"))
 	}
 
-	var loader *addons.Loader
+	var loader *addon.Loader
 	yLog := l.WithField("service", "addon checker")
 
 	removeTempDir := func(path string) {
@@ -49,7 +49,7 @@ func main() {
 		}
 		defer removeTempDir(tmpDir)
 
-		loader = addons.NewLoader(tmpDir, yLog)
+		loader = addon.NewLoader(tmpDir, yLog)
 		b, _, err := loader.LoadDir(fullPath)
 		if err != nil {
 			l.Panicln(errors.Wrap(err, "while loading addon"))

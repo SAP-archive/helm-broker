@@ -1,4 +1,4 @@
-package addons_test
+package addon_test
 
 import (
 	"io/ioutil"
@@ -11,7 +11,7 @@ import (
 
 	"k8s.io/helm/pkg/chartutil"
 
-	"github.com/kyma-project/helm-broker/internal/addons"
+	"github.com/kyma-project/helm-broker/internal/addon"
 	"github.com/kyma-project/helm-broker/platform/logger/spy"
 )
 
@@ -40,7 +40,7 @@ func TestLoaderLoadSuccess(t *testing.T) {
 				return name, err
 			}
 
-			addonLoader := addons.NewLoader(fixBaseDir, spy.NewLogDummy())
+			addonLoader := addon.NewLoader(fixBaseDir, spy.NewLogDummy())
 			addonLoader.SetCreateTmpDir(createTmpDirFake)
 
 			expChart, err := chartutil.Load("testdata/addon-redis-0.0.1.golden/chart/redis")
@@ -107,7 +107,7 @@ func TestLoaderLoadFailure(t *testing.T) {
 	} {
 		t.Run(tn, func(t *testing.T) {
 			// given
-			addonLoader := addons.NewLoader("", spy.NewLogDummy())
+			addonLoader := addon.NewLoader("", spy.NewLogDummy())
 
 			fd, err := os.Open(tc.tgzPath)
 			require.NoError(t, err)

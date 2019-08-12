@@ -5,7 +5,7 @@ import (
 
 	"github.com/Masterminds/semver"
 	"github.com/kyma-project/helm-broker/internal"
-	"github.com/kyma-project/helm-broker/internal/addons"
+	"github.com/kyma-project/helm-broker/internal/addon"
 	"github.com/kyma-project/helm-broker/internal/controller/repository"
 	"github.com/kyma-project/helm-broker/internal/storage"
 	"github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
@@ -90,7 +90,7 @@ func (a *addonManager) createAddons(URL string) ([]*repository.Entry, error) {
 				ad.ID = string(completeAddon.Addon.ID)
 				ad.Addon = completeAddon.Addon
 				ad.Charts = completeAddon.Charts
-			case addons.IsFetchingError(err):
+			case addon.IsFetchingError(err):
 				ad.FetchingError(err)
 				a.log.WithField("ad", fmt.Sprintf("%s-%s", entry.Name, entry.Version)).Errorf("while fetching ad: %s", err)
 			default:

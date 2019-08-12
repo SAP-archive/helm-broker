@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/kyma-project/helm-broker/internal/addons"
+	"github.com/kyma-project/helm-broker/internal/addon"
 	"github.com/kyma-project/helm-broker/internal/platform/logger/spy"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -27,7 +27,7 @@ func TestArchiveAddons(t *testing.T) {
 	// THEN
 	require.NoError(t, err)
 
-	loader := addons.NewLoader(loaderTempDir, spy.NewLogDummy())
+	loader := addon.NewLoader(loaderTempDir, spy.NewLogDummy())
 
 	quote, err := os.Open(filepath.Join(outputDir, "quote-1.0.1.tgz"))
 	assert.NoError(t, err)

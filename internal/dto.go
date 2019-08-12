@@ -1,9 +1,7 @@
-package addons
+package internal
 
 import (
 	"k8s.io/helm/pkg/proto/hapi/chart"
-
-	"github.com/kyma-project/helm-broker/internal"
 )
 
 type (
@@ -30,6 +28,6 @@ type EntryDTO struct {
 
 // AddonDTO aggregates a addon with his chart(s)
 type AddonDTO struct {
-	Addon  *internal.Addon
+	Addon  *Addon
 	Charts []*chart.Chart
 }

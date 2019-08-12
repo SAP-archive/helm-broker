@@ -1,4 +1,4 @@
-package addons_test
+package addon_test
 
 import (
 	"encoding/json"
@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/kyma-project/helm-broker/internal"
-	"github.com/kyma-project/helm-broker/internal/addons"
+	"github.com/kyma-project/helm-broker/internal/addon"
 
 	"github.com/Masterminds/semver"
 	"github.com/ghodss/yaml"
@@ -16,7 +16,7 @@ import (
 )
 
 func fixtureAddon(t *testing.T, testdataBasePath string) internal.Addon {
-	meta := addons.FormMeta{}
+	meta := addon.FormMeta{}
 	unmarshalYamlTestdata(t, testdataBasePath+"meta.yaml", &meta)
 	bVer, err := semver.NewVersion(meta.Version)
 	require.NoError(t, err)

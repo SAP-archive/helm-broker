@@ -12,7 +12,6 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/kubernetes-incubator/service-catalog/pkg/apis/servicecatalog/v1beta1"
 	"github.com/kyma-project/helm-broker/internal"
-	"github.com/kyma-project/helm-broker/internal/addons"
 	"github.com/kyma-project/helm-broker/internal/controller/automock"
 	"github.com/kyma-project/helm-broker/internal/platform/logger/spy"
 	"github.com/kyma-project/helm-broker/pkg/apis"
@@ -414,9 +413,9 @@ func fixDeletedAddonsConfiguration() *v1alpha1.AddonsConfiguration {
 	}
 }
 
-func fixIndexDTO() *addons.IndexDTO {
-	return &addons.IndexDTO{
-		Entries: map[addons.Name][]addons.EntryDTO{
+func fixIndexDTO() *internal.IndexDTO {
+	return &internal.IndexDTO{
+		Entries: map[internal.Name][]internal.EntryDTO{
 			"redis": {
 				{
 					Name:        "redis",
@@ -536,10 +535,10 @@ func getFakeManager(t *testing.T, cli client.Client, sch *runtime.Scheme) manage
 	}
 }
 
-func fixAddonWithDocsURL(id, name, url, docsURL string) addons.AddonDTO {
+func fixAddonWithDocsURL(id, name, url, docsURL string) internal.AddonDTO {
 	chartName := fmt.Sprintf("chart-%s", name)
 	chartVersion := semver.MustParse("1.0.0")
-	return addons.AddonDTO{
+	return internal.AddonDTO{
 		Addon: &internal.Addon{
 			ID:            internal.AddonID(id),
 			Name:          internal.AddonName(name),
@@ -577,10 +576,10 @@ func fixAddonWithDocsURL(id, name, url, docsURL string) addons.AddonDTO {
 	}
 }
 
-func fixAddonWithEmptyDocs(id, name, url string) addons.AddonDTO {
+func fixAddonWithEmptyDocs(id, name, url string) internal.AddonDTO {
 	chartName := fmt.Sprintf("chart-%s", name)
 	chartVersion := semver.MustParse("1.0.0")
-	return addons.AddonDTO{
+	return internal.AddonDTO{
 		Addon: &internal.Addon{
 			ID:            internal.AddonID(id),
 			Name:          internal.AddonName(name),

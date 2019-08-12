@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/kubernetes-incubator/service-catalog/pkg/apis/servicecatalog/v1beta1"
-	"github.com/kyma-project/helm-broker/internal/addons"
-	"github.com/kyma-project/helm-broker/internal/addons/provider"
+	"github.com/kyma-project/helm-broker/internal/addon"
+	"github.com/kyma-project/helm-broker/internal/addon/provider"
 	"github.com/kyma-project/helm-broker/internal/assetstore"
 	"github.com/kyma-project/helm-broker/internal/config"
 	"github.com/kyma-project/helm-broker/internal/controller/broker"
@@ -65,7 +65,7 @@ func SetupAndStartController(cfg *rest.Config, ctrCfg *config.ControllerConfig, 
 		lg.Infof("Disabling support for HTTP protocol because DevelopMode is set to false.")
 	}
 
-	addonGetterFactory, err := provider.NewClientFactory(allowedGetters, addons.NewLoader(ctrCfg.TmpDir, lg), lg)
+	addonGetterFactory, err := provider.NewClientFactory(allowedGetters, addon.NewLoader(ctrCfg.TmpDir, lg), lg)
 	fatalOnError(err, "cannot setup addon getter")
 
 	// Creating controllers

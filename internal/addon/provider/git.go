@@ -12,7 +12,7 @@ import (
 	"io/ioutil"
 
 	getter "github.com/hashicorp/go-getter"
-	"github.com/kyma-project/helm-broker/internal/addons"
+	"github.com/kyma-project/helm-broker/internal"
 	"github.com/kyma-project/helm-broker/internal/assetstore"
 	"github.com/mholt/archiver"
 	exerr "github.com/pkg/errors"
@@ -78,7 +78,7 @@ func (g *GitGetter) IndexReader() (io.ReadCloser, error) {
 }
 
 // AddonLoadInfo returns information how to load addon
-func (g *GitGetter) AddonLoadInfo(name addons.Name, version addons.Version) (LoadType, string, error) {
+func (g *GitGetter) AddonLoadInfo(name internal.Name, version internal.Version) (LoadType, string, error) {
 	var (
 		addonDirName = fmt.Sprintf("%s-%s", name, version)
 		pathToAddon  = path.Join(g.dst, g.addonDirPath, addonDirName)
@@ -88,7 +88,7 @@ func (g *GitGetter) AddonLoadInfo(name addons.Name, version addons.Version) (Loa
 }
 
 // AddonDocURL returns url for addon documentation
-func (g *GitGetter) AddonDocURL(name addons.Name, version addons.Version) (string, error) {
+func (g *GitGetter) AddonDocURL(name internal.Name, version internal.Version) (string, error) {
 	var (
 		addonDirName = fmt.Sprintf("%s-%s", name, version)
 		pathToAddon  = path.Join(g.dst, g.addonDirPath, addonDirName)

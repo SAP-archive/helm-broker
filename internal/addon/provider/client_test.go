@@ -7,8 +7,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/kyma-project/helm-broker/internal/addons"
-	"github.com/kyma-project/helm-broker/internal/addons/provider"
+	"github.com/kyma-project/helm-broker/internal"
+	"github.com/kyma-project/helm-broker/internal/addon"
+	"github.com/kyma-project/helm-broker/internal/addon/provider"
 	"github.com/kyma-project/helm-broker/platform/logger/spy"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -23,10 +24,10 @@ func TestRepositoryClientSuccess(t *testing.T) {
 	require.NoError(t, err)
 	defer os.RemoveAll(tmpDir)
 
-	addonLoader, err := provider.NewClient(fakeRepo, addons.NewLoader(tmpDir, log), log)
+	addonLoader, err := provider.NewClient(fakeRepo, addon.NewLoader(tmpDir, log), log)
 	require.NoError(t, err)
 
-	entry := addons.EntryDTO{
+	entry := internal.EntryDTO{
 		Name:    "redis",
 		Version: "0.0.1",
 	}
@@ -55,7 +56,7 @@ func (p *fakeRepository) IndexReader() (io.ReadCloser, error) {
 }
 
 // AddonLoadInfo returns info how to load addon
-func (p *fakeRepository) AddonLoadInfo(name addons.Name, version addons.Version) (provider.LoadType, string, error) {
+func (p *fakeRepository) AddonLoadInfo(name internal.Name, version internal.Version) (provider.LoadType, string, error) {
 	docsURL, err := p.AddonDocURL(name, version)
 	if err != nil {
 		return 0, "", err
@@ -64,7 +65,7 @@ func (p *fakeRepository) AddonLoadInfo(name addons.Name, version addons.Version)
 }
 
 // AddonDocURL returns download url for given addon
-func (p *fakeRepository) AddonDocURL(name addons.Name, version addons.Version) (string, error) {
+func (p *fakeRepository) AddonDocURL(name internal.Name, version internal.Version) (string, error) {
 	return fmt.Sprintf("%s/%s-%s.tgz", p.path, name, version), nil
 }
 

@@ -8,7 +8,6 @@ import (
 
 	"github.com/Masterminds/semver"
 	"github.com/kyma-project/helm-broker/internal"
-	"github.com/kyma-project/helm-broker/internal/addons"
 	"github.com/kyma-project/kyma/components/cms-controller-manager/pkg/apis/cms/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -27,7 +26,7 @@ func TestProvider_EnsureClusterDocsTopic(t *testing.T) {
 	const id = "123"
 
 	for tn, tc := range map[string]struct {
-		givenAddon addons.AddonDTO
+		givenAddon internal.AddonDTO
 	}{
 		"URL set":   {fixAddonWithDocsURL(id, "test", "url", "url2")},
 		"empty URL": {fixAddonWithEmptyDocs(id, "test", "url")},
@@ -117,7 +116,7 @@ func TestDocsProvider_EnsureDocsTopic(t *testing.T) {
 	dt := fixDocsTopic()
 
 	for tn, tc := range map[string]struct {
-		givenAddon addons.AddonDTO
+		givenAddon internal.AddonDTO
 	}{
 		"URL set":   {fixAddonWithDocsURL(dt.Name, "test", "url", "url2")},
 		"empty URL": {fixAddonWithEmptyDocs(dt.Name, "test", "url")},
@@ -218,10 +217,10 @@ func fixDocsTopic() *v1alpha1.ClusterDocsTopic {
 	}
 }
 
-func fixAddonWithDocsURL(id, name, url, docsURL string) addons.AddonDTO {
+func fixAddonWithDocsURL(id, name, url, docsURL string) internal.AddonDTO {
 	chartName := fmt.Sprintf("chart-%s", name)
 	chartVersion := semver.MustParse("1.0.0")
-	return addons.AddonDTO{
+	return internal.AddonDTO{
 		Addon: &internal.Addon{
 			ID:            internal.AddonID(id),
 			Name:          internal.AddonName(name),
@@ -259,10 +258,10 @@ func fixAddonWithDocsURL(id, name, url, docsURL string) addons.AddonDTO {
 	}
 }
 
-func fixAddonWithEmptyDocs(id, name, url string) addons.AddonDTO {
+func fixAddonWithEmptyDocs(id, name, url string) internal.AddonDTO {
 	chartName := fmt.Sprintf("chart-%s", name)
 	chartVersion := semver.MustParse("1.0.0")
-	return addons.AddonDTO{
+	return internal.AddonDTO{
 		Addon: &internal.Addon{
 			ID:            internal.AddonID(id),
 			Name:          internal.AddonName(name),

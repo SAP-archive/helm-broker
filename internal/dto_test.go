@@ -1,4 +1,4 @@
-package addons
+package internal
 
 import (
 	"testing"

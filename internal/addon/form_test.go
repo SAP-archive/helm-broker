@@ -1,4 +1,4 @@
-package addons
+package addon
 
 import (
 	"testing"

@@ -3,20 +3,20 @@ package provider
 import (
 	"io"
 
-	"github.com/kyma-project/helm-broker/internal/addons"
+	"github.com/kyma-project/helm-broker/internal"
 )
 
 // AddonClient defines abstraction to get and unmarshal raw index and addon into Models
 type AddonClient interface {
 	Cleanup() error
-	GetCompleteAddon(entry addons.EntryDTO) (addons.AddonDTO, error)
-	GetIndex() (*addons.IndexDTO, error)
+	GetCompleteAddon(entry internal.EntryDTO) (internal.AddonDTO, error)
+	GetIndex() (*internal.IndexDTO, error)
 }
 
 // RepositoryGetter defines functionality for downloading addons from repository such as git, http, etc.
 type RepositoryGetter interface {
 	Cleanup() error
 	IndexReader() (io.ReadCloser, error)
-	AddonLoadInfo(name addons.Name, version addons.Version) (LoadType, string, error)
-	AddonDocURL(name addons.Name, version addons.Version) (string, error)
+	AddonLoadInfo(name internal.Name, version internal.Version) (LoadType, string, error)
+	AddonDocURL(name internal.Name, version internal.Version) (string, error)
 }
