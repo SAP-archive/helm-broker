@@ -28,8 +28,8 @@ type IndexEntry struct {
 	Version     AddonVersion `json:"version"`
 }
 
-// AddonWithChart aggregates a addon with his chart(s)
-type AddonWithChart struct {
+// AddonWithCharts aggregates an addon with its chart(s)
+type AddonWithCharts struct {
 	Addon  *Addon
 	Charts []*chart.Chart
 }
@@ -40,7 +40,7 @@ type AddonID string
 // AddonName is a Addon name as defined by Open Service Broker API.
 type AddonName string
 
-// AddonVersion is a Addon name as defined by Open Service Broker API.
+// AddonVersion is a Addon version which is defined in the index file
 type AddonVersion string
 
 // AddonPlanID is an identifier of Addon plan as defined by Open Service Broker API.

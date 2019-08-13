@@ -24,14 +24,14 @@ func (_m *AddonGetter) Cleanup() error {
 }
 
 // GetCompleteAddon provides a mock function with given fields: entry
-func (_m *AddonGetter) GetCompleteAddon(entry internal.IndexEntry) (internal.AddonWithChart, error) {
+func (_m *AddonGetter) GetCompleteAddon(entry internal.IndexEntry) (internal.AddonWithCharts, error) {
 	ret := _m.Called(entry)
 
-	var r0 internal.AddonWithChart
-	if rf, ok := ret.Get(0).(func(internal.IndexEntry) internal.AddonWithChart); ok {
+	var r0 internal.AddonWithCharts
+	if rf, ok := ret.Get(0).(func(internal.IndexEntry) internal.AddonWithCharts); ok {
 		r0 = rf(entry)
 	} else {
-		r0 = ret.Get(0).(internal.AddonWithChart)
+		r0 = ret.Get(0).(internal.AddonWithCharts)
 	}
 
 	var r1 error

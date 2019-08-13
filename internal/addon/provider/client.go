@@ -41,17 +41,17 @@ func (d *Client) Cleanup() error {
 	return d.concreteGetter.Cleanup()
 }
 
-// GetCompleteAddon returns a addon with his charts as AddonWithChart instance.
-func (d *Client) GetCompleteAddon(entry internal.IndexEntry) (internal.AddonWithChart, error) {
+// GetCompleteAddon returns a addon with his charts as AddonWithCharts instance.
+func (d *Client) GetCompleteAddon(entry internal.IndexEntry) (internal.AddonWithCharts, error) {
 	b, c, err := d.loadAddonAndCharts(entry.Name, entry.Version)
 	if err != nil {
-		return internal.AddonWithChart{}, errors.Wrapf(err, "while loading addon %v", entry.Name)
+		return internal.AddonWithCharts{}, errors.Wrapf(err, "while loading addon %v", entry.Name)
 	}
 	b.RepositoryURL, err = d.concreteGetter.AddonDocURL(entry.Name, entry.Version)
 	if err != nil {
-		return internal.AddonWithChart{}, errors.Wrapf(err, "while getting Docs URL for addon %v", entry.Name)
+		return internal.AddonWithCharts{}, errors.Wrapf(err, "while getting Docs URL for addon %v", entry.Name)
 	}
-	return internal.AddonWithChart{
+	return internal.AddonWithCharts{
 		Addon:  b,
 		Charts: c,
 	}, nil

@@ -1825,6 +1825,14 @@
   revision = "d7c86cdc46e3a4fcf892b32dd7bc3aa775e0870e"
 
 [[projects]]
+  digest = "1:bd168163527e177eebdea1bcc48c753d86da310631b442dd53a95b0fc5b25509"
+  name = "k8s.io/kubernetes"
+  packages = ["pkg/controller/garbagecollector/metaonly"]
+  pruneopts = "UT"
+  revision = "f6278300bebbb750328ac16ee6dd3aa7d3549568"
+  version = "v1.15.2"
+
+[[projects]]
   digest = "1:e06b8ce47dfcd74cf6c677eb98a10685429d9acf4f52542568f11500bd813640"
   name = "sigs.k8s.io/controller-runtime"
   packages = [
@@ -1992,6 +2000,7 @@
     "k8s.io/helm/pkg/proto/hapi/services",
     "k8s.io/helm/pkg/storage/errors",
     "k8s.io/helm/pkg/tlsutil",
+    "k8s.io/kubernetes/pkg/controller/garbagecollector/metaonly",
     "sigs.k8s.io/controller-runtime/pkg/cache",
     "sigs.k8s.io/controller-runtime/pkg/client",
     "sigs.k8s.io/controller-runtime/pkg/client/config",

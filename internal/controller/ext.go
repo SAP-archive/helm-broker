@@ -29,7 +29,7 @@ type addonGetterFactory interface {
 //go:generate mockery -name=addonGetter -output=automock -outpkg=automock -case=underscore
 type addonGetter interface {
 	Cleanup() error
-	GetCompleteAddon(entry internal.IndexEntry) (internal.AddonWithChart, error)
+	GetCompleteAddon(entry internal.IndexEntry) (internal.AddonWithCharts, error)
 	GetIndex() (*internal.Index, error)
 }
 

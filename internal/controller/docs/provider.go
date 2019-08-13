@@ -17,6 +17,7 @@ import (
 // Provider allows to maintain the addons documentation
 type Provider struct {
 	dynamicClient client.Client
+	Namespace     string
 }
 
 // NewProvider creates a new Provider

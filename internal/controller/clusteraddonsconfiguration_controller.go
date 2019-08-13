@@ -19,6 +19,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
+	"k8s.io/kubernetes/pkg/controller/garbagecollector/metaonly"
 )
 
 // ClusterAddonsConfigurationController holds controller logic
@@ -71,7 +72,7 @@ func NewReconcileClusterAddonsConfiguration(mgr manager.Manager, addonGetterFact
 
 		brokerFacade: brokerFacade,
 		brokerSyncer: brokerSyncer,
-		addonManager: newAddonManager(addonGetterFactory, addonStorage, chartStorage, docsProvider, path.Join(tmpDir, "cluster-addon-loader-dst"), log),
+		addonManager: newAddonManager(mgr.GetClient(), addonGetterFactory, addonStorage, chartStorage, docsProvider, path.Join(tmpDir, "cluster-addon-loader-dst"), log),
 	}
 }
 
@@ -98,10 +99,9 @@ func (r *ReconcileClusterAddonsConfiguration) Reconcile(request reconcile.Reques
 		preAddon, err := r.prepareForProcessing(addon)
 		if err != nil {
 			r.log.Errorf("while preparing for processing: %v", err)
-			return reconcile.Result{Requeue: true}, exerr.Wrapf(err, "while adding a finalizer to AddonsConfiguration %q", request.NamespacedName)
+			return reconcile.Result{Requeue: true}, exerr.Wrapf(err, "while preparing ClusterAddonsConfiguration %q for processing", request.NamespacedName)
 		}
-		err = r.addAddonsProcess(preAddon, preAddon.Status)
-		if err != nil {
+		if err = r.addAddonsProcess(preAddon, preAddon.Status); err != nil {
 			r.log.Errorf("while adding ClusterAddonsConfiguration process: %v", err)
 			return reconcile.Result{}, exerr.Wrapf(err, "while creating ClusterAddonsConfiguration %q", request.NamespacedName)
 		}
@@ -110,9 +110,9 @@ func (r *ReconcileClusterAddonsConfiguration) Reconcile(request reconcile.Reques
 	} else if addon.Generation > addon.Status.ObservedGeneration {
 		r.log.Infof("Start update ClusterAddonsConfiguration %s process", addon.Name)
 
-		lastAddon := addon.DeepCopy()
+		lastStatus := addon.Status
 		addon.Status = addonsv1alpha1.ClusterAddonsConfigurationStatus{}
-		err = r.addAddonsProcess(addon, lastAddon.Status)
+		err = r.addAddonsProcess(addon, lastStatus)
 		if err != nil {
 			r.log.Errorf("while updating ClusterAddonsConfiguration process: %v", err)
 			return reconcile.Result{}, exerr.Wrapf(err, "while updating ClusterAddonsConfiguration %q", request.NamespacedName)
@@ -161,7 +161,7 @@ func (r *ReconcileClusterAddonsConfiguration) addAddonsProcess(addon *addonsv1al
 		}
 	case addonsv1alpha1.AddonsConfigurationReady:
 		r.log.Info("- save ready addons and charts in storage")
-		saved = r.saveAddons(string(internal.ClusterWide), repositories)
+		saved = r.saveAddons(repositories)
 
 		r.statusSnapshot(&addon.Status.CommonAddonsConfigurationStatus, repositories)
 		if _, err = r.updateAddonStatus(addon); err != nil {
@@ -233,7 +233,7 @@ func (r *ReconcileClusterAddonsConfiguration) deleteAddonsProcess(addon *addonsv
 			}
 		}
 	}
-	if err := r.deleteFinalizer(addon); err != nil {
+	if err := r.deleteFinalizer(&metaonly.MetadataOnlyObject{TypeMeta: addon.TypeMeta, ObjectMeta: addon.ObjectMeta}); err != nil {
 		return exerr.Wrapf(err, "while deleting finalizer from ClusterAddonsConfiguration %s", addon.Name)
 	}
 
@@ -274,36 +274,19 @@ func (r *ReconcileClusterAddonsConfiguration) ensureBroker(addon *addonsv1alpha1
 }
 
 func (r *ReconcileClusterAddonsConfiguration) prepareForProcessing(addon *addonsv1alpha1.ClusterAddonsConfiguration) (*addonsv1alpha1.ClusterAddonsConfiguration, error) {
-	obj := addon.DeepCopy()
-	obj.Status.Phase = addonsv1alpha1.AddonsConfigurationPending
+	addon.Status.Phase = addonsv1alpha1.AddonsConfigurationPending
 
-	pendingInstance, err := r.updateAddonStatus(obj)
+	pendingInstance, err := r.updateAddonStatus(addon)
 	if err != nil {
 		return nil, exerr.Wrap(err, "while updating addons status")
 	}
-
-	if r.protection.hasFinalizer(pendingInstance.Finalizers) {
-		return pendingInstance, nil
-	}
-	r.log.Info("- add a finalizer")
-	pendingInstance.Finalizers = r.protection.addFinalizer(pendingInstance.Finalizers)
-
-	err = r.Client.Update(context.Background(), pendingInstance)
+	finalizers, err := r.addFinalizer(&metaonly.MetadataOnlyObject{TypeMeta: pendingInstance.TypeMeta, ObjectMeta: pendingInstance.ObjectMeta})
 	if err != nil {
-		return nil, exerr.Wrap(err, "while updating addons status")
+		return nil, err
 	}
+	pendingInstance.Finalizers = finalizers
+
 	return pendingInstance, nil
-}
-
-func (r *ReconcileClusterAddonsConfiguration) deleteFinalizer(addon *addonsv1alpha1.ClusterAddonsConfiguration) error {
-	obj := addon.DeepCopy()
-	if !r.protection.hasFinalizer(obj.Finalizers) {
-		return nil
-	}
-	r.log.Info("- delete a finalizer")
-	obj.Finalizers = r.protection.removeFinalizer(obj.Finalizers)
-
-	return r.Client.Update(context.Background(), obj)
 }
 
 func (r *ReconcileClusterAddonsConfiguration) existingAddonsConfigurations(addonName string) (*addonsv1alpha1.ClusterAddonsConfigurationList, error) {

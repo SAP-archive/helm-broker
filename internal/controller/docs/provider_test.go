@@ -26,7 +26,7 @@ func TestProvider_EnsureClusterDocsTopic(t *testing.T) {
 	const id = "123"
 
 	for tn, tc := range map[string]struct {
-		givenAddon internal.AddonWithChart
+		givenAddon internal.AddonWithCharts
 	}{
 		"URL set":   {fixAddonWithDocsURL(id, "test", "url", "url2")},
 		"empty URL": {fixAddonWithEmptyDocs(id, "test", "url")},
@@ -116,7 +116,7 @@ func TestDocsProvider_EnsureDocsTopic(t *testing.T) {
 	dt := fixDocsTopic()
 
 	for tn, tc := range map[string]struct {
-		givenAddon internal.AddonWithChart
+		givenAddon internal.AddonWithCharts
 	}{
 		"URL set":   {fixAddonWithDocsURL(dt.Name, "test", "url", "url2")},
 		"empty URL": {fixAddonWithEmptyDocs(dt.Name, "test", "url")},
@@ -217,10 +217,10 @@ func fixDocsTopic() *v1alpha1.ClusterDocsTopic {
 	}
 }
 
-func fixAddonWithDocsURL(id, name, url, docsURL string) internal.AddonWithChart {
+func fixAddonWithDocsURL(id, name, url, docsURL string) internal.AddonWithCharts {
 	chartName := fmt.Sprintf("chart-%s", name)
 	chartVersion := semver.MustParse("1.0.0")
-	return internal.AddonWithChart{
+	return internal.AddonWithCharts{
 		Addon: &internal.Addon{
 			ID:            internal.AddonID(id),
 			Name:          internal.AddonName(name),
@@ -258,10 +258,10 @@ func fixAddonWithDocsURL(id, name, url, docsURL string) internal.AddonWithChart 
 	}
 }
 
-func fixAddonWithEmptyDocs(id, name, url string) internal.AddonWithChart {
+func fixAddonWithEmptyDocs(id, name, url string) internal.AddonWithCharts {
 	chartName := fmt.Sprintf("chart-%s", name)
 	chartVersion := semver.MustParse("1.0.0")
-	return internal.AddonWithChart{
+	return internal.AddonWithCharts{
 		Addon: &internal.Addon{
 			ID:            internal.AddonID(id),
 			Name:          internal.AddonName(name),

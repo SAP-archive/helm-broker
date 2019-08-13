@@ -12,6 +12,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"k8s.io/helm/pkg/proto/hapi/chart"
+	"k8s.io/kubernetes/pkg/controller/garbagecollector/metaonly"
+	"context"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type addonManager struct {
@@ -24,10 +27,14 @@ type addonManager struct {
 	protection   protection
 	dstPath      string
 
+	// used to distinguish namespace addons configurations
+	Namespace internal.Namespace
+
+	client.Client
 	log logrus.FieldLogger
 }
 
-func newAddonManager(addonGetterFactory addonGetterFactory, addonStorage addonStorage, chartStorage chartStorage, docsProvider docsProvider, dstPath string, log logrus.FieldLogger) *addonManager {
+func newAddonManager(client client.Client, addonGetterFactory addonGetterFactory, addonStorage addonStorage, chartStorage chartStorage, docsProvider docsProvider, dstPath string, log logrus.FieldLogger) *addonManager {
 	return &addonManager{
 		addonGetterFactory: addonGetterFactory,
 
@@ -38,8 +45,14 @@ func newAddonManager(addonGetterFactory addonGetterFactory, addonStorage addonSt
 		protection:   protection{},
 		dstPath:      dstPath,
 
-		log: log,
+		Client: client,
+		log:    log,
 	}
+}
+
+// IsClusterWide returns true if Namespace is not set
+func (a *addonManager) IsClusterWide() bool {
+	return a.Namespace == internal.ClusterWide
 }
 
 // Load loads repositories from given addon
@@ -103,23 +116,23 @@ func (a *addonManager) createAddons(URL string) ([]*repository.Entry, error) {
 	return adds, nil
 }
 
-func (a *addonManager) saveAddons(namespace string, repositories *repository.Collection) bool {
+func (a *addonManager) saveAddons(repositories *repository.Collection) bool {
 	saved := false
 	for _, ad := range repositories.ReadyAddons() {
 		if len(ad.Addon.Docs) == 1 {
 			a.log.Infof("- ensure ClusterDocsTopic for ad %s", ad.Addon.ID)
-			if err := a.docsProvider.EnsureDocsTopic(ad.Addon, namespace); err != nil {
+			if err := a.docsProvider.EnsureDocsTopic(ad.Addon, string(a.Namespace)); err != nil {
 				a.log.Errorf("while ensuring ClusterDocsTopic for ad %s: %v", ad.Addon.ID, err)
 			}
 		}
-		exist, err := a.addonStorage.Upsert(internal.Namespace(namespace), ad.Addon)
+		exist, err := a.addonStorage.Upsert(a.Namespace, ad.Addon)
 		if err != nil {
 			ad.RegisteringError(err)
 			a.log.Errorf("cannot upsert ad %v:%v into storage", ad.Addon.Name, ad.Addon.Version)
 			continue
 		}
 		saved = true
-		err = a.saveCharts(namespace, ad.Charts)
+		err = a.saveCharts(a.Namespace, ad.Charts)
 		if err != nil {
 			ad.RegisteringError(err)
 			a.log.Errorf("cannot upsert charts of %v:%v ad", ad.Addon.Name, ad.Addon.Version)
@@ -132,9 +145,9 @@ func (a *addonManager) saveAddons(namespace string, repositories *repository.Col
 	return saved
 }
 
-func (a *addonManager) saveCharts(namespace string, charts []*chart.Chart) error {
+func (a *addonManager) saveCharts(namespace internal.Namespace, charts []*chart.Chart) error {
 	for _, addonChart := range charts {
-		exist, err := a.chartStorage.Upsert(internal.Namespace(namespace), addonChart)
+		exist, err := a.chartStorage.Upsert(namespace, addonChart)
 		if err != nil {
 			return err
 		}
@@ -234,4 +247,28 @@ func (a *addonManager) statusSnapshot(status *v1alpha1.CommonAddonsConfiguration
 		}
 		status.Repositories = append(status.Repositories, addonsRepository)
 	}
+}
+
+func (a *addonManager) deleteFinalizer(addon *metaonly.MetadataOnlyObject) error {
+	if !a.protection.hasFinalizer(addon.Finalizers) {
+		return nil
+	}
+	a.log.Info("- delete a finalizer")
+	addon.Finalizers = a.protection.removeFinalizer(addon.Finalizers)
+
+	return a.Client.Update(context.Background(), addon)
+}
+
+func (a *addonManager) addFinalizer(addon *metaonly.MetadataOnlyObject) ([]string, error) {
+	if a.protection.hasFinalizer(addon.Finalizers) {
+		return addon.Finalizers, nil
+	}
+	a.log.Info("- add a finalizer")
+	addon.Finalizers = a.protection.addFinalizer(addon.Finalizers)
+
+	err := a.Client.Update(context.Background(), addon)
+	if err != nil {
+		return nil, err
+	}
+	return addon.Finalizers, nil
 }

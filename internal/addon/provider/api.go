@@ -9,7 +9,7 @@ import (
 // AddonClient defines abstraction to get and unmarshal raw index and addon into Models
 type AddonClient interface {
 	Cleanup() error
-	GetCompleteAddon(entry internal.IndexEntry) (internal.AddonWithChart, error)
+	GetCompleteAddon(entry internal.IndexEntry) (internal.AddonWithCharts, error)
 	GetIndex() (*internal.Index, error)
 }
 

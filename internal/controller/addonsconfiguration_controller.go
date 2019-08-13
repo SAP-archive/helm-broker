@@ -19,6 +19,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
+	"k8s.io/kubernetes/pkg/controller/garbagecollector/metaonly"
 )
 
 // AddonsConfigurationController holds a controller logic
@@ -71,7 +72,7 @@ func NewReconcileAddonsConfiguration(mgr manager.Manager, addonGetterFactory add
 
 		brokerSyncer: brokerSyncer,
 		brokerFacade: brokerFacade,
-		addonManager: newAddonManager(addonGetterFactory, addonStorage, chartStorage, docsProvider, path.Join(tmpDir, "addon-loader-dst"), log),
+		addonManager: newAddonManager(mgr.GetClient(), addonGetterFactory, addonStorage, chartStorage, docsProvider, path.Join(tmpDir, "addon-loader-dst"), log),
 	}
 }
 
@@ -97,11 +98,10 @@ func (r *ReconcileAddonsConfiguration) Reconcile(request reconcile.Request) (rec
 
 		preAddon, err := r.prepareForProcessing(addon)
 		if err != nil {
-			r.log.Errorf("while preparing for processing: %v", err)
-			return reconcile.Result{Requeue: true}, exerr.Wrapf(err, "while adding a finalizer to AddonsConfiguration %q", request.NamespacedName)
+			r.log.Errorf("while setting pending status: %v", err)
+			return reconcile.Result{Requeue: true}, exerr.Wrapf(err, "while preparing AddonsConfiguration %q for processing", request.NamespacedName)
 		}
-		err = r.addAddonsProcess(preAddon, preAddon.Status)
-		if err != nil {
+		if err := r.addAddonsProcess(preAddon, preAddon.Status); err != nil {
 			r.log.Errorf("while adding AddonsConfiguration process: %v", err)
 			return reconcile.Result{}, exerr.Wrapf(err, "while creating AddonsConfiguration %q", request.NamespacedName)
 		}
@@ -110,9 +110,9 @@ func (r *ReconcileAddonsConfiguration) Reconcile(request reconcile.Request) (rec
 	} else if addon.Generation > addon.Status.ObservedGeneration {
 		r.log.Infof("Start update AddonsConfiguration %s/%s process", addon.Name, addon.Namespace)
 
-		lastAddon := addon.DeepCopy()
+		lastStatus := addon.Status
 		addon.Status = addonsv1alpha1.AddonsConfigurationStatus{}
-		err = r.addAddonsProcess(addon, lastAddon.Status)
+		err = r.addAddonsProcess(addon, lastStatus)
 		if err != nil {
 			r.log.Errorf("while updating AddonsConfiguration process: %v", err)
 			return reconcile.Result{}, exerr.Wrapf(err, "while updating AddonsConfiguration %q", request.NamespacedName)
@@ -124,6 +124,8 @@ func (r *ReconcileAddonsConfiguration) Reconcile(request reconcile.Request) (rec
 }
 
 func (r *ReconcileAddonsConfiguration) addAddonsProcess(addon *addonsv1alpha1.AddonsConfiguration, lastStatus addonsv1alpha1.AddonsConfigurationStatus) error {
+	r.Namespace = internal.Namespace(addon.Namespace)
+
 	r.log.Infof("- load addons and charts for each addon")
 	repositories := r.Load(addon.Spec.Repositories)
 
@@ -160,8 +162,7 @@ func (r *ReconcileAddonsConfiguration) addAddonsProcess(addon *addonsv1alpha1.Ad
 			}
 		}
 	case addonsv1alpha1.AddonsConfigurationReady:
-		r.log.Info("- save ready addons and charts in storage")
-		saved = r.saveAddons(addon.Namespace, repositories)
+		saved = r.saveAddons(repositories)
 
 		r.statusSnapshot(&addon.Status.CommonAddonsConfigurationStatus, repositories)
 		if _, err := r.updateAddonStatus(addon); err != nil {
@@ -191,21 +192,9 @@ func (r *ReconcileAddonsConfiguration) addAddonsProcess(addon *addonsv1alpha1.Ad
 	return nil
 }
 
-func (r *ReconcileAddonsConfiguration) reprocessConfigurationsInConflict(deletedAddonsIDs []string, list *addonsv1alpha1.AddonsConfigurationList) error {
-	for _, id := range deletedAddonsIDs {
-		for _, configuration := range list.Items {
-			if hasConflict := r.isConfigurationInConflict(id, configuration.Status.CommonAddonsConfigurationStatus); hasConflict {
-				if err := r.reprocessRequest(&configuration); err != nil {
-					return exerr.Wrapf(err, "while reprocessing AddonsConfiguration %s", configuration.Name)
-				}
-			}
-		}
-	}
-	return nil
-}
-
 func (r *ReconcileAddonsConfiguration) deleteAddonsProcess(addon *addonsv1alpha1.AddonsConfiguration) error {
 	r.log.Infof("Start delete AddonsConfiguration %s/%s process", addon.Name, addon.Namespace)
+	r.Namespace = internal.Namespace(addon.Namespace)
 
 	if addon.Status.Phase == addonsv1alpha1.AddonsConfigurationReady {
 		adds, err := r.existingAddonsConfigurations(addon)
@@ -225,6 +214,7 @@ func (r *ReconcileAddonsConfiguration) deleteAddonsProcess(addon *addonsv1alpha1
 				deleteBroker = false
 			}
 		}
+
 		if deleteBroker {
 			r.log.Info("- delete ServiceBroker from namespace %s", addon.Namespace)
 			if err := r.brokerFacade.Delete(addon.Namespace); err != nil {
@@ -247,11 +237,24 @@ func (r *ReconcileAddonsConfiguration) deleteAddonsProcess(addon *addonsv1alpha1
 			}
 		}
 	}
-	if err := r.deleteFinalizer(addon); err != nil {
+	if err := r.deleteFinalizer(&metaonly.MetadataOnlyObject{TypeMeta: addon.TypeMeta, ObjectMeta: addon.ObjectMeta}); err != nil {
 		return exerr.Wrapf(err, "while deleting finalizer for AddonConfiguration %s/%s", addon.Name, addon.Namespace)
 	}
 
 	r.log.Info("Delete AddonsConfiguration process completed")
+	return nil
+}
+
+func (r *ReconcileAddonsConfiguration) reprocessConfigurationsInConflict(deletedAddonsIDs []string, list *addonsv1alpha1.AddonsConfigurationList) error {
+	for _, id := range deletedAddonsIDs {
+		for _, configuration := range list.Items {
+			if hasConflict := r.isConfigurationInConflict(id, configuration.Status.CommonAddonsConfigurationStatus); hasConflict {
+				if err := r.reprocessRequest(&configuration); err != nil {
+					return exerr.Wrapf(err, "while reprocessing AddonsConfiguration %s", configuration.Name)
+				}
+			}
+		}
+	}
 	return nil
 }
 
@@ -275,35 +278,18 @@ func (r *ReconcileAddonsConfiguration) ensureBroker(addon *addonsv1alpha1.Addons
 }
 
 func (r *ReconcileAddonsConfiguration) prepareForProcessing(addon *addonsv1alpha1.AddonsConfiguration) (*addonsv1alpha1.AddonsConfiguration, error) {
-	obj := addon.DeepCopy()
-	obj.Status.Phase = addonsv1alpha1.AddonsConfigurationPending
-
-	pendingInstance, err := r.updateAddonStatus(obj)
+	addon.Status.Phase = addonsv1alpha1.AddonsConfigurationPending
+	pendingInstance, err := r.updateAddonStatus(addon)
 	if err != nil {
 		return nil, err
 	}
-	if r.protection.hasFinalizer(pendingInstance.Finalizers) {
-		return pendingInstance, nil
-	}
-	r.log.Info("- add a finalizer")
-	pendingInstance.Finalizers = r.protection.addFinalizer(pendingInstance.Finalizers)
-
-	err = r.Client.Update(context.Background(), pendingInstance)
+	finalizers, err := r.addFinalizer(&metaonly.MetadataOnlyObject{TypeMeta: pendingInstance.TypeMeta, ObjectMeta: pendingInstance.ObjectMeta})
 	if err != nil {
 		return nil, err
 	}
+	pendingInstance.Finalizers = finalizers
+
 	return pendingInstance, nil
-}
-
-func (r *ReconcileAddonsConfiguration) deleteFinalizer(addon *addonsv1alpha1.AddonsConfiguration) error {
-	obj := addon.DeepCopy()
-	if !r.protection.hasFinalizer(obj.Finalizers) {
-		return nil
-	}
-	r.log.Info("- delete a finalizer")
-	obj.Finalizers = r.protection.removeFinalizer(obj.Finalizers)
-
-	return r.Client.Update(context.Background(), obj)
 }
 
 func (r *ReconcileAddonsConfiguration) existingAddonsConfigurations(addon *addonsv1alpha1.AddonsConfiguration) (*addonsv1alpha1.AddonsConfigurationList, error) {
