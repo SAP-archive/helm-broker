@@ -144,7 +144,7 @@ func (r *ReconcileClusterAddonsConfiguration) addAddonsProcess(addon *addonsv1al
 	}
 	r.log.Infof("- status: %s", addon.Status.Phase)
 
-	var deletedAddons []string
+	var deletedAddonsIDs []string
 	saved := false
 
 	switch addon.Status.Phase {
@@ -154,11 +154,10 @@ func (r *ReconcileClusterAddonsConfiguration) addAddonsProcess(addon *addonsv1al
 			return exerr.Wrap(err, "while update ClusterAddonsConfiguration status")
 		}
 		if lastStatus.Phase == addonsv1alpha1.AddonsConfigurationReady {
-			deletedAddons, err = r.deletePreviousAddons(string(internal.ClusterWide), lastStatus.Repositories)
+			deletedAddonsIDs, err = r.deletePreviousAddons(internal.ClusterWide, lastStatus.Repositories)
 			if err != nil {
 				return exerr.Wrap(err, "while deleting addons from repository")
 			}
-
 		}
 	case addonsv1alpha1.AddonsConfigurationReady:
 		r.log.Info("- save ready addons and charts in storage")
@@ -169,29 +168,23 @@ func (r *ReconcileClusterAddonsConfiguration) addAddonsProcess(addon *addonsv1al
 			return exerr.Wrap(err, "while update ClusterAddonsConfiguration status")
 		}
 		if lastStatus.Phase == addonsv1alpha1.AddonsConfigurationReady {
-			deletedAddons, err = r.deleteOrphanAddons(string(internal.ClusterWide), addon.Status.Repositories, lastStatus.Repositories)
+			deletedAddonsIDs, err = r.deleteOrphanAddons(internal.ClusterWide, addon.Status.Repositories, lastStatus.Repositories)
 			if err != nil {
 				return exerr.Wrap(err, "while deleting orphan addons from storage")
 			}
 		}
 	}
-	if saved || len(deletedAddons) > 0 {
+	if saved || len(deletedAddonsIDs) > 0 {
 		r.log.Info("- ensure ClusterServiceBroker")
 		if err = r.ensureBroker(addon); err != nil {
 			return exerr.Wrap(err, "while ensuring ClusterServiceBroker")
 		}
 	}
 
-	if len(deletedAddons) > 0 {
+	if len(deletedAddonsIDs) > 0 {
 		r.log.Info("- reprocessing conflicting addons configurations")
-		for _, key := range deletedAddons {
-			for _, existingAddon := range list.Items {
-				if hasConflict := r.isConfigurationConflicting(key, existingAddon.Status.CommonAddonsConfigurationStatus); hasConflict {
-					if err := r.reprocessAddonsConfiguration(&existingAddon); err != nil {
-						return exerr.Wrapf(err, "while reprocessing addon %s", existingAddon.Name)
-					}
-				}
-			}
+		if err := r.reprocessConfigurationsInConflict(deletedAddonsIDs, list); err != nil {
+			return exerr.Wrap(err, "while reprocessing configurations in conflict")
 		}
 	}
 
@@ -211,7 +204,7 @@ func (r *ReconcileClusterAddonsConfiguration) deleteAddonsProcess(addon *addonsv
 		for _, addon := range adds.Items {
 			if addon.Status.Phase != addonsv1alpha1.AddonsConfigurationReady {
 				// reprocess ClusterAddonsConfiguration again if was failed
-				if err := r.reprocessAddonsConfiguration(&addon); err != nil {
+				if err := r.reprocessRequest(&addon); err != nil {
 					return exerr.Wrapf(err, "while requesting reprocess for ClusterAddonsConfiguration %s", addon.Name)
 				}
 			} else {
@@ -248,6 +241,19 @@ func (r *ReconcileClusterAddonsConfiguration) deleteAddonsProcess(addon *addonsv
 	return nil
 }
 
+func (r *ReconcileClusterAddonsConfiguration) reprocessConfigurationsInConflict(deletedAddonsIDs []string, list *addonsv1alpha1.ClusterAddonsConfigurationList) error {
+	for _, id := range deletedAddonsIDs {
+		for _, configuration := range list.Items {
+			if hasConflict := r.isConfigurationInConflict(id, configuration.Status.CommonAddonsConfigurationStatus); hasConflict {
+				if err := r.reprocessRequest(&configuration); err != nil {
+					return exerr.Wrapf(err, "while reprocessing ClusterAddonsConfiguration %s", configuration.Name)
+				}
+			}
+		}
+	}
+	return nil
+}
+
 func (r *ReconcileClusterAddonsConfiguration) ensureBroker(addon *addonsv1alpha1.ClusterAddonsConfiguration) error {
 	exist, err := r.brokerFacade.Exist()
 	if err != nil {
@@ -259,51 +265,12 @@ func (r *ReconcileClusterAddonsConfiguration) ensureBroker(addon *addonsv1alpha1
 			return exerr.Wrapf(err, "while creating ClusterServiceBroker for addon %s", addon.Name)
 		}
 	} else {
+		r.log.Info("- syncing ClusterServiceBroker")
 		if err := r.brokerSyncer.Sync(); err != nil {
 			return exerr.Wrapf(err, "while syncing ClusterServiceBroker for addon %s", addon.Name)
 		}
 	}
 	return nil
-}
-
-func (r *ReconcileClusterAddonsConfiguration) existingAddonsConfigurations(addonName string) (*addonsv1alpha1.ClusterAddonsConfigurationList, error) {
-	addonsList := &addonsv1alpha1.ClusterAddonsConfigurationList{}
-	addonsConfigurationList, err := r.addonsConfigurationList()
-	if err != nil {
-		return nil, exerr.Wrap(err, "while listing ClusterAddonsConfigurations")
-	}
-
-	for _, existAddon := range addonsConfigurationList.Items {
-		if existAddon.Name != addonName {
-			addonsList.Items = append(addonsList.Items, existAddon)
-		}
-	}
-
-	return addonsList, nil
-}
-
-func (r *ReconcileClusterAddonsConfiguration) reprocessAddonsConfiguration(addon *addonsv1alpha1.ClusterAddonsConfiguration) error {
-	ad := &addonsv1alpha1.ClusterAddonsConfiguration{}
-	if err := r.Client.Get(context.Background(), types.NamespacedName{Name: addon.Name}, ad); err != nil {
-		return exerr.Wrapf(err, "while getting ClusterAddonsConfiguration %s", addon.Name)
-	}
-	ad.Spec.ReprocessRequest++
-	if err := r.Client.Update(context.Background(), ad); err != nil {
-		return exerr.Wrapf(err, "while incrementing a reprocess requests for ClusterAddonsConfiguration %s", addon.Name)
-	}
-	return nil
-}
-
-func (r *ReconcileClusterAddonsConfiguration) updateAddonStatus(addon *addonsv1alpha1.ClusterAddonsConfiguration) (*addonsv1alpha1.ClusterAddonsConfiguration, error) {
-	addon.Status.ObservedGeneration = addon.Generation
-	addon.Status.LastProcessedTime = &v1.Time{Time: time.Now()}
-
-	r.log.Infof("- update ClusterAddonsConfiguration %s status", addon.Name)
-	err := r.Status().Update(context.TODO(), addon)
-	if err != nil {
-		return nil, exerr.Wrap(err, "while update ClusterAddonsConfiguration")
-	}
-	return addon, nil
 }
 
 func (r *ReconcileClusterAddonsConfiguration) prepareForProcessing(addon *addonsv1alpha1.ClusterAddonsConfiguration) (*addonsv1alpha1.ClusterAddonsConfiguration, error) {
@@ -339,7 +306,8 @@ func (r *ReconcileClusterAddonsConfiguration) deleteFinalizer(addon *addonsv1alp
 	return r.Client.Update(context.Background(), obj)
 }
 
-func (r *ReconcileClusterAddonsConfiguration) addonsConfigurationList() (*addonsv1alpha1.ClusterAddonsConfigurationList, error) {
+func (r *ReconcileClusterAddonsConfiguration) existingAddonsConfigurations(addonName string) (*addonsv1alpha1.ClusterAddonsConfigurationList, error) {
+	addonsList := &addonsv1alpha1.ClusterAddonsConfigurationList{}
 	addonsConfigurationList := &addonsv1alpha1.ClusterAddonsConfigurationList{}
 
 	err := r.Client.List(context.TODO(), &client.ListOptions{}, addonsConfigurationList)
@@ -347,5 +315,35 @@ func (r *ReconcileClusterAddonsConfiguration) addonsConfigurationList() (*addons
 		return addonsConfigurationList, exerr.Wrap(err, "during fetching ClusterAddonConfiguration list by client")
 	}
 
-	return addonsConfigurationList, nil
+	for _, existAddon := range addonsConfigurationList.Items {
+		if existAddon.Name != addonName {
+			addonsList.Items = append(addonsList.Items, existAddon)
+		}
+	}
+
+	return addonsList, nil
+}
+
+func (r *ReconcileClusterAddonsConfiguration) reprocessRequest(addon *addonsv1alpha1.ClusterAddonsConfiguration) error {
+	ad := &addonsv1alpha1.ClusterAddonsConfiguration{}
+	if err := r.Client.Get(context.Background(), types.NamespacedName{Name: addon.Name}, ad); err != nil {
+		return exerr.Wrapf(err, "while getting ClusterAddonsConfiguration %s", addon.Name)
+	}
+	ad.Spec.ReprocessRequest++
+	if err := r.Client.Update(context.Background(), ad); err != nil {
+		return exerr.Wrapf(err, "while incrementing a reprocess requests for ClusterAddonsConfiguration %s", addon.Name)
+	}
+	return nil
+}
+
+func (r *ReconcileClusterAddonsConfiguration) updateAddonStatus(addon *addonsv1alpha1.ClusterAddonsConfiguration) (*addonsv1alpha1.ClusterAddonsConfiguration, error) {
+	addon.Status.ObservedGeneration = addon.Generation
+	addon.Status.LastProcessedTime = &v1.Time{Time: time.Now()}
+
+	r.log.Infof("- update ClusterAddonsConfiguration %s status", addon.Name)
+	err := r.Status().Update(context.TODO(), addon)
+	if err != nil {
+		return nil, exerr.Wrap(err, "while update ClusterAddonsConfiguration")
+	}
+	return addon, nil
 }

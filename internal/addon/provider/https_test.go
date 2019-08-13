@@ -54,9 +54,9 @@ func TestHTTPRepositoryIndexReader(t *testing.T) {
 func TestHTTPRepositoryAddonLoadInfo(t *testing.T) {
 	// given
 	const (
-		expAddonName  internal.Name    = "addon_name"
-		expAddonVer   internal.Version = "1.2.3"
-		expContentGen string           = "expected content - addon"
+		expAddonName  internal.AddonName    = "addon_name"
+		expAddonVer   internal.AddonVersion = "1.2.3"
+		expContentGen string                = "expected content - addon"
 	)
 
 	mux := http.NewServeMux()
@@ -93,8 +93,8 @@ func TestHTTPRepositoryAddonLoadInfo(t *testing.T) {
 func TestHTTPRepositoryAddonDocURL(t *testing.T) {
 	// given
 	const (
-		addonName internal.Name    = "addon_name"
-		addonVer  internal.Version = "1.2.3"
+		addonName internal.AddonName    = "addon_name"
+		addonVer  internal.AddonVersion = "1.2.3"
 	)
 
 	mux := http.NewServeMux()

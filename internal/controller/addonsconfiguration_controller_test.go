@@ -415,7 +415,7 @@ func fixDeletedAddonsConfiguration() *v1alpha1.AddonsConfiguration {
 
 func fixIndexDTO() *internal.IndexDTO {
 	return &internal.IndexDTO{
-		Entries: map[internal.Name][]internal.EntryDTO{
+		Entries: map[internal.AddonName][]internal.EntryDTO{
 			"redis": {
 				{
 					Name:        "redis",

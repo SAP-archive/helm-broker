@@ -84,7 +84,7 @@ func (d *Client) GetIndex() (*internal.IndexDTO, error) {
 	return &idx, nil
 }
 
-func (d *Client) loadAddonAndCharts(entryName internal.Name, version internal.Version) (*internal.Addon, []*chart.Chart, error) {
+func (d *Client) loadAddonAndCharts(entryName internal.AddonName, version internal.AddonVersion) (*internal.Addon, []*chart.Chart, error) {
 	lType, path, err := d.concreteGetter.AddonLoadInfo(entryName, version)
 	if err != nil {
 		return nil, nil, addon.NewFetchingError(errors.Wrapf(err, "while reading addon archive for name [%s] and version [%v]", entryName, version))

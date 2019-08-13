@@ -56,7 +56,7 @@ func (p *fakeRepository) IndexReader() (io.ReadCloser, error) {
 }
 
 // AddonLoadInfo returns info how to load addon
-func (p *fakeRepository) AddonLoadInfo(name internal.Name, version internal.Version) (provider.LoadType, string, error) {
+func (p *fakeRepository) AddonLoadInfo(name internal.AddonName, version internal.AddonVersion) (provider.LoadType, string, error) {
 	docsURL, err := p.AddonDocURL(name, version)
 	if err != nil {
 		return 0, "", err
@@ -65,7 +65,7 @@ func (p *fakeRepository) AddonLoadInfo(name internal.Name, version internal.Vers
 }
 
 // AddonDocURL returns download url for given addon
-func (p *fakeRepository) AddonDocURL(name internal.Name, version internal.Version) (string, error) {
+func (p *fakeRepository) AddonDocURL(name internal.AddonName, version internal.AddonVersion) (string, error) {
 	return fmt.Sprintf("%s/%s-%s.tgz", p.path, name, version), nil
 }
 

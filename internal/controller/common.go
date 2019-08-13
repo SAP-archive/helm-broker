@@ -172,20 +172,22 @@ func (a *addonManager) removeAddon(ad v1alpha1.Addon, namespace internal.Namespa
 	return removed, nil
 }
 
-func (a *addonManager) deletePreviousAddons(namespace string, repos []v1alpha1.StatusRepository) ([]string, error) {
-	var deletedAddonsKeys []string
+// deletePreviousAddons delete addons if configuration was ready and then failed
+func (a *addonManager) deletePreviousAddons(namespace internal.Namespace, repos []v1alpha1.StatusRepository) ([]string, error) {
+	var deletedAddonsIDs []string
 	for _, repo := range repos {
 		for _, ad := range repo.Addons {
-			if _, err := a.removeAddon(ad, internal.Namespace(namespace)); err != nil && !storage.IsNotFoundError(err) {
+			if _, err := a.removeAddon(ad, namespace); err != nil && !storage.IsNotFoundError(err) {
 				return nil, errors.Wrapf(err, "while deleting addons and charts for addon %s", ad.Name)
 			}
-			deletedAddonsKeys = append(deletedAddonsKeys, ad.Key())
+			deletedAddonsIDs = append(deletedAddonsIDs, ad.Key())
 		}
 	}
-	return deletedAddonsKeys, nil
+	return deletedAddonsIDs, nil
 }
 
-func (a *addonManager) deleteOrphanAddons(namespace string, repos []v1alpha1.StatusRepository, lastRepos []v1alpha1.StatusRepository) ([]string, error) {
+// deleteOrphanAddons deletes addons if configuration was modified and some addons have ceased to be provided
+func (a *addonManager) deleteOrphanAddons(namespace internal.Namespace, repos []v1alpha1.StatusRepository, lastRepos []v1alpha1.StatusRepository) ([]string, error) {
 	addonsToStay := map[string]v1alpha1.Addon{}
 	for _, repo := range repos {
 		for _, ad := range repo.Addons {
@@ -196,7 +198,7 @@ func (a *addonManager) deleteOrphanAddons(namespace string, repos []v1alpha1.Sta
 	for _, repo := range lastRepos {
 		for _, ad := range repo.Addons {
 			if _, exist := addonsToStay[ad.Key()]; !exist {
-				if _, err := a.removeAddon(ad, internal.Namespace(namespace)); err != nil && !storage.IsNotFoundError(err) {
+				if _, err := a.removeAddon(ad, namespace); err != nil && !storage.IsNotFoundError(err) {
 					return nil, errors.Wrapf(err, "while deleting addons and charts for addon %s", ad.Name)
 				}
 				deletedAddonsIDs = append(deletedAddonsIDs, ad.Key())
@@ -206,7 +208,7 @@ func (a *addonManager) deleteOrphanAddons(namespace string, repos []v1alpha1.Sta
 	return deletedAddonsIDs, nil
 }
 
-func (a *addonManager) isConfigurationConflicting(key string, status v1alpha1.CommonAddonsConfigurationStatus) bool {
+func (a *addonManager) isConfigurationInConflict(key string, status v1alpha1.CommonAddonsConfigurationStatus) bool {
 	if status.Phase != v1alpha1.AddonsConfigurationReady {
 		for _, repo := range status.Repositories {
 			if repo.Status != v1alpha1.RepositoryStatusReady {

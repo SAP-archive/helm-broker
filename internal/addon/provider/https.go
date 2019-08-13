@@ -67,7 +67,7 @@ func (h *HTTPGetter) IndexReader() (io.ReadCloser, error) {
 }
 
 // AddonLoadInfo returns information how to load addon
-func (h *HTTPGetter) AddonLoadInfo(name internal.Name, version internal.Version) (LoadType, string, error) {
+func (h *HTTPGetter) AddonLoadInfo(name internal.AddonName, version internal.AddonVersion) (LoadType, string, error) {
 	rawURL, err := h.AddonDocURL(name, version)
 	if err != nil {
 		return UnknownLoadType, "", err
@@ -86,7 +86,7 @@ func (h *HTTPGetter) AddonLoadInfo(name internal.Name, version internal.Version)
 }
 
 // AddonDocURL returns url for addon documentation
-func (h *HTTPGetter) AddonDocURL(name internal.Name, version internal.Version) (string, error) {
+func (h *HTTPGetter) AddonDocURL(name internal.AddonName, version internal.AddonVersion) (string, error) {
 	return fmt.Sprintf("%s%s-%s.tgz", h.repoURL, name, version), nil
 }
 

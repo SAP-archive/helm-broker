@@ -78,7 +78,7 @@ func (g *GitGetter) IndexReader() (io.ReadCloser, error) {
 }
 
 // AddonLoadInfo returns information how to load addon
-func (g *GitGetter) AddonLoadInfo(name internal.Name, version internal.Version) (LoadType, string, error) {
+func (g *GitGetter) AddonLoadInfo(name internal.AddonName, version internal.AddonVersion) (LoadType, string, error) {
 	var (
 		addonDirName = fmt.Sprintf("%s-%s", name, version)
 		pathToAddon  = path.Join(g.dst, g.addonDirPath, addonDirName)
@@ -88,7 +88,7 @@ func (g *GitGetter) AddonLoadInfo(name internal.Name, version internal.Version) 
 }
 
 // AddonDocURL returns url for addon documentation
-func (g *GitGetter) AddonDocURL(name internal.Name, version internal.Version) (string, error) {
+func (g *GitGetter) AddonDocURL(name internal.AddonName, version internal.AddonVersion) (string, error) {
 	var (
 		addonDirName = fmt.Sprintf("%s-%s", name, version)
 		pathToAddon  = path.Join(g.dst, g.addonDirPath, addonDirName)

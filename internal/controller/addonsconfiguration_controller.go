@@ -130,11 +130,11 @@ func (r *ReconcileAddonsConfiguration) addAddonsProcess(addon *addonsv1alpha1.Ad
 	r.log.Info("- check duplicate ID addons alongside repositories")
 	repositories.ReviseAddonDuplicationInRepository()
 
-	r.log.Info("- check duplicates ID addons in existing AddonsConfiguration")
 	list, err := r.existingAddonsConfigurations(addon)
 	if err != nil {
 		return exerr.Wrap(err, "while fetching AddonsConfiguration list")
 	}
+	r.log.Info("- check duplicates ID addons in existing AddonsConfiguration")
 	repositories.ReviseAddonDuplicationInStorage(list)
 
 	if repositories.IsRepositoriesFailed() {
@@ -144,7 +144,7 @@ func (r *ReconcileAddonsConfiguration) addAddonsProcess(addon *addonsv1alpha1.Ad
 	}
 	r.log.Infof("- status: %s", addon.Status.Phase)
 
-	var deletedAddons []string
+	var deletedAddonsIDs []string
 	saved := false
 
 	switch addon.Status.Phase {
@@ -154,7 +154,7 @@ func (r *ReconcileAddonsConfiguration) addAddonsProcess(addon *addonsv1alpha1.Ad
 			return exerr.Wrap(err, "while updating AddonsConfiguration status")
 		}
 		if lastStatus.Phase == addonsv1alpha1.AddonsConfigurationReady {
-			deletedAddons, err = r.deletePreviousAddons(addon.Namespace, lastStatus.Repositories)
+			deletedAddonsIDs, err = r.deletePreviousAddons(internal.Namespace(addon.Namespace), lastStatus.Repositories)
 			if err != nil {
 				return exerr.Wrap(err, "while deleting addons from repository")
 			}
@@ -164,32 +164,39 @@ func (r *ReconcileAddonsConfiguration) addAddonsProcess(addon *addonsv1alpha1.Ad
 		saved = r.saveAddons(addon.Namespace, repositories)
 
 		r.statusSnapshot(&addon.Status.CommonAddonsConfigurationStatus, repositories)
-		_, err := r.updateAddonStatus(addon)
-		if err != nil {
+		if _, err := r.updateAddonStatus(addon); err != nil {
 			return exerr.Wrap(err, "while updating AddonsConfiguration status")
 		}
 		if lastStatus.Phase == addonsv1alpha1.AddonsConfigurationReady {
-			deletedAddons, err = r.deleteOrphanAddons(addon.Namespace, addon.Status.Repositories, lastStatus.Repositories)
+			deletedAddonsIDs, err = r.deleteOrphanAddons(internal.Namespace(addon.Namespace), addon.Status.Repositories, lastStatus.Repositories)
 			if err != nil {
 				return exerr.Wrap(err, "while deleting orphan addons from storage")
 			}
 		}
 	}
-	if saved || len(deletedAddons) > 0 {
+	if saved || len(deletedAddonsIDs) > 0 {
 		r.log.Info("- ensure ServiceBroker")
 		if err = r.ensureBroker(addon); err != nil {
 			return exerr.Wrap(err, "while ensuring ServiceBroker")
 		}
 	}
 
-	if len(deletedAddons) > 0 {
+	if len(deletedAddonsIDs) > 0 {
 		r.log.Info("- reprocessing conflicting addons configurations")
-		for _, key := range deletedAddons {
-			for _, existingAddon := range list.Items {
-				if hasConflict := r.isConfigurationConflicting(key, existingAddon.Status.CommonAddonsConfigurationStatus); hasConflict {
-					if err := r.reprocessAddonsConfiguration(&existingAddon); err != nil {
-						return exerr.Wrapf(err, "while reprocessing addon %s", existingAddon.Name)
-					}
+		if err := r.reprocessConfigurationsInConflict(deletedAddonsIDs, list); err != nil {
+			return exerr.Wrap(err, "while reprocessing configurations in conflict")
+		}
+	}
+
+	return nil
+}
+
+func (r *ReconcileAddonsConfiguration) reprocessConfigurationsInConflict(deletedAddonsIDs []string, list *addonsv1alpha1.AddonsConfigurationList) error {
+	for _, id := range deletedAddonsIDs {
+		for _, configuration := range list.Items {
+			if hasConflict := r.isConfigurationInConflict(id, configuration.Status.CommonAddonsConfigurationStatus); hasConflict {
+				if err := r.reprocessRequest(&configuration); err != nil {
+					return exerr.Wrapf(err, "while reprocessing AddonsConfiguration %s", configuration.Name)
 				}
 			}
 		}
@@ -210,7 +217,7 @@ func (r *ReconcileAddonsConfiguration) deleteAddonsProcess(addon *addonsv1alpha1
 		for _, addon := range adds.Items {
 			if addon.Status.Phase != addonsv1alpha1.AddonsConfigurationReady {
 				// reprocess AddonConfig again if it was failed
-				if err := r.reprocessAddonsConfiguration(&addon); err != nil {
+				if err := r.reprocessRequest(&addon); err != nil {
 					return exerr.Wrapf(err, "while requesting reprocess for AddonsConfiguration %s", addon.Name)
 
 				}
@@ -259,51 +266,12 @@ func (r *ReconcileAddonsConfiguration) ensureBroker(addon *addonsv1alpha1.Addons
 			return exerr.Wrapf(err, "while creating ServiceBroker for AddonConfiguration %s/%s", addon.Name, addon.Namespace)
 		}
 	} else {
+		r.log.Infof("- syncing ServiceBroker in namespace %s", addon.Namespace)
 		if err := r.brokerSyncer.SyncServiceBroker(addon.Namespace); err != nil {
 			return exerr.Wrapf(err, "while syncing ServiceBroker for AddonConfiguration %s/%s", addon.Name, addon.Namespace)
 		}
 	}
 	return nil
-}
-
-func (r *ReconcileAddonsConfiguration) existingAddonsConfigurations(addon *addonsv1alpha1.AddonsConfiguration) (*addonsv1alpha1.AddonsConfigurationList, error) {
-	addonsList := &addonsv1alpha1.AddonsConfigurationList{}
-	addonsConfigurationList, err := r.addonsConfigurationList(addon.Namespace)
-	if err != nil {
-		return nil, exerr.Wrapf(err, "while listing AddonsConfigurations from namespace %s", addon.Namespace)
-	}
-
-	for _, existAddon := range addonsConfigurationList.Items {
-		if existAddon.Name != addon.Name {
-			addonsList.Items = append(addonsList.Items, existAddon)
-		}
-	}
-
-	return addonsList, nil
-}
-
-func (r *ReconcileAddonsConfiguration) reprocessAddonsConfiguration(addon *addonsv1alpha1.AddonsConfiguration) error {
-	ad := &addonsv1alpha1.AddonsConfiguration{}
-	if err := r.Client.Get(context.Background(), types.NamespacedName{Name: addon.Name, Namespace: addon.Namespace}, ad); err != nil {
-		return exerr.Wrapf(err, "while getting AddonsConfiguration %s", addon.Name)
-	}
-	ad.Spec.ReprocessRequest++
-	if err := r.Client.Update(context.Background(), ad); err != nil {
-		return exerr.Wrapf(err, "while incrementing a reprocess requests for AddonsConfiguration %s", addon.Name)
-	}
-	return nil
-}
-
-func (r *ReconcileAddonsConfiguration) updateAddonStatus(addon *addonsv1alpha1.AddonsConfiguration) (*addonsv1alpha1.AddonsConfiguration, error) {
-	addon.Status.ObservedGeneration = addon.Generation
-	addon.Status.LastProcessedTime = &v1.Time{Time: time.Now()}
-
-	r.log.Infof("- update AddonsConfiguration %s/%s status", addon.Name, addon.Namespace)
-	err := r.Status().Update(context.TODO(), addon)
-	if err != nil {
-		return nil, exerr.Wrap(err, "while update AddonsConfiguration status")
-	}
-	return addon, nil
 }
 
 func (r *ReconcileAddonsConfiguration) prepareForProcessing(addon *addonsv1alpha1.AddonsConfiguration) (*addonsv1alpha1.AddonsConfiguration, error) {
@@ -338,13 +306,44 @@ func (r *ReconcileAddonsConfiguration) deleteFinalizer(addon *addonsv1alpha1.Add
 	return r.Client.Update(context.Background(), obj)
 }
 
-func (r *ReconcileAddonsConfiguration) addonsConfigurationList(namespace string) (*addonsv1alpha1.AddonsConfigurationList, error) {
+func (r *ReconcileAddonsConfiguration) existingAddonsConfigurations(addon *addonsv1alpha1.AddonsConfiguration) (*addonsv1alpha1.AddonsConfigurationList, error) {
+	addonsList := &addonsv1alpha1.AddonsConfigurationList{}
 	addonsConfigurationList := &addonsv1alpha1.AddonsConfigurationList{}
 
-	err := r.Client.List(context.TODO(), &client.ListOptions{Namespace: namespace}, addonsConfigurationList)
+	err := r.Client.List(context.TODO(), &client.ListOptions{Namespace: addon.Namespace}, addonsConfigurationList)
 	if err != nil {
 		return addonsConfigurationList, exerr.Wrap(err, "during fetching AddonConfiguration list by client")
 	}
 
-	return addonsConfigurationList, nil
+	for _, existAddon := range addonsConfigurationList.Items {
+		if existAddon.Name != addon.Name {
+			addonsList.Items = append(addonsList.Items, existAddon)
+		}
+	}
+
+	return addonsList, nil
+}
+
+func (r *ReconcileAddonsConfiguration) reprocessRequest(addon *addonsv1alpha1.AddonsConfiguration) error {
+	ad := &addonsv1alpha1.AddonsConfiguration{}
+	if err := r.Client.Get(context.Background(), types.NamespacedName{Name: addon.Name, Namespace: addon.Namespace}, ad); err != nil {
+		return exerr.Wrapf(err, "while getting AddonsConfiguration %s", addon.Name)
+	}
+	ad.Spec.ReprocessRequest++
+	if err := r.Client.Update(context.Background(), ad); err != nil {
+		return exerr.Wrapf(err, "while incrementing a reprocess requests for AddonsConfiguration %s", addon.Name)
+	}
+	return nil
+}
+
+func (r *ReconcileAddonsConfiguration) updateAddonStatus(addon *addonsv1alpha1.AddonsConfiguration) (*addonsv1alpha1.AddonsConfiguration, error) {
+	addon.Status.ObservedGeneration = addon.Generation
+	addon.Status.LastProcessedTime = &v1.Time{Time: time.Now()}
+
+	r.log.Infof("- update AddonsConfiguration %s/%s status", addon.Name, addon.Namespace)
+	err := r.Status().Update(context.TODO(), addon)
+	if err != nil {
+		return nil, exerr.Wrap(err, "while update AddonsConfiguration status")
+	}
+	return addon, nil
 }

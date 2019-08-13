@@ -10,13 +10,38 @@ import (
 	"github.com/fatih/structs"
 	cms "github.com/kyma-project/kyma/components/cms-controller-manager/pkg/apis/cms/v1alpha1"
 	"github.com/pkg/errors"
+	"k8s.io/helm/pkg/proto/hapi/chart"
 )
+
+// IndexDTO contains collection of all addons from the given repository
+type IndexDTO struct {
+	Entries map[AddonName][]EntryDTO `json:"entries"`
+}
+
+// EntryDTO contains information about single addon entry
+type EntryDTO struct {
+	// Name is set to index entry key name
+	Name AddonName `json:"-"`
+	// DisplayName is the entry name, currently treated by us as DisplayName
+	DisplayName string       `json:"name"`
+	Description string       `json:"description"`
+	Version     AddonVersion `json:"version"`
+}
+
+// AddonDTO aggregates a addon with his chart(s)
+type AddonDTO struct {
+	Addon  *Addon
+	Charts []*chart.Chart
+}
 
 // AddonID is a Addon identifier as defined by Open Service Broker API.
 type AddonID string
 
 // AddonName is a Addon name as defined by Open Service Broker API.
 type AddonName string
+
+// AddonVersion is a Addon name as defined by Open Service Broker API.
+type AddonVersion string
 
 // AddonPlanID is an identifier of Addon plan as defined by Open Service Broker API.
 type AddonPlanID string

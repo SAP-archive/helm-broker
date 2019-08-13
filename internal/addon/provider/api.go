@@ -17,6 +17,6 @@ type AddonClient interface {
 type RepositoryGetter interface {
 	Cleanup() error
 	IndexReader() (io.ReadCloser, error)
-	AddonLoadInfo(name internal.Name, version internal.Version) (LoadType, string, error)
-	AddonDocURL(name internal.Name, version internal.Version) (string, error)
+	AddonLoadInfo(name internal.AddonName, version internal.AddonVersion) (LoadType, string, error)
+	AddonDocURL(name internal.AddonName, version internal.AddonVersion) (string, error)
 }
