@@ -23,7 +23,7 @@ entries:
       description: Redis service
       version: 0.0.1
 `
-	dto := internal.IndexDTO{}
+	dto := internal.Index{}
 	// WHEN
 	err := yaml.Unmarshal([]byte(data), &dto)
 

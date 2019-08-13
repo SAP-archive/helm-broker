@@ -41,24 +41,24 @@ func (d *Client) Cleanup() error {
 	return d.concreteGetter.Cleanup()
 }
 
-// GetCompleteAddon returns a addon with his charts as AddonDTO instance.
-func (d *Client) GetCompleteAddon(entry internal.EntryDTO) (internal.AddonDTO, error) {
+// GetCompleteAddon returns a addon with his charts as AddonWithChart instance.
+func (d *Client) GetCompleteAddon(entry internal.IndexEntry) (internal.AddonWithChart, error) {
 	b, c, err := d.loadAddonAndCharts(entry.Name, entry.Version)
 	if err != nil {
-		return internal.AddonDTO{}, errors.Wrapf(err, "while loading addon %v", entry.Name)
+		return internal.AddonWithChart{}, errors.Wrapf(err, "while loading addon %v", entry.Name)
 	}
 	b.RepositoryURL, err = d.concreteGetter.AddonDocURL(entry.Name, entry.Version)
 	if err != nil {
-		return internal.AddonDTO{}, errors.Wrapf(err, "while getting Docs URL for addon %v", entry.Name)
+		return internal.AddonWithChart{}, errors.Wrapf(err, "while getting Docs URL for addon %v", entry.Name)
 	}
-	return internal.AddonDTO{
+	return internal.AddonWithChart{
 		Addon:  b,
 		Charts: c,
 	}, nil
 }
 
 // GetIndex returns all entries from given repo index
-func (d *Client) GetIndex() (*internal.IndexDTO, error) {
+func (d *Client) GetIndex() (*internal.Index, error) {
 	idxReader, err := d.concreteGetter.IndexReader()
 	if err != nil {
 		return nil, errors.Wrap(err, "while getting index file")
@@ -69,7 +69,7 @@ func (d *Client) GetIndex() (*internal.IndexDTO, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "while reading index file")
 	}
-	idx := internal.IndexDTO{}
+	idx := internal.Index{}
 	if err = yaml.Unmarshal(bytes, &idx); err != nil {
 		return nil, errors.Wrap(err, "while unmarshaling index file")
 	}

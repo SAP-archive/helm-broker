@@ -13,13 +13,13 @@ import (
 	"k8s.io/helm/pkg/proto/hapi/chart"
 )
 
-// IndexDTO contains collection of all addons from the given repository
-type IndexDTO struct {
-	Entries map[AddonName][]EntryDTO `json:"entries"`
+// Index contains collection of all addons from the given repository
+type Index struct {
+	Entries map[AddonName][]IndexEntry `json:"entries"`
 }
 
-// EntryDTO contains information about single addon entry
-type EntryDTO struct {
+// IndexEntry contains information about single addon entry
+type IndexEntry struct {
 	// Name is set to index entry key name
 	Name AddonName `json:"-"`
 	// DisplayName is the entry name, currently treated by us as DisplayName
@@ -28,8 +28,8 @@ type EntryDTO struct {
 	Version     AddonVersion `json:"version"`
 }
 
-// AddonDTO aggregates a addon with his chart(s)
-type AddonDTO struct {
+// AddonWithChart aggregates a addon with his chart(s)
+type AddonWithChart struct {
 	Addon  *Addon
 	Charts []*chart.Chart
 }

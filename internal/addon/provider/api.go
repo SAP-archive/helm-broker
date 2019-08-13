@@ -9,8 +9,8 @@ import (
 // AddonClient defines abstraction to get and unmarshal raw index and addon into Models
 type AddonClient interface {
 	Cleanup() error
-	GetCompleteAddon(entry internal.EntryDTO) (internal.AddonDTO, error)
-	GetIndex() (*internal.IndexDTO, error)
+	GetCompleteAddon(entry internal.IndexEntry) (internal.AddonWithChart, error)
+	GetIndex() (*internal.Index, error)
 }
 
 // RepositoryGetter defines functionality for downloading addons from repository such as git, http, etc.

@@ -413,9 +413,9 @@ func fixDeletedAddonsConfiguration() *v1alpha1.AddonsConfiguration {
 	}
 }
 
-func fixIndexDTO() *internal.IndexDTO {
-	return &internal.IndexDTO{
-		Entries: map[internal.AddonName][]internal.EntryDTO{
+func fixIndexDTO() *internal.Index {
+	return &internal.Index{
+		Entries: map[internal.AddonName][]internal.IndexEntry{
 			"redis": {
 				{
 					Name:        "redis",
@@ -535,10 +535,10 @@ func getFakeManager(t *testing.T, cli client.Client, sch *runtime.Scheme) manage
 	}
 }
 
-func fixAddonWithDocsURL(id, name, url, docsURL string) internal.AddonDTO {
+func fixAddonWithDocsURL(id, name, url, docsURL string) internal.AddonWithChart {
 	chartName := fmt.Sprintf("chart-%s", name)
 	chartVersion := semver.MustParse("1.0.0")
-	return internal.AddonDTO{
+	return internal.AddonWithChart{
 		Addon: &internal.Addon{
 			ID:            internal.AddonID(id),
 			Name:          internal.AddonName(name),
@@ -576,10 +576,10 @@ func fixAddonWithDocsURL(id, name, url, docsURL string) internal.AddonDTO {
 	}
 }
 
-func fixAddonWithEmptyDocs(id, name, url string) internal.AddonDTO {
+func fixAddonWithEmptyDocs(id, name, url string) internal.AddonWithChart {
 	chartName := fmt.Sprintf("chart-%s", name)
 	chartVersion := semver.MustParse("1.0.0")
-	return internal.AddonDTO{
+	return internal.AddonWithChart{
 		Addon: &internal.Addon{
 			ID:            internal.AddonID(id),
 			Name:          internal.AddonName(name),

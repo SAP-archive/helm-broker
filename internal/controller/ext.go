@@ -29,8 +29,8 @@ type addonGetterFactory interface {
 //go:generate mockery -name=addonGetter -output=automock -outpkg=automock -case=underscore
 type addonGetter interface {
 	Cleanup() error
-	GetCompleteAddon(entry internal.EntryDTO) (internal.AddonDTO, error)
-	GetIndex() (*internal.IndexDTO, error)
+	GetCompleteAddon(entry internal.IndexEntry) (internal.AddonWithChart, error)
+	GetIndex() (*internal.Index, error)
 }
 
 //go:generate mockery -name=brokerFacade -output=automock -outpkg=automock -case=underscore

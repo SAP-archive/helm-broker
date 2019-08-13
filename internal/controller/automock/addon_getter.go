@@ -24,18 +24,18 @@ func (_m *AddonGetter) Cleanup() error {
 }
 
 // GetCompleteAddon provides a mock function with given fields: entry
-func (_m *AddonGetter) GetCompleteAddon(entry internal.EntryDTO) (internal.AddonDTO, error) {
+func (_m *AddonGetter) GetCompleteAddon(entry internal.IndexEntry) (internal.AddonWithChart, error) {
 	ret := _m.Called(entry)
 
-	var r0 internal.AddonDTO
-	if rf, ok := ret.Get(0).(func(internal.EntryDTO) internal.AddonDTO); ok {
+	var r0 internal.AddonWithChart
+	if rf, ok := ret.Get(0).(func(internal.IndexEntry) internal.AddonWithChart); ok {
 		r0 = rf(entry)
 	} else {
-		r0 = ret.Get(0).(internal.AddonDTO)
+		r0 = ret.Get(0).(internal.AddonWithChart)
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(internal.EntryDTO) error); ok {
+	if rf, ok := ret.Get(1).(func(internal.IndexEntry) error); ok {
 		r1 = rf(entry)
 	} else {
 		r1 = ret.Error(1)
@@ -45,15 +45,15 @@ func (_m *AddonGetter) GetCompleteAddon(entry internal.EntryDTO) (internal.Addon
 }
 
 // GetIndex provides a mock function with given fields:
-func (_m *AddonGetter) GetIndex() (*internal.IndexDTO, error) {
+func (_m *AddonGetter) GetIndex() (*internal.Index, error) {
 	ret := _m.Called()
 
-	var r0 *internal.IndexDTO
-	if rf, ok := ret.Get(0).(func() *internal.IndexDTO); ok {
+	var r0 *internal.Index
+	if rf, ok := ret.Get(0).(func() *internal.Index); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*internal.IndexDTO)
+			r0 = ret.Get(0).(*internal.Index)
 		}
 	}
 

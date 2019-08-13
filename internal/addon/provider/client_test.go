@@ -27,7 +27,7 @@ func TestRepositoryClientSuccess(t *testing.T) {
 	addonLoader, err := provider.NewClient(fakeRepo, addon.NewLoader(tmpDir, log), log)
 	require.NoError(t, err)
 
-	entry := internal.EntryDTO{
+	entry := internal.IndexEntry{
 		Name:    "redis",
 		Version: "0.0.1",
 	}
