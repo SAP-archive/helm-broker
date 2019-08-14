@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/mux"
 	negronilogrus "github.com/meatballhat/negroni-logrus"
 	"github.com/pkg/errors"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/negroni"
 
@@ -128,6 +129,8 @@ func (srv *Server) CreateHandler() http.Handler {
 		fmt.Fprint(w, "OK")
 	}).Methods("GET")
 
+	rtr.Handle("/metrics", promhttp.Handler())
+
 	srv.handleRouter(rtr.PathPrefix("/cluster").Subrouter())
 	srv.handleRouter(rtr.PathPrefix("/ns/{namespace}").Subrouter())
 
@@ -141,7 +144,6 @@ func (srv *Server) CreateHandler() http.Handler {
 	}
 
 	n := negroni.New(negroni.NewRecovery(), logMiddleware)
-	n.Use(&OSBContextMiddleware{})
 	n.UseHandler(rtr)
 	return n
 }

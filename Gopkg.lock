@@ -1938,6 +1938,7 @@
     "github.com/pborman/uuid",
     "github.com/pkg/errors",
     "github.com/pmorie/go-open-service-broker-client/v2",
+    "github.com/prometheus/client_golang/prometheus/promhttp",
     "github.com/renstrom/dedent",
     "github.com/sirupsen/logrus",
     "github.com/stretchr/testify/assert",
