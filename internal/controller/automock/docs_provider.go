@@ -9,13 +9,13 @@ type DocsProvider struct {
 	mock.Mock
 }
 
-// EnsureDocsTopic provides a mock function with given fields: addon, namespace
-func (_m *DocsProvider) EnsureDocsTopic(addon *internal.Addon, namespace string) error {
-	ret := _m.Called(addon, namespace)
+// EnsureDocsTopic provides a mock function with given fields: addon
+func (_m *DocsProvider) EnsureDocsTopic(addon *internal.Addon) error {
+	ret := _m.Called(addon)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*internal.Addon, string) error); ok {
-		r0 = rf(addon, namespace)
+	if rf, ok := ret.Get(0).(func(*internal.Addon) error); ok {
+		r0 = rf(addon)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -23,16 +23,21 @@ func (_m *DocsProvider) EnsureDocsTopic(addon *internal.Addon, namespace string)
 	return r0
 }
 
-// EnsureDocsTopicRemoved provides a mock function with given fields: id, namespace
-func (_m *DocsProvider) EnsureDocsTopicRemoved(id string, namespace string) error {
-	ret := _m.Called(id, namespace)
+// EnsureDocsTopicRemoved provides a mock function with given fields: id
+func (_m *DocsProvider) EnsureDocsTopicRemoved(id string) error {
+	ret := _m.Called(id)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, string) error); ok {
-		r0 = rf(id, namespace)
+	if rf, ok := ret.Get(0).(func(string) error); ok {
+		r0 = rf(id)
 	} else {
 		r0 = ret.Error(0)
 	}
 
 	return r0
+}
+
+// SetNamespace provides a mock function with given fields: namespace
+func (_m *DocsProvider) SetNamespace(namespace string) {
+	_m.Called(namespace)
 }

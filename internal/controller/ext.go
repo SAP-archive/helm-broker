@@ -7,6 +7,11 @@ import (
 	"k8s.io/helm/pkg/proto/hapi/chart"
 )
 
+// NamespacedService represents service layer which can be applied to both namespace scoped and cluster-wide resources
+type NamespacedService interface {
+	SetNamespace(namespace string)
+}
+
 //go:generate mockery -name=addonStorage -output=automock -outpkg=automock -case=underscore
 type addonStorage interface {
 	Get(internal.Namespace, internal.AddonName, semver.Version) (*internal.Addon, error)
@@ -33,32 +38,32 @@ type addonGetter interface {
 	GetIndex() (*internal.Index, error)
 }
 
-//go:generate mockery -name=brokerFacade -output=automock -outpkg=automock -case=underscore
-type brokerFacade interface {
-	Create(ns string) error
-	Exist(ns string) (bool, error)
-	Delete(ns string) error
-}
-
 //go:generate mockery -name=docsProvider -output=automock -outpkg=automock -case=underscore
 type docsProvider interface {
-	EnsureDocsTopic(addon *internal.Addon, namespace string) error
-	EnsureDocsTopicRemoved(id string, namespace string) error
+	NamespacedService
+	EnsureDocsTopic(addon *internal.Addon) error
+	EnsureDocsTopicRemoved(id string) error
 }
 
-//go:generate mockery -name=brokerSyncer -output=automock -outpkg=automock -case=underscore
-type brokerSyncer interface {
-	SyncServiceBroker(namespace string) error
-}
-
-//go:generate mockery -name=clusterBrokerFacade -output=automock -outpkg=automock -case=underscore
-type clusterBrokerFacade interface {
+//go:generate mockery -name=brokerFacade -output=automock -outpkg=automock -case=underscore
+type brokerFacade interface {
+	NamespacedService
 	Create() error
 	Exist() (bool, error)
 	Delete() error
 }
 
-//go:generate mockery -name=clusterBrokerSyncer -output=automock -outpkg=automock -case=underscore
-type clusterBrokerSyncer interface {
+//go:generate mockery -name=brokerSyncer -output=automock -outpkg=automock -case=underscore
+type brokerSyncer interface {
+	NamespacedService
 	Sync() error
+}
+
+//go:generate mockery -name=addonsClient -output=automock -outpkg=automock -case=underscore
+type addonsClient interface {
+	NamespacedService
+	UpdateConfiguration(*internal.CommonAddon) (*internal.CommonAddon, error)
+	UpdateConfigurationStatus(*internal.CommonAddon) (*internal.CommonAddon, error)
+	ListConfigurations() ([]internal.CommonAddon, error)
+	ReprocessRequest(addonName string) error
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/kyma-project/helm-broker/internal"
 	"github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
 	"github.com/stretchr/testify/assert"
 )
@@ -13,8 +14,8 @@ func TestRepositoryEntry_IsReady(t *testing.T) {
 	ta := testAddon()
 
 	// Then
-	assert.Equal(t, "default-addon", ta.Entry.Name)
-	assert.Equal(t, "1.0", ta.Entry.Version)
+	assert.Equal(t, internal.AddonName("default-addon"), ta.AddonWithCharts.Addon.Name)
+	assert.Equal(t, "1.0", ta.AddonWithCharts.Addon.Version.Original())
 	assert.True(t, ta.IsReady())
 }
 
@@ -38,9 +39,9 @@ func TestRepositoryEntry_FetchingError(t *testing.T) {
 
 	// Then
 	assert.False(t, ta.IsReady())
-	assert.Equal(t, v1alpha1.AddonStatusFailed, ta.Entry.Status)
-	assert.Equal(t, v1alpha1.AddonFetchingError, ta.Entry.Reason)
-	assert.Equal(t, "Fetching failed due to error: 'some error:a:b:c'", ta.Entry.Message)
+	assert.Equal(t, v1alpha1.AddonStatusFailed, ta.AddonWithCharts.Addon.Status)
+	assert.Equal(t, v1alpha1.AddonFetchingError, ta.AddonWithCharts.Addon.Reason)
+	assert.Equal(t, "Fetching failed due to error: 'some error:a:b:c'", ta.AddonWithCharts.Addon.Message)
 }
 
 func TestRepositoryEntry_LoadingError(t *testing.T) {
@@ -52,9 +53,9 @@ func TestRepositoryEntry_LoadingError(t *testing.T) {
 
 	// Then
 	assert.False(t, ta.IsReady())
-	assert.Equal(t, v1alpha1.AddonStatusFailed, ta.Entry.Status)
-	assert.Equal(t, v1alpha1.AddonLoadingError, ta.Entry.Reason)
-	assert.Equal(t, "Loading failed due to error: 'loading error'", ta.Entry.Message)
+	assert.Equal(t, v1alpha1.AddonStatusFailed, ta.AddonWithCharts.Addon.Status)
+	assert.Equal(t, v1alpha1.AddonLoadingError, ta.AddonWithCharts.Addon.Reason)
+	assert.Equal(t, "Loading failed due to error: 'loading error'", ta.AddonWithCharts.Addon.Message)
 }
 
 func TestRepositoryEntry_ConflictInSpecifiedRepositories(t *testing.T) {
@@ -66,9 +67,9 @@ func TestRepositoryEntry_ConflictInSpecifiedRepositories(t *testing.T) {
 
 	// Then
 	assert.False(t, ta.IsReady())
-	assert.Equal(t, v1alpha1.AddonStatusFailed, ta.Entry.Status)
-	assert.Equal(t, v1alpha1.AddonConflictInSpecifiedRepositories, ta.Entry.Reason)
-	assert.Equal(t, "Specified repositories have addons with the same ID: id exist in repositories", ta.Entry.Message)
+	assert.Equal(t, v1alpha1.AddonStatusFailed, ta.AddonWithCharts.Addon.Status)
+	assert.Equal(t, v1alpha1.AddonConflictInSpecifiedRepositories, ta.AddonWithCharts.Addon.Reason)
+	assert.Equal(t, "Specified repositories have addons with the same ID: id exist in repositories", ta.AddonWithCharts.Addon.Message)
 }
 
 func TestRepositoryEntry_ConflictWithAlreadyRegisteredAddons(t *testing.T) {
@@ -80,9 +81,9 @@ func TestRepositoryEntry_ConflictWithAlreadyRegisteredAddons(t *testing.T) {
 
 	// Then
 	assert.False(t, ta.IsReady())
-	assert.Equal(t, v1alpha1.AddonStatusFailed, ta.Entry.Status)
-	assert.Equal(t, v1alpha1.AddonConflictWithAlreadyRegisteredAddons, ta.Entry.Reason)
-	assert.Equal(t, "An addon with the same ID is already registered: id exist in storage", ta.Entry.Message)
+	assert.Equal(t, v1alpha1.AddonStatusFailed, ta.AddonWithCharts.Addon.Status)
+	assert.Equal(t, v1alpha1.AddonConflictWithAlreadyRegisteredAddons, ta.AddonWithCharts.Addon.Reason)
+	assert.Equal(t, "An addon with the same ID is already registered: id exist in storage", ta.AddonWithCharts.Addon.Message)
 }
 
 func TestRepositoryEntry_RegisteringError(t *testing.T) {
@@ -94,9 +95,9 @@ func TestRepositoryEntry_RegisteringError(t *testing.T) {
 
 	// Then
 	assert.False(t, ta.IsReady())
-	assert.Equal(t, v1alpha1.AddonStatusFailed, ta.Entry.Status)
-	assert.Equal(t, v1alpha1.AddonRegisteringError, ta.Entry.Reason)
-	assert.Equal(t, "Registering failed due to error: 'cannot register'", ta.Entry.Message)
+	assert.Equal(t, v1alpha1.AddonStatusFailed, ta.AddonWithCharts.Addon.Status)
+	assert.Equal(t, v1alpha1.AddonRegisteringError, ta.AddonWithCharts.Addon.Reason)
+	assert.Equal(t, "Registering failed due to error: 'cannot register'", ta.AddonWithCharts.Addon.Message)
 }
 
 func testAddon() *Entry {

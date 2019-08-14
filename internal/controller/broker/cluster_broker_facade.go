@@ -19,8 +19,8 @@ type clusterBrokerSyncer interface {
 	Sync() error
 }
 
-// ClusterBrokersFacade is responsible for creation k8s objects for namespaced broker
-type ClusterBrokersFacade struct {
+// ClusterFacade is responsible for creation k8s objects for namespaced broker
+type ClusterFacade struct {
 	client            client.Client
 	workingNamespace  string
 	serviceName       string
@@ -31,31 +31,26 @@ type ClusterBrokersFacade struct {
 }
 
 // NewClusterBrokersFacade returns facade
-func NewClusterBrokersFacade(client client.Client, clusterBrokerSyncer clusterBrokerSyncer, workingNamespace, serviceName, clusterBrokerName string, log logrus.FieldLogger) *ClusterBrokersFacade {
-	return &ClusterBrokersFacade{
-		client:              client,
-		workingNamespace:    workingNamespace,
-		clusterBrokerSyncer: clusterBrokerSyncer,
-		clusterBrokerName:   clusterBrokerName,
-		serviceName:         serviceName,
-		log:                 log.WithField("service", "cluster-broker-facade"),
+func NewClusterBrokersFacade(client client.Client, workingNamespace, serviceName, clusterBrokerName string, log logrus.FieldLogger) *ClusterFacade {
+	return &ClusterFacade{
+		client:            client,
+		workingNamespace:  workingNamespace,
+		clusterBrokerName: clusterBrokerName,
+		serviceName:       serviceName,
+		log:               log.WithField("service", "cluster-broker-facade"),
 	}
 }
 
 // Create creates ClusterServiceBroker. Errors don't stop execution of method. AlreadyExist errors are ignored.
-func (f *ClusterBrokersFacade) Create() error {
-	var resultErr *multierror.Error
+func (f *ClusterFacade) Create() error {
+	f.log.Infof("- creating ClusterServiceBroker %s", f.clusterBrokerName)
 
+	var resultErr *multierror.Error
 	svcURL := fmt.Sprintf("http://%s.%s.svc.cluster.local", f.serviceName, f.workingNamespace)
 	_, err := f.createClusterServiceBroker(svcURL)
 	if err != nil {
 		resultErr = multierror.Append(resultErr, err)
 		f.log.Warnf("Creation of ClusterServiceBroker %s results in error: [%s]. AlreadyExist errors will be ignored.", f.clusterBrokerName, err)
-	}
-
-	err = f.clusterBrokerSyncer.Sync()
-	if err != nil {
-		f.log.Warnf("Failed to sync a broker %s : %v", f.clusterBrokerName, err.Error())
 	}
 
 	resultErr = filterOutMultiError(resultErr, ignoreAlreadyExist)
@@ -66,14 +61,14 @@ func (f *ClusterBrokersFacade) Create() error {
 	return resultErr
 }
 
-// Delete removes ClusterServiceBroker and BrokersFacade. Errors don't stop execution of method. NotFound errors are ignored.
-func (f *ClusterBrokersFacade) Delete() error {
+// Delete removes ClusterServiceBroker. Errors don't stop execution of method. NotFound errors are ignored.
+func (f *ClusterFacade) Delete() error {
 	csb := &v1beta1.ClusterServiceBroker{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: f.clusterBrokerName,
 		},
 	}
-
+	f.log.Infof("- deleting ClusterServiceBroker %s", f.clusterBrokerName)
 	err := f.client.Delete(context.Background(), csb)
 	switch {
 	case k8serrors.IsNotFound(err):
@@ -86,7 +81,7 @@ func (f *ClusterBrokersFacade) Delete() error {
 }
 
 // Exist check if ClusterServiceBroker exists.
-func (f *ClusterBrokersFacade) Exist() (bool, error) {
+func (f *ClusterFacade) Exist() (bool, error) {
 	err := f.client.Get(context.Background(), types.NamespacedName{Name: f.clusterBrokerName}, &v1beta1.ClusterServiceBroker{})
 	switch {
 	case k8serrors.IsNotFound(err):
@@ -99,7 +94,7 @@ func (f *ClusterBrokersFacade) Exist() (bool, error) {
 }
 
 // createServiceBroker returns just created or existing ClusterServiceBroker
-func (f *ClusterBrokersFacade) createClusterServiceBroker(svcURL string) (*v1beta1.ClusterServiceBroker, error) {
+func (f *ClusterFacade) createClusterServiceBroker(svcURL string) (*v1beta1.ClusterServiceBroker, error) {
 	url := fmt.Sprintf("%s/cluster", svcURL)
 	broker := &v1beta1.ClusterServiceBroker{
 		ObjectMeta: metav1.ObjectMeta{
@@ -107,7 +102,8 @@ func (f *ClusterBrokersFacade) createClusterServiceBroker(svcURL string) (*v1bet
 		},
 		Spec: v1beta1.ClusterServiceBrokerSpec{
 			CommonServiceBrokerSpec: v1beta1.CommonServiceBrokerSpec{
-				URL: url,
+				URL:            url,
+				RelistRequests: 1,
 			},
 		},
 	}
@@ -121,4 +117,9 @@ func (f *ClusterBrokersFacade) createClusterServiceBroker(svcURL string) (*v1bet
 	}
 
 	return broker, err
+}
+
+// SetNamespace sets service's working namespace
+func (f *ClusterFacade) SetNamespace(namespace string) {
+	return
 }

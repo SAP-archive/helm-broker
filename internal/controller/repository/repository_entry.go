@@ -4,35 +4,36 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/Masterminds/semver"
 	"github.com/kyma-project/helm-broker/internal"
 	"github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
-	"k8s.io/helm/pkg/proto/hapi/chart"
 )
 
-// Entry is a wraper for Addon element with extra fields like URL, addon or charts
+// Entry is a wraper for AddonWithCharts element with extra fields like URL or ID
 type Entry struct {
-	ID     string
-	URL    string
-	Entry  v1alpha1.Addon
-	Addon  *internal.Addon
-	Charts []*chart.Chart
+	ID  string
+	URL string
+
+	AddonWithCharts *internal.AddonWithCharts
 }
 
 // NewRepositoryEntry returns pointer to new Entry based on name, version and url
 func NewRepositoryEntry(n, v, u string) *Entry {
 	return &Entry{
 		URL: u,
-		Entry: v1alpha1.Addon{
-			Name:    n,
-			Version: v,
-			Status:  v1alpha1.AddonStatusReady,
+		AddonWithCharts: &internal.AddonWithCharts{
+			Addon: &internal.Addon{
+				Name:    internal.AddonName(n),
+				Version: *semver.MustParse(v),
+				Status:  v1alpha1.AddonStatusReady,
+			},
 		},
 	}
 }
 
 // IsReady informs addon is in ready status
 func (a *Entry) IsReady() bool {
-	return a.Entry.Status == v1alpha1.AddonStatusReady
+	return a.AddonWithCharts.Addon.Status == v1alpha1.AddonStatusReady
 }
 
 // IsComplete informs RepositoryEntry has no fetching/loading error, what means own ID (from addon)
@@ -71,12 +72,12 @@ func (a *Entry) RegisteringError(err error) {
 }
 
 func (a *Entry) failed() {
-	a.Entry.Status = v1alpha1.AddonStatusFailed
+	a.AddonWithCharts.Addon.Status = v1alpha1.AddonStatusFailed
 }
 
 func (a *Entry) setEntryStatus(reason v1alpha1.AddonStatusReason, message string) {
-	a.Entry.Reason = reason
-	a.Entry.Message = fmt.Sprintf(reason.Message(), message)
+	a.AddonWithCharts.Addon.Reason = reason
+	a.AddonWithCharts.Addon.Message = fmt.Sprintf(reason.Message(), message)
 }
 
 // limitMessage limits content of message field for AddonConfiguration which e.g. for fetching error

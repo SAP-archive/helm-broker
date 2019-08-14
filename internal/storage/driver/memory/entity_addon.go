@@ -19,7 +19,7 @@ func NewAddon() *Addon {
 	}
 }
 
-// Addon implements in-memory storage for Addon entities.
+// Addon implements in-memory storage for AddonWithCharts entities.
 type Addon struct {
 	threadSafeStorage
 	ketToID map[addonKey]internal.AddonID

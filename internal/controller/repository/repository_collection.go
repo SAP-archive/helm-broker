@@ -3,6 +3,7 @@ package repository
 import (
 	"fmt"
 
+	"github.com/kyma-project/helm-broker/internal"
 	addonsv1alpha1 "github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
 )
 
@@ -93,7 +94,7 @@ func (rc *Collection) ReviseAddonDuplicationInRepository() {
 		} else {
 			ids[addon.ID] = idConflictData{
 				repositoryURL: addon.URL,
-				addonsName:    fmt.Sprintf("%s:%s", addon.Entry.Name, addon.Entry.Version),
+				addonsName:    fmt.Sprintf("%s:%v", addon.AddonWithCharts.Addon.Name, addon.AddonWithCharts.Addon.Version.Original()),
 			}
 		}
 	}
@@ -101,35 +102,17 @@ func (rc *Collection) ReviseAddonDuplicationInRepository() {
 
 // ReviseAddonDuplicationInStorage checks all completed addons (addons without fetch/load error)
 // they have no name:version conflict with other AddonConfiguration
-func (rc *Collection) ReviseAddonDuplicationInStorage(acList *addonsv1alpha1.AddonsConfigurationList) {
+func (rc *Collection) ReviseAddonDuplicationInStorage(addonsList []internal.CommonAddon) {
 	for _, addon := range rc.completeAddons() {
-		rc.findExistingAddon(addon, acList)
+		rc.findExistingAddon(addon, addonsList)
 	}
 }
 
-// ReviseAddonDuplicationInClusterStorage checks all completed addons (addons without fetch/load error)
-// they have no name:version conflict with other AddonConfiguration
-func (rc *Collection) ReviseAddonDuplicationInClusterStorage(acList *addonsv1alpha1.ClusterAddonsConfigurationList) {
-	for _, addon := range rc.completeAddons() {
-		rc.findExistingClusterAddon(addon, acList)
-	}
-}
-
-func (rc *Collection) findExistingAddon(addon *Entry, list *addonsv1alpha1.AddonsConfigurationList) {
-	for _, existAddonConfiguration := range list.Items {
+func (rc *Collection) findExistingAddon(addon *Entry, list []internal.CommonAddon) {
+	for _, existAddonConfiguration := range list {
 		for _, repo := range existAddonConfiguration.Status.Repositories {
 			if rc.addonAlreadyRegistered(*addon, rc.filterReadyAddons(repo)) {
-				addon.ConflictWithAlreadyRegisteredAddons(fmt.Errorf("[ConfigurationName: %s, url: %s, addons: %s:%s]", existAddonConfiguration.Name, repo.URL, addon.Entry.Name, addon.Entry.Version))
-			}
-		}
-	}
-}
-
-func (rc *Collection) findExistingClusterAddon(addon *Entry, list *addonsv1alpha1.ClusterAddonsConfigurationList) {
-	for _, existAddonConfiguration := range list.Items {
-		for _, repo := range existAddonConfiguration.Status.Repositories {
-			if rc.addonAlreadyRegistered(*addon, rc.filterReadyAddons(repo)) {
-				addon.ConflictWithAlreadyRegisteredAddons(fmt.Errorf("[ConfigurationName: %s, url: %s, addons: %s:%s]", existAddonConfiguration.Name, repo.URL, addon.Entry.Name, addon.Entry.Version))
+				addon.ConflictWithAlreadyRegisteredAddons(fmt.Errorf("[ConfigurationName: %s, url: %s, addons: %s:%v]", existAddonConfiguration.Meta.Name, repo.URL, addon.AddonWithCharts.Addon.Name, addon.AddonWithCharts.Addon.Version.Original()))
 			}
 		}
 	}
@@ -149,7 +132,7 @@ func (rc *Collection) filterReadyAddons(repository addonsv1alpha1.StatusReposito
 
 func (rc *Collection) addonAlreadyRegistered(addon Entry, addons []addonsv1alpha1.Addon) bool {
 	for _, existAddon := range addons {
-		if addon.Entry.Name == existAddon.Name && addon.Entry.Version == existAddon.Version {
+		if string(addon.AddonWithCharts.Addon.Name) == existAddon.Name && addon.AddonWithCharts.Addon.Version.Original() == existAddon.Version {
 			return true
 		}
 	}

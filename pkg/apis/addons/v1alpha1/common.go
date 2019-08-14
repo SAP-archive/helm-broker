@@ -53,7 +53,7 @@ type CommonAddonsConfigurationSpec struct {
 	Repositories     []SpecRepository `json:"repositories"`
 }
 
-// Addon holds information about single addon
+// AddonWithCharts holds information about single addon
 type Addon struct {
 	Name    string `json:"name"`
 	Version string `json:"version"`

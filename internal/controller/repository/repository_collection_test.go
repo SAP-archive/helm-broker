@@ -3,6 +3,8 @@ package repository
 import (
 	"testing"
 
+	"github.com/Masterminds/semver"
+	"github.com/kyma-project/helm-broker/internal"
 	"github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -55,20 +57,20 @@ func TestRepositoryCollection_ReadyAddons(t *testing.T) {
 		&Repository{
 			Addons: []*Entry{
 				{
-					ID:    "84e70958-5ae1-49b7-a78c-25983d1b3d0e",
-					Entry: v1alpha1.Addon{Status: v1alpha1.AddonStatusReady},
+					ID:              "84e70958-5ae1-49b7-a78c-25983d1b3d0e",
+					AddonWithCharts: &internal.AddonWithCharts{Addon: &internal.Addon{Status: v1alpha1.AddonStatusReady}},
 				},
 				{
-					ID:    "2285fb92-3eb1-4e93-bc47-eacd40344c90",
-					Entry: v1alpha1.Addon{Status: v1alpha1.AddonStatusReady},
+					ID:              "2285fb92-3eb1-4e93-bc47-eacd40344c90",
+					AddonWithCharts: &internal.AddonWithCharts{Addon: &internal.Addon{Status: v1alpha1.AddonStatusReady}},
 				},
 				{
-					ID:    "e89b4535-1728-4577-a6f6-e67998733a0f",
-					Entry: v1alpha1.Addon{Status: v1alpha1.AddonStatusFailed},
+					ID:              "e89b4535-1728-4577-a6f6-e67998733a0f",
+					AddonWithCharts: &internal.AddonWithCharts{Addon: &internal.Addon{Status: v1alpha1.AddonStatusFailed}},
 				},
 				{
-					ID:    "ceabec68-30cf-40fc-b2d9-0d4cd24aee45",
-					Entry: v1alpha1.Addon{Status: v1alpha1.AddonStatusReady},
+					ID:              "ceabec68-30cf-40fc-b2d9-0d4cd24aee45",
+					AddonWithCharts: &internal.AddonWithCharts{Addon: &internal.Addon{Status: v1alpha1.AddonStatusReady}},
 				},
 			},
 		})
@@ -98,8 +100,10 @@ func TestRepositoryCollection_IsRepositoriesFailed(t *testing.T) {
 	trc.AddRepository(&Repository{
 		Addons: []*Entry{
 			{
-				Entry: v1alpha1.Addon{
-					Status: v1alpha1.AddonStatusFailed,
+				AddonWithCharts: &internal.AddonWithCharts{
+					Addon: &internal.Addon{
+						Status: v1alpha1.AddonStatusFailed,
+					},
 				},
 			},
 		},
@@ -120,19 +124,23 @@ func TestRepositoryCollection_ReviseAddonDuplicationInRepository(t *testing.T) {
 				{
 					ID:  "84e70958-5ae1-49b7-a78c-25983d1b3d0e",
 					URL: "http://example.com/index.yaml",
-					Entry: v1alpha1.Addon{
-						Name:    "test",
-						Version: "0.1",
-						Status:  v1alpha1.AddonStatusReady,
+					AddonWithCharts: &internal.AddonWithCharts{
+						Addon: &internal.Addon{
+							Name:    "test",
+							Version: *semver.MustParse("0.1"),
+							Status:  v1alpha1.AddonStatusReady,
+						},
 					},
 				},
 				{
 					ID:  "2285fb92-3eb1-4e93-bc47-eacd40344c90",
 					URL: "http://example.com/index.yaml",
-					Entry: v1alpha1.Addon{
-						Name:    "test",
-						Version: "0.2",
-						Status:  v1alpha1.AddonStatusReady,
+					AddonWithCharts: &internal.AddonWithCharts{
+						Addon: &internal.Addon{
+							Name:    "test",
+							Version: *semver.MustParse("0.2"),
+							Status:  v1alpha1.AddonStatusReady,
+						},
 					},
 				},
 			},
@@ -143,19 +151,23 @@ func TestRepositoryCollection_ReviseAddonDuplicationInRepository(t *testing.T) {
 				{
 					ID:  "e89b4535-1728-4577-a6f6-e67998733a0f",
 					URL: "http://example.com/index-duplication.yaml",
-					Entry: v1alpha1.Addon{
-						Name:    "test",
-						Version: "0.3",
-						Status:  v1alpha1.AddonStatusReady,
+					AddonWithCharts: &internal.AddonWithCharts{
+						Addon: &internal.Addon{
+							Name:    "test",
+							Version: *semver.MustParse("0.3"),
+							Status:  v1alpha1.AddonStatusReady,
+						},
 					},
 				},
 				{
 					ID:  "2285fb92-3eb1-4e93-bc47-eacd40344c90",
 					URL: "http://example.com/index-duplication.yaml",
-					Entry: v1alpha1.Addon{
-						Name:    "test",
-						Version: "0.4",
-						Status:  v1alpha1.AddonStatusReady,
+					AddonWithCharts: &internal.AddonWithCharts{
+						Addon: &internal.Addon{
+							Name:    "test",
+							Version: *semver.MustParse("0.4"),
+							Status:  v1alpha1.AddonStatusReady,
+						},
 					},
 				},
 			},
@@ -163,39 +175,35 @@ func TestRepositoryCollection_ReviseAddonDuplicationInRepository(t *testing.T) {
 	trc.ReviseAddonDuplicationInRepository()
 
 	// Then
-	assert.Equal(t, string(v1alpha1.AddonStatusReady), string(findAddon(trc, "test", "0.1").Entry.Status))
-	assert.Equal(t, string(v1alpha1.AddonStatusReady), string(findAddon(trc, "test", "0.2").Entry.Status))
-	assert.Equal(t, string(v1alpha1.AddonStatusReady), string(findAddon(trc, "test", "0.3").Entry.Status))
-	assert.Equal(t, string(v1alpha1.AddonStatusFailed), string(findAddon(trc, "test", "0.4").Entry.Status))
+	assert.Equal(t, v1alpha1.AddonStatusReady, findAddon(trc, "test", "0.1").AddonWithCharts.Addon.Status)
+	assert.Equal(t, v1alpha1.AddonStatusReady, findAddon(trc, "test", "0.2").AddonWithCharts.Addon.Status)
+	assert.Equal(t, v1alpha1.AddonStatusReady, findAddon(trc, "test", "0.3").AddonWithCharts.Addon.Status)
+	assert.Equal(t, v1alpha1.AddonStatusFailed, findAddon(trc, "test", "0.4").AddonWithCharts.Addon.Status)
 	assert.Equal(t,
 		string(v1alpha1.AddonConflictInSpecifiedRepositories),
-		string(findAddon(trc, "test", "0.4").Entry.Reason))
+		string(findAddon(trc, "test", "0.4").AddonWithCharts.Addon.Reason))
 	assert.Equal(t,
 		"Specified repositories have addons with the same ID: [url: http://example.com/index.yaml, addons: test:0.2]",
-		string(findAddon(trc, "test", "0.4").Entry.Message))
+		string(findAddon(trc, "test", "0.4").AddonWithCharts.Addon.Message))
 }
 
 func TestRepositoryCollection_ReviseAddonDuplicationInStorage(t *testing.T) {
 	// Given
 	trc := NewRepositoryCollection()
-	list := &v1alpha1.AddonsConfigurationList{
-		Items: []v1alpha1.AddonsConfiguration{
-			{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "addon-testing",
-				},
-				Status: v1alpha1.AddonsConfigurationStatus{
-					CommonAddonsConfigurationStatus: v1alpha1.CommonAddonsConfigurationStatus{
-						Repositories: []v1alpha1.StatusRepository{
+	list := []internal.CommonAddon{
+		{
+			Meta: metav1.ObjectMeta{
+				Name: "addon-testing",
+			},
+			Status: v1alpha1.CommonAddonsConfigurationStatus{
+				Repositories: []v1alpha1.StatusRepository{
+					{
+						URL: "http://example.com/index.yaml",
+						Addons: []v1alpha1.Addon{
 							{
-								URL: "http://example.com/index.yaml",
-								Addons: []v1alpha1.Addon{
-									{
-										Name:    "test",
-										Version: "0.2",
-										Status:  v1alpha1.AddonStatusReady,
-									},
-								},
+								Name:    "test",
+								Version: "0.2",
+								Status:  v1alpha1.AddonStatusReady,
 							},
 						},
 					},
@@ -211,19 +219,23 @@ func TestRepositoryCollection_ReviseAddonDuplicationInStorage(t *testing.T) {
 				{
 					ID:  "84e70958-5ae1-49b7-a78c-25983d1b3d0e",
 					URL: "http://example.com/index.yaml",
-					Entry: v1alpha1.Addon{
-						Name:    "test",
-						Version: "0.1",
-						Status:  v1alpha1.AddonStatusReady,
+					AddonWithCharts: &internal.AddonWithCharts{
+						Addon: &internal.Addon{
+							Name:    "test",
+							Version: *semver.MustParse("0.1"),
+							Status:  v1alpha1.AddonStatusReady,
+						},
 					},
 				},
 				{
 					ID:  "2285fb92-3eb1-4e93-bc47-eacd40344c90",
 					URL: "http://example.com/index.yaml",
-					Entry: v1alpha1.Addon{
-						Name:    "test",
-						Version: "0.2",
-						Status:  v1alpha1.AddonStatusReady,
+					AddonWithCharts: &internal.AddonWithCharts{
+						Addon: &internal.Addon{
+							Name:    "test",
+							Version: *semver.MustParse("0.2"),
+							Status:  v1alpha1.AddonStatusReady,
+						},
 					},
 				},
 			},
@@ -231,19 +243,19 @@ func TestRepositoryCollection_ReviseAddonDuplicationInStorage(t *testing.T) {
 	trc.ReviseAddonDuplicationInStorage(list)
 
 	// Then
-	assert.Equal(t, string(v1alpha1.AddonStatusReady), string(findAddon(trc, "test", "0.1").Entry.Status))
-	assert.Equal(t, string(v1alpha1.AddonStatusFailed), string(findAddon(trc, "test", "0.2").Entry.Status))
+	assert.Equal(t, v1alpha1.AddonStatusReady, findAddon(trc, "test", "0.1").AddonWithCharts.Addon.Status)
+	assert.Equal(t, v1alpha1.AddonStatusFailed, findAddon(trc, "test", "0.2").AddonWithCharts.Addon.Status)
 	assert.Equal(t,
 		string(v1alpha1.AddonConflictWithAlreadyRegisteredAddons),
-		string(findAddon(trc, "test", "0.2").Entry.Reason))
+		string(findAddon(trc, "test", "0.2").AddonWithCharts.Addon.Reason))
 	assert.Equal(t,
 		"An addon with the same ID is already registered: [ConfigurationName: addon-testing, url: http://example.com/index.yaml, addons: test:0.2]",
-		string(findAddon(trc, "test", "0.2").Entry.Message))
+		string(findAddon(trc, "test", "0.2").AddonWithCharts.Addon.Message))
 }
 
 func findAddon(rc *Collection, name, version string) *Entry {
 	for _, addon := range rc.completeAddons() {
-		if addon.Entry.Name == name && addon.Entry.Version == version {
+		if string(addon.AddonWithCharts.Addon.Name) == name && addon.AddonWithCharts.Addon.Version.Original() == version {
 			return addon
 		}
 	}

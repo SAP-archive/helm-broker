@@ -7,21 +7,16 @@ type DummyProvider struct {
 }
 
 // EnsureDocsTopic fulfills the docsFacade interface
-func (s *DummyProvider) EnsureDocsTopic(addon *internal.Addon, namespace string) error {
+func (s *DummyProvider) EnsureDocsTopic(addon *internal.Addon) error {
 	return nil
 }
 
 // EnsureDocsTopicRemoved fulfills the docsFacade interface
-func (*DummyProvider) EnsureDocsTopicRemoved(id string, namespace string) error {
+func (*DummyProvider) EnsureDocsTopicRemoved(id string) error {
 	return nil
 }
 
-// EnsureClusterDocsTopic fulfills the docsFacade interface
-func (*DummyProvider) EnsureClusterDocsTopic(addon *internal.Addon) error {
-	return nil
-}
-
-// EnsureClusterDocsTopicRemoved fulfills the docsFacade interface
-func (*DummyProvider) EnsureClusterDocsTopicRemoved(id string) error {
-	return nil
+// SetNamespace fulfills the docsFacade interface
+func (*DummyProvider) SetNamespace(namespace string) {
+	return
 }

@@ -47,7 +47,7 @@ func TestReconcileClusterAddonsConfiguration_AddAddonsProcess(t *testing.T) {
 				Return(false, nil)
 			ts.chartStorage.On("Upsert", internal.ClusterWide, completeAddon.Charts[0]).
 				Return(false, nil)
-			ts.docsProvider.On("EnsureDocsTopic", completeAddon.Addon, "").Return(nil)
+			ts.docsProvider.On("EnsureDocsTopic", completeAddon.Addon).Return(nil)
 
 		}
 	}
@@ -57,7 +57,7 @@ func TestReconcileClusterAddonsConfiguration_AddAddonsProcess(t *testing.T) {
 	defer ts.assertExpectations()
 
 	// WHEN
-	reconciler := NewReconcileClusterAddonsConfiguration(ts.mgr, ts.addonGetterFactory, ts.chartStorage, ts.addonStorage, ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, tmpDir, spy.NewLogDummy())
+	reconciler := NewReconcileClusterAddonsConfiguration(ts.mgr, ts.addonGetterFactory, ts.chartStorage, ts.addonStorage, ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, os.TempDir(), spy.NewLogDummy())
 
 	// THEN
 	result, err := reconciler.Reconcile(reconcile.Request{NamespacedName: types.NamespacedName{Name: fixAddonsCfg.Name}})
@@ -90,7 +90,7 @@ func TestReconcileClusterAddonsConfiguration_AddAddonsProcess_Error(t *testing.T
 				Return(false, nil)
 			ts.chartStorage.On("Upsert", internal.ClusterWide, completeAddon.Charts[0]).
 				Return(false, nil)
-			ts.docsProvider.On("EnsureDocsTopic", completeAddon.Addon, "").Return(nil)
+			ts.docsProvider.On("EnsureDocsTopic", completeAddon.Addon).Return(nil)
 		}
 	}
 	ts.brokerFacade.On("Exist").Return(false, errors.New("")).Once()
@@ -98,7 +98,7 @@ func TestReconcileClusterAddonsConfiguration_AddAddonsProcess_Error(t *testing.T
 	defer ts.assertExpectations()
 
 	// WHEN
-	reconciler := NewReconcileClusterAddonsConfiguration(ts.mgr, ts.addonGetterFactory, ts.chartStorage, ts.addonStorage, ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, tmpDir, spy.NewLogDummy())
+	reconciler := NewReconcileClusterAddonsConfiguration(ts.mgr, ts.addonGetterFactory, ts.chartStorage, ts.addonStorage, ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, os.TempDir(), spy.NewLogDummy())
 
 	// THEN
 	result, err := reconciler.Reconcile(reconcile.Request{NamespacedName: types.NamespacedName{Name: fixAddonsCfg.Name}})
@@ -133,7 +133,7 @@ func TestReconcileClusterAddonsConfiguration_UpdateAddonsProcess(t *testing.T) {
 				Return(false, nil)
 			ts.chartStorage.On("Upsert", internal.ClusterWide, completeAddon.Charts[0]).
 				Return(false, nil)
-			ts.docsProvider.On("EnsureDocsTopic", completeAddon.Addon, "").Return(nil)
+			ts.docsProvider.On("EnsureDocsTopic", completeAddon.Addon).Return(nil)
 		}
 
 	}
@@ -143,7 +143,7 @@ func TestReconcileClusterAddonsConfiguration_UpdateAddonsProcess(t *testing.T) {
 	defer ts.assertExpectations()
 
 	// WHEN
-	reconciler := NewReconcileClusterAddonsConfiguration(ts.mgr, ts.addonGetterFactory, ts.chartStorage, ts.addonStorage, ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, tmpDir, spy.NewLogDummy())
+	reconciler := NewReconcileClusterAddonsConfiguration(ts.mgr, ts.addonGetterFactory, ts.chartStorage, ts.addonStorage, ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, os.TempDir(), spy.NewLogDummy())
 
 	// THEN
 	result, err := reconciler.Reconcile(reconcile.Request{NamespacedName: types.NamespacedName{Name: fixAddonsCfg.Name}})
@@ -177,7 +177,7 @@ func TestReconcileClusterAddonsConfiguration_UpdateAddonsProcess_ConflictingAddo
 	defer ts.assertExpectations()
 
 	// WHEN
-	reconciler := NewReconcileClusterAddonsConfiguration(ts.mgr, ts.addonGetterFactory, ts.chartStorage, ts.addonStorage, ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, tmpDir, spy.NewLogDummy())
+	reconciler := NewReconcileClusterAddonsConfiguration(ts.mgr, ts.addonGetterFactory, ts.chartStorage, ts.addonStorage, ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, os.TempDir(), spy.NewLogDummy())
 
 	// THEN
 	result, err := reconciler.Reconcile(reconcile.Request{NamespacedName: types.NamespacedName{Name: fixAddonsCfg.Name}})
@@ -206,7 +206,7 @@ func TestReconcileClusterAddonsConfiguration_DeleteAddonsProcess(t *testing.T) {
 	ts.addonStorage.On("Remove", internal.ClusterWide, fixAddon.Name, addonVer).Return(nil)
 	ts.chartStorage.On("Remove", internal.Namespace(fixAddonsCfg.Namespace), fixAddon.Plans[internal.AddonPlanID(fmt.Sprintf("plan-%s", fixAddon.Name))].ChartRef.Name, fixAddon.Plans[internal.AddonPlanID(fmt.Sprintf("plan-%s", fixAddon.Name))].ChartRef.Version).Return(nil)
 
-	ts.docsProvider.On("EnsureDocsTopicRemoved", string(fixAddon.ID), "").Return(nil)
+	ts.docsProvider.On("EnsureDocsTopicRemoved", string(fixAddon.ID)).Return(nil)
 	defer ts.assertExpectations()
 
 	// WHEN
@@ -239,7 +239,7 @@ func TestReconcileClusterAddonsConfiguration_DeleteAddonsProcess_ReconcileOtherA
 	ts.addonStorage.On("Remove", internal.ClusterWide, fixAddon.Name, addonVer).Return(nil)
 	ts.chartStorage.On("Remove", internal.Namespace(fixAddonsCfg.Namespace), fixAddon.Plans[internal.AddonPlanID(fmt.Sprintf("plan-%s", fixAddon.Name))].ChartRef.Name, fixAddon.Plans[internal.AddonPlanID(fmt.Sprintf("plan-%s", fixAddon.Name))].ChartRef.Version).Return(nil)
 
-	ts.docsProvider.On("EnsureDocsTopicRemoved", string(fixAddon.ID), "").Return(nil)
+	ts.docsProvider.On("EnsureDocsTopicRemoved", string(fixAddon.ID)).Return(nil)
 	defer ts.assertExpectations()
 
 	// WHEN
@@ -289,9 +289,9 @@ type clusterTestSuite struct {
 	mgr                manager.Manager
 	addonGetterFactory *automock.AddonGetterFactory
 	addonGetter        *automock.AddonGetter
-	brokerFacade       *automock.ClusterBrokerFacade
+	brokerFacade       *automock.BrokerFacade
 	docsProvider       *automock.DocsProvider
-	brokerSyncer       *automock.ClusterBrokerSyncer
+	brokerSyncer       *automock.BrokerSyncer
 	addonStorage       *automock.AddonStorage
 	chartStorage       *automock.ChartStorage
 }
@@ -306,10 +306,10 @@ func getClusterTestSuite(t *testing.T, objects ...runtime.Object) *clusterTestSu
 	return &clusterTestSuite{
 		t:                  t,
 		mgr:                getFakeManager(t, fake.NewFakeClientWithScheme(sch, objects...), sch),
-		brokerFacade:       &automock.ClusterBrokerFacade{},
+		brokerFacade:       &automock.BrokerFacade{},
 		addonGetterFactory: &automock.AddonGetterFactory{},
 		addonGetter:        &automock.AddonGetter{},
-		brokerSyncer:       &automock.ClusterBrokerSyncer{},
+		brokerSyncer:       &automock.BrokerSyncer{},
 		docsProvider:       &automock.DocsProvider{},
 
 		addonStorage: &automock.AddonStorage{},

@@ -43,15 +43,19 @@ func SetupAndStartController(cfg *rest.Config, ctrCfg *config.ControllerConfig, 
 
 	// Setup dependencies
 
-	var docsProvider docsProvider
-	docsProvider = docs.NewProvider(mgr.GetClient())
-	if !ctrCfg.DocumentationEnabled {
-		docsProvider = &docs.DummyProvider{}
-	}
+	var dtProvider docsProvider
+	var cdtProvider docsProvider
 
-	brokerSyncer := broker.NewServiceBrokerSyncer(mgr.GetClient(), ctrCfg.ClusterServiceBrokerName, lg)
-	sbFacade := broker.NewBrokersFacade(mgr.GetClient(), brokerSyncer, ctrCfg.Namespace, ctrCfg.ServiceName, lg)
-	csbFacade := broker.NewClusterBrokersFacade(mgr.GetClient(), brokerSyncer, ctrCfg.Namespace, ctrCfg.ServiceName, ctrCfg.ClusterServiceBrokerName, lg)
+	dtProvider = docs.NewProvider(mgr.GetClient(), lg)
+	cdtProvider = docs.NewClusterProvider(mgr.GetClient(), lg)
+	if !ctrCfg.DocumentationEnabled {
+		dtProvider = &docs.DummyProvider{}
+		cdtProvider = &docs.DummyProvider{}
+	}
+	sbSyncer := broker.NewBrokerSyncer(mgr.GetClient(), lg)
+	csbSyncer := broker.NewClusterBrokerSyncer(mgr.GetClient(), ctrCfg.ClusterServiceBrokerName, lg)
+	sbFacade := broker.NewBrokersFacade(mgr.GetClient(), ctrCfg.Namespace, ctrCfg.ServiceName, lg)
+	csbFacade := broker.NewClusterBrokersFacade(mgr.GetClient(), ctrCfg.Namespace, ctrCfg.ServiceName, ctrCfg.ClusterServiceBrokerName, lg)
 
 	gitGetterFactory := provider.GitGetterConfiguration{Cli: uploadClient, TmpDir: ctrCfg.TmpDir}
 	allowedGetters := map[string]provider.Provider{
@@ -70,12 +74,12 @@ func SetupAndStartController(cfg *rest.Config, ctrCfg *config.ControllerConfig, 
 
 	// Creating controllers
 	lg.Info("Setting up controller")
-	acReconcile := NewReconcileAddonsConfiguration(mgr, addonGetterFactory, sFact.Chart(), sFact.Addon(), sbFacade, docsProvider, brokerSyncer, ctrCfg.TmpDir, lg)
+	acReconcile := NewReconcileAddonsConfiguration(mgr, addonGetterFactory, sFact.Chart(), sFact.Addon(), sbFacade, dtProvider, sbSyncer, ctrCfg.TmpDir, lg)
 	acController := NewAddonsConfigurationController(acReconcile)
 	err = acController.Start(mgr)
 	fatalOnError(err, "unable to start AddonsConfigurationController")
 
-	cacReconcile := NewReconcileClusterAddonsConfiguration(mgr, addonGetterFactory, sFact.Chart(), sFact.Addon(), csbFacade, docsProvider, brokerSyncer, ctrCfg.TmpDir, lg)
+	cacReconcile := NewReconcileClusterAddonsConfiguration(mgr, addonGetterFactory, sFact.Chart(), sFact.Addon(), csbFacade, cdtProvider, csbSyncer, ctrCfg.TmpDir, lg)
 	cacController := NewClusterAddonsConfigurationController(cacReconcile)
 	err = cacController.Start(mgr)
 	fatalOnError(err, "unable to start ClusterAddonsConfigurationController")

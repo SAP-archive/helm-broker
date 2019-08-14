@@ -9,6 +9,7 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/kyma-project/helm-broker/internal"
 	"github.com/kyma-project/kyma/components/cms-controller-manager/pkg/apis/cms/v1alpha1"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -19,119 +20,29 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
-func TestProvider_EnsureClusterDocsTopic(t *testing.T) {
-	// given
-	err := v1alpha1.AddToScheme(scheme.Scheme)
-	require.NoError(t, err)
-	const id = "123"
-
-	for tn, tc := range map[string]struct {
-		givenAddon internal.AddonWithCharts
-	}{
-		"URL set":   {fixAddonWithDocsURL(id, "test", "url", "url2")},
-		"empty URL": {fixAddonWithEmptyDocs(id, "test", "url")},
-	} {
-		t.Run(tn, func(t *testing.T) {
-			c := fake.NewFakeClient()
-			cdt := fixClusterDocsTopic(id)
-			docsProvider := NewProvider(c)
-
-			// when
-			err = docsProvider.EnsureDocsTopic(tc.givenAddon.Addon, "")
-			require.NoError(t, err)
-
-			// then
-			err = c.Get(context.Background(), client.ObjectKey{Namespace: cdt.Namespace, Name: cdt.Name}, cdt)
-			require.NoError(t, err)
-			assert.Equal(t, tc.givenAddon.Addon.Docs[0].Template, cdt.Spec.CommonDocsTopicSpec)
-		})
-	}
-}
-
-func TestProvider_EnsureClusterDocsTopic_UpdateIfExist(t *testing.T) {
-	// given
-	err := v1alpha1.AddToScheme(scheme.Scheme)
-	require.NoError(t, err)
-
-	const id = "123"
-	cdt := fixClusterDocsTopic(id)
-	addonWithEmptyDocsURL := fixAddonWithEmptyDocs(id, "test", "url")
-	addonWithEmptyDocsURL.Addon.Docs[0].Template.Description = "new description"
-
-	c := fake.NewFakeClient(cdt)
-	docsProvider := NewProvider(c)
-
-	// when
-	err = docsProvider.EnsureDocsTopic(addonWithEmptyDocsURL.Addon, "")
-	require.NoError(t, err)
-
-	// then
-	err = c.Get(context.Background(), client.ObjectKey{Namespace: cdt.Namespace, Name: cdt.Name}, cdt)
-	require.NoError(t, err)
-	assert.Equal(t, addonWithEmptyDocsURL.Addon.Docs[0].Template, cdt.Spec.CommonDocsTopicSpec)
-}
-
-func TestDocsProvider_EnsureClusterDocsTopicRemoved(t *testing.T) {
-	// given
-	err := v1alpha1.AddToScheme(scheme.Scheme)
-	require.NoError(t, err)
-
-	const id = "123"
-	cdt := fixClusterDocsTopic(id)
-	c := fake.NewFakeClient(cdt)
-	docsProvider := NewProvider(c)
-
-	// when
-	err = docsProvider.EnsureDocsTopicRemoved(id, "")
-	require.NoError(t, err)
-
-	// then
-	err = c.Get(context.Background(), client.ObjectKey{Namespace: cdt.Namespace, Name: cdt.Name}, cdt)
-	assert.True(t, errors.IsNotFound(err))
-}
-
-func TestDocsProvider_EnsureClusterDocsTopicRemoved_NotExists(t *testing.T) {
-	// given
-	err := v1alpha1.AddToScheme(scheme.Scheme)
-	require.NoError(t, err)
-
-	const id = "123"
-	cdt := fixClusterDocsTopic(id)
-	c := fake.NewFakeClient()
-	docsProvider := NewProvider(c)
-
-	// when
-	err = docsProvider.EnsureDocsTopicRemoved(id, "")
-	require.NoError(t, err)
-
-	// then
-	err = c.Get(context.Background(), client.ObjectKey{Namespace: cdt.Namespace, Name: cdt.Name}, cdt)
-	assert.True(t, errors.IsNotFound(err))
-}
-
 func TestDocsProvider_EnsureDocsTopic(t *testing.T) {
 	// given
 	err := v1alpha1.AddToScheme(scheme.Scheme)
 	require.NoError(t, err)
-	dt := fixDocsTopic()
 
 	for tn, tc := range map[string]struct {
 		givenAddon internal.AddonWithCharts
 	}{
-		"URL set":   {fixAddonWithDocsURL(dt.Name, "test", "url", "url2")},
-		"empty URL": {fixAddonWithEmptyDocs(dt.Name, "test", "url")},
+		"URL set":   {fixAddonWithDocsURL("test", "test", "url", "url2")},
+		"empty URL": {fixAddonWithEmptyDocs("test", "test", "url")},
 	} {
 		t.Run(tn, func(t *testing.T) {
-			c := fake.NewFakeClient(dt)
-			docsProvider := NewProvider(c)
+			c := fake.NewFakeClient()
+			docsProvider := NewProvider(c, logrus.New())
 
 			// when
-			err = docsProvider.EnsureDocsTopic(tc.givenAddon.Addon, dt.Namespace)
+			docsProvider.SetNamespace("test")
+			err = docsProvider.EnsureDocsTopic(tc.givenAddon.Addon)
 			require.NoError(t, err)
 
 			// then
 			result := v1alpha1.DocsTopic{}
-			err = c.Get(context.Background(), client.ObjectKey{Namespace: dt.Namespace, Name: dt.Name}, &result)
+			err = c.Get(context.Background(), client.ObjectKey{Namespace: "test", Name: "test"}, &result)
 			require.NoError(t, err)
 			assert.Equal(t, tc.givenAddon.Addon.Docs[0].Template, result.Spec.CommonDocsTopicSpec)
 		})
@@ -149,10 +60,11 @@ func TestDocsProvider_EnsureDocsTopic_UpdateIfExist(t *testing.T) {
 	addonWithEmptyDocsURL.Addon.Docs[0].Template.Description = "new description"
 
 	c := fake.NewFakeClient(dt)
-	docsProvider := NewProvider(c)
+	docsProvider := NewProvider(c, logrus.New())
 
 	// when
-	err = docsProvider.EnsureDocsTopic(addonWithEmptyDocsURL.Addon, dt.Namespace)
+	docsProvider.SetNamespace("test")
+	err = docsProvider.EnsureDocsTopic(addonWithEmptyDocsURL.Addon)
 	require.NoError(t, err)
 
 	// then
@@ -169,10 +81,11 @@ func TestDocsProvider_EnsureDocsTopicRemoved(t *testing.T) {
 
 	dt := fixDocsTopic()
 	c := fake.NewFakeClient(dt)
-	docsProvider := NewProvider(c)
+	docsProvider := NewProvider(c, logrus.New())
 
 	// when
-	err = docsProvider.EnsureDocsTopicRemoved(dt.Name, dt.Namespace)
+	docsProvider.SetNamespace("test")
+	err = docsProvider.EnsureDocsTopicRemoved(dt.Name)
 	require.NoError(t, err)
 
 	// then
@@ -188,10 +101,11 @@ func TestDocsProvider_EnsureDocsTopicRemoved_NotExists(t *testing.T) {
 
 	dt := fixDocsTopic()
 	c := fake.NewFakeClient()
-	docsProvider := NewProvider(c)
+	docsProvider := NewProvider(c, logrus.New())
 
 	// when
-	err = docsProvider.EnsureDocsTopicRemoved(dt.Name, dt.Namespace)
+	docsProvider.SetNamespace("test")
+	err = docsProvider.EnsureDocsTopicRemoved(dt.Name)
 	require.NoError(t, err)
 
 	// then
@@ -200,16 +114,8 @@ func TestDocsProvider_EnsureDocsTopicRemoved_NotExists(t *testing.T) {
 	assert.True(t, errors.IsNotFound(err))
 }
 
-func fixClusterDocsTopic(id string) *v1alpha1.ClusterDocsTopic {
-	return &v1alpha1.ClusterDocsTopic{
-		ObjectMeta: v1.ObjectMeta{
-			Name: id,
-		},
-	}
-}
-
-func fixDocsTopic() *v1alpha1.ClusterDocsTopic {
-	return &v1alpha1.ClusterDocsTopic{
+func fixDocsTopic() *v1alpha1.DocsTopic {
+	return &v1alpha1.DocsTopic{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "test",
 			Namespace: "test",
