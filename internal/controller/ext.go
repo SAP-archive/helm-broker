@@ -5,6 +5,7 @@ import (
 	"github.com/kyma-project/helm-broker/internal"
 	"github.com/kyma-project/helm-broker/internal/addon/provider"
 	"k8s.io/helm/pkg/proto/hapi/chart"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 // NamespacedService represents service layer which can be applied to both namespace scoped and cluster-wide resources
@@ -66,4 +67,10 @@ type commonAddonsClient interface {
 	UpdateConfigurationStatus(*internal.CommonAddon) error
 	ListConfigurations() ([]internal.CommonAddon, error)
 	ReprocessRequest(addonName string) error
+	IsNamespaceScoped() bool
+}
+
+type commonAddonsReconciler interface {
+	Reconcile(addon *internal.CommonAddon, trace string) (reconcile.Result, error)
+	SetWorkingNamespace(namespace string)
 }

@@ -3,11 +3,8 @@ package controller
 import (
 	"context"
 	"path"
-	"time"
-
 	"github.com/kyma-project/helm-broker/internal"
 	"github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -15,6 +12,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
+	"fmt"
 )
 
 var _ reconcile.Reconciler = &ReconcileClusterAddonsConfiguration{}
@@ -24,7 +22,7 @@ type ReconcileClusterAddonsConfiguration struct {
 	log logrus.FieldLogger
 	client.Client
 
-	*common
+	common commonAddonsReconciler
 }
 
 // NewReconcileClusterAddonsConfiguration returns a new reconcile.Reconciler
@@ -38,7 +36,6 @@ func NewReconcileClusterAddonsConfiguration(mgr manager.Manager, addonGetterFact
 }
 
 // Reconcile reads that state of the cluster for a ClusterAddonsConfiguration object and makes changes based on the state read
-// and what is in the ClusterAddonsConfiguration.Spec
 func (r *ReconcileClusterAddonsConfiguration) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	addon := &v1alpha1.ClusterAddonsConfiguration{}
 	err := r.Get(context.TODO(), request.NamespacedName, addon)
@@ -51,45 +48,7 @@ func (r *ReconcileClusterAddonsConfiguration) Reconcile(request reconcile.Reques
 		Status: addon.Status.CommonAddonsConfigurationStatus,
 	}
 
-	if addon.DeletionTimestamp != nil {
-		r.log.Infof("Start delete ClusterAddonsConfiguration %s", addon.Name)
-
-		if err := r.ReconcileOnDelete(commonAddon); err != nil {
-			r.log.Errorf("while deleting ClusterAddonsConfiguration process: %v", err)
-			return reconcile.Result{RequeueAfter: time.Second * 15}, errors.Wrapf(err, "while deleting ClusterAddonConfiguration %q", request.NamespacedName)
-		}
-		r.log.Info("Delete ClusterAddonsConfiguration process completed")
-		return reconcile.Result{}, nil
-	}
-
-	if addon.Status.ObservedGeneration == 0 {
-		r.log.Infof("Start add ClusterAddonsConfiguration %s process", addon.Name)
-
-		preAddon, err := r.PrepareForProcessing(commonAddon)
-		if err != nil {
-			r.log.Errorf("while preparing ClusterAddonsConfiguration %q for processing: %v", request.NamespacedName, err)
-			return reconcile.Result{}, errors.Wrapf(err, "while preparing ClusterAddonsConfiguration %q for processing", request.NamespacedName)
-		}
-		if err = r.ReconcileOnAdd(preAddon, preAddon.Status); err != nil {
-			r.log.Errorf("while adding ClusterAddonsConfiguration process: %v", err)
-			return reconcile.Result{}, errors.Wrapf(err, "while creating ClusterAddonsConfiguration %q", request.NamespacedName)
-		}
-		r.log.Infof("Add ClusterAddonsConfiguration process completed")
-
-	} else if addon.Generation > addon.Status.ObservedGeneration {
-		r.log.Infof("Start update ClusterAddonsConfiguration %s process", addon.Name)
-
-		lastStatus := commonAddon.Status
-		commonAddon.Status = v1alpha1.CommonAddonsConfigurationStatus{}
-
-		if err = r.ReconcileOnAdd(commonAddon, lastStatus); err != nil {
-			r.log.Errorf("while updating ClusterAddonsConfiguration process: %v", err)
-			return reconcile.Result{}, errors.Wrapf(err, "while updating ClusterAddonsConfiguration %q", request.NamespacedName)
-		}
-		r.log.Infof("Update ClusterAddonsConfiguration %s process completed", addon.Name)
-	}
-
-	return reconcile.Result{}, nil
+	return r.common.Reconcile(commonAddon, fmt.Sprintf("ClusterAddonsConfiguration %s", commonAddon.Meta.Name))
 }
 
 // ClusterAddonsConfigurationController holds controller logic
