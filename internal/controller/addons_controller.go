@@ -24,7 +24,7 @@ type ReconcileAddonsConfiguration struct {
 	log logrus.FieldLogger
 	client.Client
 
-	*addonManager
+	*common
 }
 
 // NewReconcileAddonsConfiguration returns a new reconcile.Reconciler
@@ -33,7 +33,7 @@ func NewReconcileAddonsConfiguration(mgr manager.Manager, addonGetterFactory add
 		log:    log.WithField("controller", "addons"),
 		Client: mgr.GetClient(),
 
-		addonManager: newAddonManager(mgr.GetClient(), addonGetterFactory, addonStorage, chartStorage, docsProvider, brokerSyncer, brokerFacade, path.Join(tmpDir, "addon-loader-dst"), log),
+		common: newControllerCommon(mgr.GetClient(), addonGetterFactory, addonStorage, chartStorage, docsProvider, brokerSyncer, brokerFacade, path.Join(tmpDir, "addon-loader-dst"), log),
 	}
 }
 
@@ -48,16 +48,8 @@ func (r *ReconcileAddonsConfiguration) Reconcile(request reconcile.Request) (rec
 	r.SetWorkingNamespace(addon.Namespace)
 	commonAddon := &internal.CommonAddon{
 		Meta: addon.ObjectMeta,
-		Spec: v1alpha1.CommonAddonsConfigurationSpec{
-			ReprocessRequest: addon.Spec.ReprocessRequest,
-			Repositories:     addon.Spec.Repositories,
-		},
-		Status: v1alpha1.CommonAddonsConfigurationStatus{
-			Repositories:       addon.Status.Repositories,
-			Phase:              addon.Status.Phase,
-			ObservedGeneration: addon.Status.ObservedGeneration,
-			LastProcessedTime:  addon.Status.LastProcessedTime,
-		},
+		Spec: addon.Spec.CommonAddonsConfigurationSpec,
+		Status: addon.Status.CommonAddonsConfigurationStatus,
 	}
 
 	if addon.DeletionTimestamp != nil {
@@ -76,6 +68,7 @@ func (r *ReconcileAddonsConfiguration) Reconcile(request reconcile.Request) (rec
 
 		preAddon, err := r.PrepareForProcessing(commonAddon)
 		if err != nil {
+			r.log.Errorf("while preparing AddonsConfiguration %q for processing: %v", request.NamespacedName, err)
 			return reconcile.Result{}, errors.Wrapf(err, "while preparing AddonsConfiguration %q for processing", request.NamespacedName)
 		}
 		if err = r.ReconcileOnAdd(preAddon, preAddon.Status); err != nil {

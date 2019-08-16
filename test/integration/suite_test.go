@@ -84,7 +84,7 @@ func newTestSuite(t *testing.T, docsEnabled bool) *testSuite {
 	logger := logrus.New()
 
 	brokerServer := broker.New(sFact.Addon(), sFact.Chart(), sFact.InstanceOperation(), sFact.Instance(), sFact.InstanceBindData(),
-		bind.NewRenderer(), bind.NewResolver(k8sClientset.CoreV1()), nil, logger.WithField("svc", "broker"))
+		bind.NewRenderer(), bind.NewResolver(k8sClientset.CoreV1()), nil, logger.WithField("test", "int"))
 
 	// OSB API Server
 	server := httptest.NewServer(brokerServer.CreateHandler())

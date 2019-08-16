@@ -59,11 +59,11 @@ type brokerSyncer interface {
 	Sync() error
 }
 
-//go:generate mockery -name=addonsClient -output=automock -outpkg=automock -case=underscore
-type addonsClient interface {
+//go:generate mockery -name=commonAddonsClient -output=automock -outpkg=automock -case=underscore
+type commonAddonsClient interface {
 	NamespacedService
-	UpdateConfiguration(*internal.CommonAddon) (*internal.CommonAddon, error)
-	UpdateConfigurationStatus(*internal.CommonAddon) (*internal.CommonAddon, error)
+	UpdateConfiguration(*internal.CommonAddon) error
+	UpdateConfigurationStatus(*internal.CommonAddon) error
 	ListConfigurations() ([]internal.CommonAddon, error)
 	ReprocessRequest(addonName string) error
 }

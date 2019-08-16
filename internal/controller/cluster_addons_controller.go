@@ -24,7 +24,7 @@ type ReconcileClusterAddonsConfiguration struct {
 	log logrus.FieldLogger
 	client.Client
 
-	*addonManager
+	*common
 }
 
 // NewReconcileClusterAddonsConfiguration returns a new reconcile.Reconciler
@@ -33,7 +33,7 @@ func NewReconcileClusterAddonsConfiguration(mgr manager.Manager, addonGetterFact
 		log:    log.WithField("controller", "cluster-addons"),
 		Client: mgr.GetClient(),
 
-		addonManager: newAddonManager(mgr.GetClient(), addonGetterFactory, addonStorage, chartStorage, docsProvider, brokerSyncer, brokerFacade, path.Join(tmpDir, "cluster-addon-loader-dst"), log),
+		common: newControllerCommon(mgr.GetClient(), addonGetterFactory, addonStorage, chartStorage, docsProvider, brokerSyncer, brokerFacade, path.Join(tmpDir, "cluster-addon-loader-dst"), log),
 	}
 }
 
@@ -47,16 +47,8 @@ func (r *ReconcileClusterAddonsConfiguration) Reconcile(request reconcile.Reques
 	}
 	commonAddon := &internal.CommonAddon{
 		Meta: addon.ObjectMeta,
-		Spec: v1alpha1.CommonAddonsConfigurationSpec{
-			ReprocessRequest: addon.Spec.ReprocessRequest,
-			Repositories:     addon.Spec.Repositories,
-		},
-		Status: v1alpha1.CommonAddonsConfigurationStatus{
-			Repositories:       addon.Status.Repositories,
-			Phase:              addon.Status.Phase,
-			ObservedGeneration: addon.Status.ObservedGeneration,
-			LastProcessedTime:  addon.Status.LastProcessedTime,
-		},
+		Spec: addon.Spec.CommonAddonsConfigurationSpec,
+		Status: addon.Status.CommonAddonsConfigurationStatus,
 	}
 
 	if addon.DeletionTimestamp != nil {
@@ -75,9 +67,9 @@ func (r *ReconcileClusterAddonsConfiguration) Reconcile(request reconcile.Reques
 
 		preAddon, err := r.PrepareForProcessing(commonAddon)
 		if err != nil {
-			return reconcile.Result{}, errors.Wrapf(err, "while preparing AddonsConfiguration %q for processing", request.NamespacedName)
+			r.log.Errorf("while preparing ClusterAddonsConfiguration %q for processing: %v", request.NamespacedName, err)
+			return reconcile.Result{}, errors.Wrapf(err, "while preparing ClusterAddonsConfiguration %q for processing", request.NamespacedName)
 		}
-		r.log.Infof("%v VS %s", commonAddon, preAddon)
 		if err = r.ReconcileOnAdd(preAddon, preAddon.Status); err != nil {
 			r.log.Errorf("while adding ClusterAddonsConfiguration process: %v", err)
 			return reconcile.Result{}, errors.Wrapf(err, "while creating ClusterAddonsConfiguration %q", request.NamespacedName)

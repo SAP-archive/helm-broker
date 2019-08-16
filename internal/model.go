@@ -11,7 +11,7 @@ import (
 	"github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
 	cms "github.com/kyma-project/kyma/components/cms-controller-manager/pkg/apis/cms/v1alpha1"
 	"github.com/pkg/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/helm/pkg/proto/hapi/chart"
 )
 
@@ -28,12 +28,6 @@ type IndexEntry struct {
 	DisplayName string       `json:"name"`
 	Description string       `json:"description"`
 	Version     AddonVersion `json:"version"`
-}
-
-// AddonWithCharts aggregates an addon with its chart(s)
-type AddonWithCharts struct {
-	Addon  *Addon
-	Charts []*chart.Chart
 }
 
 // AddonID is a AddonWithCharts identifier as defined by Open Service Broker API.
@@ -185,6 +179,12 @@ type CommonAddon struct {
 	Meta   v1.ObjectMeta
 	Spec   v1alpha1.CommonAddonsConfigurationSpec
 	Status v1alpha1.CommonAddonsConfigurationStatus
+}
+
+// AddonWithCharts aggregates an addon with its chart(s)
+type AddonWithCharts struct {
+	Addon  *Addon
+	Charts []*chart.Chart
 }
 
 // IsProvisioningAllowed determines addon can be provision on indicated namespace
