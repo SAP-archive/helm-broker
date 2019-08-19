@@ -246,9 +246,8 @@ func TestCommon_PrepareForProcessing(t *testing.T) {
 
 			ts.brokerFacade.On("Delete").Return(nil).Once()
 
-			result, err := common.PrepareForProcessing(tc.addon)
+			err := common.PrepareForProcessing(tc.addon)
 			require.NoError(t, err)
-			assert.Equal(t, result, tc.addon)
 		})
 	}
 }
@@ -272,9 +271,8 @@ func TestCommon_PrepareForProcessing_NamespaceScoped(t *testing.T) {
 
 			common.SetWorkingNamespace(tc.addon.Meta.Namespace)
 
-			result, err := common.PrepareForProcessing(tc.addon)
+			err := common.PrepareForProcessing(tc.addon)
 			require.NoError(t, err)
-			assert.Equal(t, result, tc.addon)
 		})
 	}
 }

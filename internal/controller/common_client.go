@@ -137,26 +137,20 @@ func (a *CommonClient) ReprocessRequest(addonName string) error {
 		if a.IsNamespaceScoped() {
 			ad := &v1alpha1.AddonsConfiguration{}
 			if err := a.Get(context.Background(), types.NamespacedName{Name: addonName, Namespace: a.namespace}, ad); err != nil {
-				return errors.Wrapf(err, "while getting AddonsConfiguration %s", addonName)
+				return err
 			}
 			ad.Spec.ReprocessRequest++
-			if err := a.Update(context.Background(), ad); err != nil {
-				return errors.Wrapf(err, "while updating AddonsConfiguration %s", addonName)
-			}
-		} else {
-			ad := &v1alpha1.ClusterAddonsConfiguration{}
-			if err := a.Get(context.Background(), types.NamespacedName{Name: addonName}, ad); err != nil {
-				return errors.Wrapf(err, "while getting ClusterAddonsConfiguration %s", addonName)
-			}
-			ad.Spec.ReprocessRequest++
-			if err := a.Update(context.Background(), ad); err != nil {
-				return errors.Wrapf(err, "while updating ClusterAddonsConfiguration %s", addonName)
-			}
+			return a.Update(context.Background(), ad)
 		}
-		return nil
+		ad := &v1alpha1.ClusterAddonsConfiguration{}
+		if err := a.Get(context.Background(), types.NamespacedName{Name: addonName}, ad); err != nil {
+			return err
+		}
+		ad.Spec.ReprocessRequest++
+		return a.Update(context.Background(), ad)
 	})
 	if err != nil {
-		return errors.Wrapf(err, "while updating addons configuration %s/%s status", a.namespace, addonName)
+		return errors.Wrapf(err, "while updating addons configuration %s/%s", a.namespace, addonName)
 	}
 	return nil
 }

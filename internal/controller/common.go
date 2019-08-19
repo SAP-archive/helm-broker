@@ -88,12 +88,11 @@ func (c *common) Reconcile(addon *internal.CommonAddon, trace string) (reconcile
 	if addon.Status.ObservedGeneration == 0 {
 		c.log.Infof("Start add %s process", trace)
 
-		preAddon, err := c.PrepareForProcessing(addon)
-		if err != nil {
+		if err := c.PrepareForProcessing(addon); err != nil {
 			c.log.Errorf("while preparing %s for processing: %v", trace, err)
 			return reconcile.Result{}, errors.Wrapf(err, "while preparing %s for processing", trace)
 		}
-		if err = c.OnAdd(preAddon, preAddon.Status); err != nil {
+		if err := c.OnAdd(addon, addon.Status); err != nil {
 			c.log.Errorf("while adding %s process: %v", trace, err)
 			return reconcile.Result{}, errors.Wrapf(err, "while creating %s", trace)
 		}
@@ -116,18 +115,18 @@ func (c *common) Reconcile(addon *internal.CommonAddon, trace string) (reconcile
 }
 
 // PrepareForProcessing prepares ClusterAddonsConfiguration or AddonsConfiguration if namespace is set
-func (c *common) PrepareForProcessing(addon *internal.CommonAddon) (*internal.CommonAddon, error) {
+func (c *common) PrepareForProcessing(addon *internal.CommonAddon) error {
 	err := c.addFinalizer(addon)
 	if err != nil {
-		return nil, errors.Wrap(err, "while adding finalizer")
+		return errors.Wrap(err, "while adding finalizer")
 	}
 	addon.Status.Phase = v1alpha1.AddonsConfigurationPending
 	err = c.updateAddonStatus(addon)
 	if err != nil {
-		return nil, errors.Wrap(err, "while updating status")
+		return errors.Wrap(err, "while updating status")
 	}
 
-	return addon, nil
+	return nil
 }
 
 // OnAdd executes logic on adding ClusterAddonsConfiguration or AddonsConfiguration if namespace is set
@@ -188,7 +187,6 @@ func (c *common) OnAdd(addon *internal.CommonAddon, lastStatus v1alpha1.CommonAd
 	}
 
 	if len(deletedAddonsIDs) > 0 {
-		c.log.Info("- reprocessing conflicting addons configurations")
 		if err := c.reprocessConfigurationsInConflict(deletedAddonsIDs, list); err != nil {
 			return errors.Wrap(err, "while reprocessing configurations in conflict")
 		}
@@ -434,6 +432,7 @@ func (c *common) reprocessConfigurationsInConflict(deletedAddonsIDs []string, li
 	for _, id := range deletedAddonsIDs {
 		for _, configuration := range list {
 			if hasConflict := c.isConfigurationInConflict(id, configuration.Status); hasConflict {
+				c.log.Infof("- reprocessing conflicting addons configuration `%s/%s`", configuration.Meta.Namespace, configuration.Meta.Name)
 				if err := c.commonClient.ReprocessRequest(configuration.Meta.Name); err != nil {
 					return errors.Wrapf(err, "while reprocessing conflicting addons configuration %s", configuration.Meta.Name)
 				}
