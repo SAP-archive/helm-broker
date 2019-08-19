@@ -14,6 +14,7 @@ import (
 	"github.com/kyma-project/helm-broker/internal"
 	"github.com/kyma-project/helm-broker/internal/controller/automock"
 	"github.com/kyma-project/helm-broker/internal/platform/logger/spy"
+	"github.com/kyma-project/helm-broker/internal/storage"
 	"github.com/kyma-project/helm-broker/pkg/apis"
 	"github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
 	cms "github.com/kyma-project/kyma/components/cms-controller-manager/pkg/apis/cms/v1alpha1"
@@ -50,10 +51,6 @@ func TestReconcileAddonsConfiguration_AddAddonsProcess(t *testing.T) {
 
 			ts.addonGetter.On("GetCompleteAddon", e).
 				Return(completeAddon, nil)
-			ts.addonStorage.On("Upsert", internal.Namespace(fixAddonsCfg.Namespace), completeAddon.Addon).
-				Return(false, nil)
-			ts.chartStorage.On("Upsert", internal.Namespace(fixAddonsCfg.Namespace), completeAddon.Charts[0]).
-				Return(false, nil)
 			ts.docsProvider.On("EnsureDocsTopic", completeAddon.Addon).Return(nil)
 		}
 	}
@@ -91,11 +88,6 @@ func TestReconcileAddonsConfiguration_AddAddonsProcess_ErrorIfBrokerExist(t *tes
 
 			ts.addonGetter.On("GetCompleteAddon", e).
 				Return(completeAddon, nil)
-
-			ts.addonStorage.On("Upsert", internal.Namespace(fixAddonsCfg.Namespace), completeAddon.Addon).
-				Return(false, nil)
-			ts.chartStorage.On("Upsert", internal.Namespace(fixAddonsCfg.Namespace), completeAddon.Charts[0]).
-				Return(false, nil)
 			ts.docsProvider.On("EnsureDocsTopic", completeAddon.Addon).Return(nil)
 		}
 	}
@@ -134,11 +126,6 @@ func TestReconcileAddonsConfiguration_UpdateAddonsProcess(t *testing.T) {
 
 			ts.addonGetter.On("GetCompleteAddon", e).
 				Return(completeAddon, nil)
-
-			ts.addonStorage.On("Upsert", internal.Namespace(fixAddonsCfg.Namespace), completeAddon.Addon).
-				Return(false, nil)
-			ts.chartStorage.On("Upsert", internal.Namespace(fixAddonsCfg.Namespace), completeAddon.Charts[0]).
-				Return(false, nil)
 			ts.docsProvider.On("EnsureDocsTopic", completeAddon.Addon).Return(nil)
 		}
 	}
@@ -196,19 +183,10 @@ func TestReconcileAddonsConfiguration_UpdateAddonsProcess_ConflictingAddons(t *t
 func TestReconcileAddonsConfiguration_DeleteAddonsProcess(t *testing.T) {
 	// GIVEN
 	fixAddonsCfg := fixDeletedAddonsConfiguration()
-	fixAddon := fixAddonWithEmptyDocs("id", fixAddonsCfg.Status.Repositories[0].Addons[0].Name, "example.com").Addon
-	addonVer := *semver.MustParse(fixAddonsCfg.Status.Repositories[0].Addons[0].Version)
 	ts := getTestSuite(t, fixAddonsCfg)
 	tmpDir := os.TempDir()
 
 	ts.brokerFacade.On("Delete").Return(nil).Once()
-	ts.addonStorage.
-		On("Get", internal.Namespace(fixAddonsCfg.Namespace), internal.AddonName(fixAddonsCfg.Status.Repositories[0].Addons[0].Name), addonVer).
-		Return(fixAddon, nil)
-	ts.addonStorage.On("Remove", internal.Namespace(fixAddonsCfg.Namespace), fixAddon.Name, addonVer).Return(nil)
-	ts.chartStorage.On("Remove", internal.Namespace(fixAddonsCfg.Namespace), fixAddon.Plans[internal.AddonPlanID(fmt.Sprintf("plan-%s", fixAddon.Name))].ChartRef.Name, fixAddon.Plans[internal.AddonPlanID(fmt.Sprintf("plan-%s", fixAddon.Name))].ChartRef.Version).Return(nil)
-
-	ts.docsProvider.On("EnsureDocsTopicRemoved", string(fixAddon.ID)).Return(nil)
 	defer ts.assertExpectations()
 
 	// WHEN
@@ -229,19 +207,10 @@ func TestReconcileAddonsConfiguration_DeleteAddonsProcess_ReconcileOtherAddons(t
 	// GIVEN
 	failedAddCfg := fixFailedAddonsConfiguration()
 	fixAddonsCfg := fixDeletedAddonsConfiguration()
-	fixAddon := fixAddonWithEmptyDocs("id", fixAddonsCfg.Status.Repositories[0].Addons[0].Name, "example.com").Addon
-	addonVer := *semver.MustParse(fixAddonsCfg.Status.Repositories[0].Addons[0].Version)
 	ts := getTestSuite(t, fixAddonsCfg, failedAddCfg)
 	tmpDir := os.TempDir()
 
 	ts.brokerFacade.On("Delete").Return(nil).Once()
-	ts.addonStorage.
-		On("Get", internal.Namespace(fixAddonsCfg.Namespace), internal.AddonName(fixAddonsCfg.Status.Repositories[0].Addons[0].Name), addonVer).
-		Return(fixAddon, nil)
-	ts.addonStorage.On("Remove", internal.Namespace(fixAddonsCfg.Namespace), fixAddon.Name, addonVer).Return(nil)
-	ts.chartStorage.On("Remove", internal.Namespace(fixAddonsCfg.Namespace), fixAddon.Plans[internal.AddonPlanID(fmt.Sprintf("plan-%s", fixAddon.Name))].ChartRef.Name, fixAddon.Plans[internal.AddonPlanID(fmt.Sprintf("plan-%s", fixAddon.Name))].ChartRef.Version).Return(nil)
-
-	ts.docsProvider.On("EnsureDocsTopicRemoved", string(fixAddon.ID)).Return(nil)
 	defer ts.assertExpectations()
 
 	// WHEN
@@ -287,6 +256,36 @@ func TestReconcileAddonsConfiguration_DeleteAddonsProcess_Error(t *testing.T) {
 	assert.Contains(t, res.Finalizers, v1alpha1.FinalizerAddonsConfiguration)
 }
 
+func fixRepositories() []v1alpha1.StatusRepository {
+	return []v1alpha1.StatusRepository{
+		{
+			Status: v1alpha1.RepositoryStatusReady,
+			Addons: []v1alpha1.Addon{
+				{
+					Status:  v1alpha1.AddonStatusReady,
+					Name:    "redis",
+					Version: "0.0.1",
+				},
+			},
+		},
+	}
+}
+
+func fixRepositoriesFailed() []v1alpha1.StatusRepository {
+	return []v1alpha1.StatusRepository{
+		{
+			Status: v1alpha1.RepositoryStatusFailed,
+			Addons: []v1alpha1.Addon{
+				{
+					Status:  v1alpha1.AddonStatusFailed,
+					Name:    "redis",
+					Version: "0.0.1",
+				},
+			},
+		},
+	}
+}
+
 func fixAddonsConfiguration() *v1alpha1.AddonsConfiguration {
 	return &v1alpha1.AddonsConfiguration{
 		ObjectMeta: metav1.ObjectMeta{
@@ -301,6 +300,12 @@ func fixAddonsConfiguration() *v1alpha1.AddonsConfiguration {
 						URL: "http://example.com/index.yaml",
 					},
 				},
+			},
+		},
+		Status: v1alpha1.AddonsConfigurationStatus{
+			CommonAddonsConfigurationStatus: v1alpha1.CommonAddonsConfigurationStatus{
+				Phase:        v1alpha1.AddonsConfigurationFailed,
+				Repositories: fixRepositories(),
 			},
 		},
 	}
@@ -324,19 +329,8 @@ func fixFailedAddonsConfiguration() *v1alpha1.AddonsConfiguration {
 		},
 		Status: v1alpha1.AddonsConfigurationStatus{
 			CommonAddonsConfigurationStatus: v1alpha1.CommonAddonsConfigurationStatus{
-				Phase: v1alpha1.AddonsConfigurationFailed,
-				Repositories: []v1alpha1.StatusRepository{
-					{
-						Status: v1alpha1.RepositoryStatusFailed,
-						Addons: []v1alpha1.Addon{
-							{
-								Status:  v1alpha1.AddonStatusFailed,
-								Name:    "redis",
-								Version: "0.0.1",
-							},
-						},
-					},
-				},
+				Phase:        v1alpha1.AddonsConfigurationFailed,
+				Repositories: fixRepositoriesFailed(),
 			},
 		},
 	}
@@ -360,19 +354,8 @@ func fixReadyAddonsConfiguration() *v1alpha1.AddonsConfiguration {
 		},
 		Status: v1alpha1.AddonsConfigurationStatus{
 			CommonAddonsConfigurationStatus: v1alpha1.CommonAddonsConfigurationStatus{
-				Phase: v1alpha1.AddonsConfigurationReady,
-				Repositories: []v1alpha1.StatusRepository{
-					{
-						Status: v1alpha1.RepositoryStatusReady,
-						Addons: []v1alpha1.Addon{
-							{
-								Status:  v1alpha1.AddonStatusReady,
-								Name:    "redis",
-								Version: "0.0.1",
-							},
-						},
-					},
-				},
+				Phase:        v1alpha1.AddonsConfigurationReady,
+				Repositories: fixRepositories(),
 			},
 		},
 	}
@@ -398,19 +381,8 @@ func fixDeletedAddonsConfiguration() *v1alpha1.AddonsConfiguration {
 		},
 		Status: v1alpha1.AddonsConfigurationStatus{
 			CommonAddonsConfigurationStatus: v1alpha1.CommonAddonsConfigurationStatus{
-				Phase: v1alpha1.AddonsConfigurationReady,
-				Repositories: []v1alpha1.StatusRepository{
-					{
-						Status: v1alpha1.RepositoryStatusReady,
-						Addons: []v1alpha1.Addon{
-							{
-								Status:  v1alpha1.AddonStatusReady,
-								Name:    "redis",
-								Version: "0.0.1",
-							},
-						},
-					},
-				},
+				Phase:        v1alpha1.AddonsConfigurationReady,
+				Repositories: fixRepositories(),
 			},
 		},
 	}
@@ -444,8 +416,8 @@ type testSuite struct {
 	brokerFacade       *automock.BrokerFacade
 	docsProvider       *automock.DocsProvider
 	brokerSyncer       *automock.BrokerSyncer
-	addonStorage       *automock.AddonStorage
-	chartStorage       *automock.ChartStorage
+	addonStorage       storage.Addon
+	chartStorage       storage.Chart
 }
 
 func getTestSuite(t *testing.T, objects ...runtime.Object) *testSuite {
@@ -454,6 +426,9 @@ func getTestSuite(t *testing.T, objects ...runtime.Object) *testSuite {
 	require.NoError(t, apis.AddToScheme(sch))
 	require.NoError(t, v1beta1.AddToScheme(sch))
 	require.NoError(t, v1.AddToScheme(sch))
+
+	sFact, err := storage.NewFactory(storage.NewConfigListAllMemory())
+	require.NoError(t, err)
 
 	ts := &testSuite{
 		t:                  t,
@@ -464,8 +439,8 @@ func getTestSuite(t *testing.T, objects ...runtime.Object) *testSuite {
 		brokerSyncer:       &automock.BrokerSyncer{},
 		docsProvider:       &automock.DocsProvider{},
 
-		addonStorage: &automock.AddonStorage{},
-		chartStorage: &automock.ChartStorage{},
+		addonStorage: sFact.Addon(),
+		chartStorage: sFact.Chart(),
 	}
 
 	ts.brokerFacade.On("SetNamespace", fixAddonsConfiguration().Namespace).Return(nil).Once()
@@ -486,8 +461,6 @@ func (ts *testSuite) assertExpectations() {
 	ts.brokerFacade.AssertExpectations(ts.t)
 	ts.docsProvider.AssertExpectations(ts.t)
 	ts.brokerSyncer.AssertExpectations(ts.t)
-	ts.addonStorage.AssertExpectations(ts.t)
-	ts.chartStorage.AssertExpectations(ts.t)
 	ts.addonGetterFactory.AssertExpectations(ts.t)
 }
 

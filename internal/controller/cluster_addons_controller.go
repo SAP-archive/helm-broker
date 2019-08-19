@@ -2,7 +2,9 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"path"
+
 	"github.com/kyma-project/helm-broker/internal"
 	"github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
 	"github.com/sirupsen/logrus"
@@ -12,7 +14,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
-	"fmt"
 )
 
 var _ reconcile.Reconciler = &ReconcileClusterAddonsConfiguration{}
@@ -22,7 +23,7 @@ type ReconcileClusterAddonsConfiguration struct {
 	log logrus.FieldLogger
 	client.Client
 
-	common commonAddonsReconciler
+	common commonReconciler
 }
 
 // NewReconcileClusterAddonsConfiguration returns a new reconcile.Reconciler
@@ -43,12 +44,12 @@ func (r *ReconcileClusterAddonsConfiguration) Reconcile(request reconcile.Reques
 		return reconcile.Result{}, err
 	}
 	commonAddon := &internal.CommonAddon{
-		Meta: addon.ObjectMeta,
-		Spec: addon.Spec.CommonAddonsConfigurationSpec,
+		Meta:   addon.ObjectMeta,
+		Spec:   addon.Spec.CommonAddonsConfigurationSpec,
 		Status: addon.Status.CommonAddonsConfigurationStatus,
 	}
 
-	return r.common.Reconcile(commonAddon, fmt.Sprintf("ClusterAddonsConfiguration %s", commonAddon.Meta.Name))
+	return r.common.Reconcile(commonAddon, fmt.Sprintf("ClusterAddonsConfiguration `%s`", commonAddon.Meta.Name))
 }
 
 // ClusterAddonsConfigurationController holds controller logic

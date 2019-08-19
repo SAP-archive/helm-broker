@@ -6,23 +6,23 @@ import (
 	"github.com/kyma-project/helm-broker/internal"
 	"github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
 	"github.com/pkg/errors"
-	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/retry"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// CommonAddonsClient holds shared client for controllers
-type CommonAddonsClient struct {
+// CommonClient holds shared client for controllers
+type CommonClient struct {
 	client.Client
 	namespace string
 
 	log logrus.FieldLogger
 }
 
-// NewCommonAddonsClient creates a new CommonAddonsClient
-func NewCommonAddonsClient(cli client.Client, log logrus.FieldLogger) *CommonAddonsClient {
-	return &CommonAddonsClient{
+// NewCommonClient creates a new CommonClient
+func NewCommonClient(cli client.Client, log logrus.FieldLogger) *CommonClient {
+	return &CommonClient{
 		Client:    cli,
 		namespace: string(internal.ClusterWide),
 
@@ -31,17 +31,17 @@ func NewCommonAddonsClient(cli client.Client, log logrus.FieldLogger) *CommonAdd
 }
 
 // IsNamespaceScoped return true if service is namespace-scoped
-func (a *CommonAddonsClient) IsNamespaceScoped() bool {
+func (a *CommonClient) IsNamespaceScoped() bool {
 	return a.namespace != string(internal.ClusterWide)
 }
 
 // SetNamespace sets service's working namespace
-func (a *CommonAddonsClient) SetNamespace(namespace string) {
+func (a *CommonClient) SetNamespace(namespace string) {
 	a.namespace = namespace
 }
 
 // UpdateConfiguration updates ClusterAddonsConfiguration or AddonsConfiguration if namespace is set
-func (a *CommonAddonsClient) UpdateConfiguration(addon *internal.CommonAddon) error {
+func (a *CommonClient) UpdateConfiguration(addon *internal.CommonAddon) error {
 	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		if a.IsNamespaceScoped() {
 			ad := &v1alpha1.AddonsConfiguration{}
@@ -51,24 +51,16 @@ func (a *CommonAddonsClient) UpdateConfiguration(addon *internal.CommonAddon) er
 			ad.Finalizers = addon.Meta.Finalizers
 			ad.Spec.CommonAddonsConfigurationSpec = addon.Spec
 
-			if err := a.Update(context.Background(), ad); err != nil {
-				a.log.Infof("%v ERROR: %v", ad, err)
-				return err
-			}
-		} else {
-			ad := &v1alpha1.ClusterAddonsConfiguration{}
-			if err := a.Get(context.Background(), types.NamespacedName{Name: addon.Meta.Name}, ad); err != nil {
-				return err
-			}
-			ad.ObjectMeta.Finalizers = addon.Meta.Finalizers
-			ad.Spec.CommonAddonsConfigurationSpec = addon.Spec
-
-			if err := a.Update(context.Background(), ad); err != nil {
-				return err
-			}
-			return nil
+			return a.Update(context.Background(), ad)
 		}
-		return nil
+		ad := &v1alpha1.ClusterAddonsConfiguration{}
+		if err := a.Get(context.Background(), types.NamespacedName{Name: addon.Meta.Name}, ad); err != nil {
+			return err
+		}
+		ad.ObjectMeta.Finalizers = addon.Meta.Finalizers
+		ad.Spec.CommonAddonsConfigurationSpec = addon.Spec
+
+		return a.Update(context.Background(), ad)
 	})
 	if err != nil {
 		return errors.Wrapf(err, "while updating addons configuration %s/%s", a.namespace, addon.Meta.Name)
@@ -77,7 +69,7 @@ func (a *CommonAddonsClient) UpdateConfiguration(addon *internal.CommonAddon) er
 }
 
 // UpdateConfigurationStatus updates ClusterAddonsConfiguration or AddonsConfiguration status if namespace is set
-func (a *CommonAddonsClient) UpdateConfigurationStatus(addon *internal.CommonAddon) error {
+func (a *CommonClient) UpdateConfigurationStatus(addon *internal.CommonAddon) error {
 	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		if a.IsNamespaceScoped() {
 			ad := &v1alpha1.AddonsConfiguration{}
@@ -86,21 +78,15 @@ func (a *CommonAddonsClient) UpdateConfigurationStatus(addon *internal.CommonAdd
 			}
 			ad.Status.CommonAddonsConfigurationStatus = addon.Status
 
-			if err := a.Status().Update(context.Background(), ad); err != nil {
-				return err
-			}
-		} else {
-			ad := &v1alpha1.ClusterAddonsConfiguration{}
-			if err := a.Get(context.Background(), types.NamespacedName{Name: addon.Meta.Name}, ad); err != nil {
-				return err
-			}
-			ad.Status.CommonAddonsConfigurationStatus = addon.Status
-
-			if err := a.Status().Update(context.Background(), ad); err != nil {
-				return err
-			}
+			return a.Status().Update(context.Background(), ad)
 		}
-		return nil
+		ad := &v1alpha1.ClusterAddonsConfiguration{}
+		if err := a.Get(context.Background(), types.NamespacedName{Name: addon.Meta.Name}, ad); err != nil {
+			return err
+		}
+		ad.Status.CommonAddonsConfigurationStatus = addon.Status
+
+		return a.Status().Update(context.Background(), ad)
 	})
 	if err != nil {
 		return errors.Wrapf(err, "while updating addons configuration %s/%s status", a.namespace, addon.Meta.Name)
@@ -109,7 +95,7 @@ func (a *CommonAddonsClient) UpdateConfigurationStatus(addon *internal.CommonAdd
 }
 
 // ListConfigurations lists ClusterAddonsConfiguration or AddonsConfiguration if namespace is set
-func (a *CommonAddonsClient) ListConfigurations() ([]internal.CommonAddon, error) {
+func (a *CommonClient) ListConfigurations() ([]internal.CommonAddon, error) {
 	var commonAddons []internal.CommonAddon
 	if a.IsNamespaceScoped() {
 		addonsConfigurationList := &v1alpha1.AddonsConfigurationList{}
@@ -146,7 +132,7 @@ func (a *CommonAddonsClient) ListConfigurations() ([]internal.CommonAddon, error
 }
 
 // ReprocessRequest bumps reprocessRequest for ClusterAddonsConfiguration or AddonsConfiguration if namespace is set
-func (a *CommonAddonsClient) ReprocessRequest(addonName string) error {
+func (a *CommonClient) ReprocessRequest(addonName string) error {
 	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		if a.IsNamespaceScoped() {
 			ad := &v1alpha1.AddonsConfiguration{}

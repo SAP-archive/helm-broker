@@ -60,8 +60,8 @@ type brokerSyncer interface {
 	Sync() error
 }
 
-//go:generate mockery -name=commonAddonsClient -output=automock -outpkg=automock -case=underscore
-type commonAddonsClient interface {
+//go:generate mockery -name=commonClient -output=automock -outpkg=automock -case=underscore
+type commonClient interface {
 	NamespacedService
 	UpdateConfiguration(*internal.CommonAddon) error
 	UpdateConfigurationStatus(*internal.CommonAddon) error
@@ -70,7 +70,7 @@ type commonAddonsClient interface {
 	IsNamespaceScoped() bool
 }
 
-type commonAddonsReconciler interface {
+type commonReconciler interface {
 	Reconcile(addon *internal.CommonAddon, trace string) (reconcile.Result, error)
 	SetWorkingNamespace(namespace string)
 }

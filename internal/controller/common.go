@@ -13,7 +13,7 @@ import (
 	"github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/helm/pkg/proto/hapi/chart"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -35,7 +35,7 @@ type common struct {
 	// used to distinguish namespace-scoped and cluster-wide addons configurations
 	namespace internal.Namespace
 
-	commonClient commonAddonsClient
+	commonClient commonClient
 	log          logrus.FieldLogger
 
 	trace string
@@ -55,7 +55,7 @@ func newControllerCommon(client client.Client, addonGetterFactory addonGetterFac
 		protection:   protection{},
 
 		namespace:    internal.ClusterWide,
-		commonClient: NewCommonAddonsClient(client, log),
+		commonClient: NewCommonClient(client, log),
 
 		dstPath: dstPath,
 		log:     log,
@@ -72,11 +72,12 @@ func (c *common) SetWorkingNamespace(namespace string) {
 	}
 }
 
+// Reconcile handles configuration state change
 func (c *common) Reconcile(addon *internal.CommonAddon, trace string) (reconcile.Result, error) {
 	if addon.Meta.DeletionTimestamp != nil {
 		c.log.Infof("Start delete %s", trace)
 
-		if err := c.onDelete(addon); err != nil {
+		if err := c.OnDelete(addon); err != nil {
 			c.log.Errorf("while deleting %s process: %v", trace, err)
 			return reconcile.Result{RequeueAfter: time.Second * 15}, errors.Wrapf(err, "while deleting %s", trace)
 		}
@@ -87,12 +88,12 @@ func (c *common) Reconcile(addon *internal.CommonAddon, trace string) (reconcile
 	if addon.Status.ObservedGeneration == 0 {
 		c.log.Infof("Start add %s process", trace)
 
-		preAddon, err := c.prepareForProcessing(addon)
+		preAddon, err := c.PrepareForProcessing(addon)
 		if err != nil {
 			c.log.Errorf("while preparing %s for processing: %v", trace, err)
 			return reconcile.Result{}, errors.Wrapf(err, "while preparing %s for processing", trace)
 		}
-		if err = c.onAdd(preAddon, preAddon.Status); err != nil {
+		if err = c.OnAdd(preAddon, preAddon.Status); err != nil {
 			c.log.Errorf("while adding %s process: %v", trace, err)
 			return reconcile.Result{}, errors.Wrapf(err, "while creating %s", trace)
 		}
@@ -104,7 +105,7 @@ func (c *common) Reconcile(addon *internal.CommonAddon, trace string) (reconcile
 		lastStatus := addon.Status
 		addon.Status = v1alpha1.CommonAddonsConfigurationStatus{}
 
-		if err := c.onAdd(addon, lastStatus); err != nil {
+		if err := c.OnAdd(addon, lastStatus); err != nil {
 			c.log.Errorf("while updating %s process: %v", trace, err)
 			return reconcile.Result{}, errors.Wrapf(err, "while updating %s", trace)
 		}
@@ -114,8 +115,8 @@ func (c *common) Reconcile(addon *internal.CommonAddon, trace string) (reconcile
 	return reconcile.Result{}, nil
 }
 
-// prepareForProcessing prepares ClusterAddonsConfiguration or AddonsConfiguration if namespace is set
-func (c *common) prepareForProcessing(addon *internal.CommonAddon) (*internal.CommonAddon, error) {
+// PrepareForProcessing prepares ClusterAddonsConfiguration or AddonsConfiguration if namespace is set
+func (c *common) PrepareForProcessing(addon *internal.CommonAddon) (*internal.CommonAddon, error) {
 	err := c.addFinalizer(addon)
 	if err != nil {
 		return nil, errors.Wrap(err, "while adding finalizer")
@@ -129,8 +130,8 @@ func (c *common) prepareForProcessing(addon *internal.CommonAddon) (*internal.Co
 	return addon, nil
 }
 
-// onAdd executes logic on adding ClusterAddonsConfiguration or AddonsConfiguration if namespace is set
-func (c *common) onAdd(addon *internal.CommonAddon, lastStatus v1alpha1.CommonAddonsConfigurationStatus) error {
+// OnAdd executes logic on adding ClusterAddonsConfiguration or AddonsConfiguration if namespace is set
+func (c *common) OnAdd(addon *internal.CommonAddon, lastStatus v1alpha1.CommonAddonsConfigurationStatus) error {
 	c.log.Infof("- load addons and charts for each addon")
 	repositories := c.loadRepositories(addon.Spec.Repositories)
 
@@ -196,8 +197,8 @@ func (c *common) onAdd(addon *internal.CommonAddon, lastStatus v1alpha1.CommonAd
 	return nil
 }
 
-// onDelete executes logic on deleting ClusterAddonsConfiguration or AddonsConfiguration if namespace is set
-func (c *common) onDelete(addon *internal.CommonAddon) error {
+// OnDelete executes logic on deleting ClusterAddonsConfiguration or AddonsConfiguration if namespace is set
+func (c *common) OnDelete(addon *internal.CommonAddon) error {
 	if addon.Status.Phase == v1alpha1.AddonsConfigurationReady {
 		adds, err := c.listExistingConfigurations(addon.Meta.Name)
 		if err != nil {
@@ -207,7 +208,7 @@ func (c *common) onDelete(addon *internal.CommonAddon) error {
 		deleteBroker := true
 		for _, ad := range adds {
 			if ad.Status.Phase != v1alpha1.AddonsConfigurationReady {
-				// reprocess addons configuration again if was failed
+				c.log.Infof("- reprocessing unblocked conflicting configuration `%s`", ad.Meta.Name)
 				if err := c.commonClient.ReprocessRequest(ad.Meta.Name); err != nil {
 					return errors.Wrapf(err, "while requesting reprocess addons configuration %s", ad.Meta.Name)
 				}
@@ -329,9 +330,9 @@ func (c *common) saveAddons(repositories *repository.Collection) bool {
 			continue
 		}
 		if exist {
-			c.log.Infof("- addon %v:%v already existed in storage, addon was replaced", ad.AddonWithCharts.Addon.Name, ad.AddonWithCharts.Addon.Version.Original())
+			c.log.Infof("- addon `%v:%v` already existed in storage, addon was replaced", ad.AddonWithCharts.Addon.Name, ad.AddonWithCharts.Addon.Version.Original())
 		} else {
-			c.log.Infof("- addon %v:%v saved to storage %s", ad.AddonWithCharts.Addon.Name, ad.AddonWithCharts.Addon.Version.Original(), c.namespace)
+			c.log.Infof("- addon `%v:%v` saved to storage %s", ad.AddonWithCharts.Addon.Name, ad.AddonWithCharts.Addon.Version.Original(), c.namespace)
 		}
 	}
 	return saved
@@ -352,7 +353,7 @@ func (c *common) saveCharts(charts []*chart.Chart) error {
 
 func (c *common) removeAddon(ad v1alpha1.Addon) (bool, error) {
 	removed := false
-	c.log.Infof("- delete addon %s from storage", ad.Name)
+	c.log.Infof("- addon `%s:%s` removed from storage %s", ad.Name, ad.Version, c.namespace)
 	add, err := c.addonStorage.Get(c.namespace, internal.AddonName(ad.Name), *semver.MustParse(ad.Version))
 	if err != nil {
 		return false, err
@@ -382,7 +383,7 @@ func (c *common) deletePreviousAddons(repos []v1alpha1.StatusRepository) ([]stri
 	for _, repo := range repos {
 		for _, ad := range repo.Addons {
 			if _, err := c.removeAddon(ad); err != nil && !storage.IsNotFoundError(err) {
-				return nil, errors.Wrapf(err, "while deleting addons and charts for addon %s", ad.Name)
+				return nil, errors.Wrapf(err, "while deleting previous addons and charts for addon `%s`", ad.Name)
 			}
 			deletedAddonsIDs = append(deletedAddonsIDs, ad.Key())
 		}
@@ -403,7 +404,7 @@ func (c *common) deleteOrphanAddons(repos []v1alpha1.StatusRepository, lastRepos
 		for _, ad := range repo.Addons {
 			if _, exist := addonsToStay[ad.Key()]; !exist {
 				if _, err := c.removeAddon(ad); err != nil && !storage.IsNotFoundError(err) {
-					return nil, errors.Wrapf(err, "while deleting addons and charts for addon %s", ad.Name)
+					return nil, errors.Wrapf(err, "while deleting orphan addons and charts for addon `%s`", ad.Name)
 				}
 				deletedAddonsIDs = append(deletedAddonsIDs, ad.Key())
 			}
@@ -434,7 +435,7 @@ func (c *common) reprocessConfigurationsInConflict(deletedAddonsIDs []string, li
 		for _, configuration := range list {
 			if hasConflict := c.isConfigurationInConflict(id, configuration.Status); hasConflict {
 				if err := c.commonClient.ReprocessRequest(configuration.Meta.Name); err != nil {
-					return errors.Wrapf(err, "while reprocessing addons configuration %s", configuration.Meta.Name)
+					return errors.Wrapf(err, "while reprocessing conflicting addons configuration %s", configuration.Meta.Name)
 				}
 			}
 		}

@@ -3,16 +3,14 @@ package controller
 import (
 	"context"
 	"errors"
-	"fmt"
 	"os"
 	"path"
 	"testing"
 	"time"
 
-	"github.com/Masterminds/semver"
 	"github.com/kubernetes-incubator/service-catalog/pkg/apis/servicecatalog/v1beta1"
-	"github.com/kyma-project/helm-broker/internal"
 	"github.com/kyma-project/helm-broker/internal/controller/automock"
+	"github.com/kyma-project/helm-broker/internal/storage"
 	"github.com/kyma-project/helm-broker/pkg/apis"
 	"github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
 	"github.com/kyma-project/helm-broker/platform/logger/spy"
@@ -42,11 +40,6 @@ func TestReconcileClusterAddonsConfiguration_AddAddonsProcess(t *testing.T) {
 
 			ts.addonGetter.On("GetCompleteAddon", e).
 				Return(completeAddon, nil)
-
-			ts.addonStorage.On("Upsert", internal.ClusterWide, completeAddon.Addon).
-				Return(false, nil)
-			ts.chartStorage.On("Upsert", internal.ClusterWide, completeAddon.Charts[0]).
-				Return(false, nil)
 			ts.docsProvider.On("EnsureDocsTopic", completeAddon.Addon).Return(nil)
 
 		}
@@ -85,11 +78,6 @@ func TestReconcileClusterAddonsConfiguration_AddAddonsProcess_Error(t *testing.T
 
 			ts.addonGetter.On("GetCompleteAddon", e).
 				Return(completeAddon, nil)
-
-			ts.addonStorage.On("Upsert", internal.ClusterWide, completeAddon.Addon).
-				Return(false, nil)
-			ts.chartStorage.On("Upsert", internal.ClusterWide, completeAddon.Charts[0]).
-				Return(false, nil)
 			ts.docsProvider.On("EnsureDocsTopic", completeAddon.Addon).Return(nil)
 		}
 	}
@@ -128,11 +116,6 @@ func TestReconcileClusterAddonsConfiguration_UpdateAddonsProcess(t *testing.T) {
 			completeAddon := fixAddonWithDocsURL(string(e.Name), string(e.Name), "example.com", "example.com")
 
 			ts.addonGetter.On("GetCompleteAddon", e).Return(completeAddon, nil)
-
-			ts.addonStorage.On("Upsert", internal.ClusterWide, completeAddon.Addon).
-				Return(false, nil)
-			ts.chartStorage.On("Upsert", internal.ClusterWide, completeAddon.Charts[0]).
-				Return(false, nil)
 			ts.docsProvider.On("EnsureDocsTopic", completeAddon.Addon).Return(nil)
 		}
 
@@ -194,19 +177,9 @@ func TestReconcileClusterAddonsConfiguration_UpdateAddonsProcess_ConflictingAddo
 func TestReconcileClusterAddonsConfiguration_DeleteAddonsProcess(t *testing.T) {
 	// GIVEN
 	fixAddonsCfg := fixDeletedClusterAddonsConfiguration()
-	fixAddon := fixAddonWithEmptyDocs("id", fixAddonsCfg.Status.Repositories[0].Addons[0].Name, "example.com").Addon
-	addonVer := *semver.MustParse(fixAddonsCfg.Status.Repositories[0].Addons[0].Version)
-
 	ts := getClusterTestSuite(t, fixAddonsCfg)
 
 	ts.brokerFacade.On("Delete").Return(nil).Once()
-	ts.addonStorage.
-		On("Get", internal.ClusterWide, internal.AddonName(fixAddonsCfg.Status.Repositories[0].Addons[0].Name), addonVer).
-		Return(fixAddon, nil)
-	ts.addonStorage.On("Remove", internal.ClusterWide, fixAddon.Name, addonVer).Return(nil)
-	ts.chartStorage.On("Remove", internal.Namespace(fixAddonsCfg.Namespace), fixAddon.Plans[internal.AddonPlanID(fmt.Sprintf("plan-%s", fixAddon.Name))].ChartRef.Name, fixAddon.Plans[internal.AddonPlanID(fmt.Sprintf("plan-%s", fixAddon.Name))].ChartRef.Version).Return(nil)
-
-	ts.docsProvider.On("EnsureDocsTopicRemoved", string(fixAddon.ID)).Return(nil)
 	defer ts.assertExpectations()
 
 	// WHEN
@@ -227,19 +200,9 @@ func TestReconcileClusterAddonsConfiguration_DeleteAddonsProcess_ReconcileOtherA
 	// GIVEN
 	failedAddCfg := fixFailedClusterAddonsConfiguration()
 	fixAddonsCfg := fixDeletedClusterAddonsConfiguration()
-	fixAddon := fixAddonWithEmptyDocs("id", fixAddonsCfg.Status.Repositories[0].Addons[0].Name, "example.com").Addon
-	addonVer := *semver.MustParse(fixAddonsCfg.Status.Repositories[0].Addons[0].Version)
-
 	ts := getClusterTestSuite(t, fixAddonsCfg, failedAddCfg)
 
 	ts.brokerFacade.On("Delete").Return(nil).Once()
-	ts.addonStorage.
-		On("Get", internal.ClusterWide, internal.AddonName(fixAddonsCfg.Status.Repositories[0].Addons[0].Name), addonVer).
-		Return(fixAddon, nil)
-	ts.addonStorage.On("Remove", internal.ClusterWide, fixAddon.Name, addonVer).Return(nil)
-	ts.chartStorage.On("Remove", internal.Namespace(fixAddonsCfg.Namespace), fixAddon.Plans[internal.AddonPlanID(fmt.Sprintf("plan-%s", fixAddon.Name))].ChartRef.Name, fixAddon.Plans[internal.AddonPlanID(fmt.Sprintf("plan-%s", fixAddon.Name))].ChartRef.Version).Return(nil)
-
-	ts.docsProvider.On("EnsureDocsTopicRemoved", string(fixAddon.ID)).Return(nil)
 	defer ts.assertExpectations()
 
 	// WHEN
@@ -292,8 +255,8 @@ type clusterTestSuite struct {
 	brokerFacade       *automock.BrokerFacade
 	docsProvider       *automock.DocsProvider
 	brokerSyncer       *automock.BrokerSyncer
-	addonStorage       *automock.AddonStorage
-	chartStorage       *automock.ChartStorage
+	addonStorage       storage.Addon
+	chartStorage       storage.Chart
 }
 
 func getClusterTestSuite(t *testing.T, objects ...runtime.Object) *clusterTestSuite {
@@ -302,6 +265,9 @@ func getClusterTestSuite(t *testing.T, objects ...runtime.Object) *clusterTestSu
 	require.NoError(t, apis.AddToScheme(sch))
 	require.NoError(t, v1beta1.AddToScheme(sch))
 	require.NoError(t, v1.AddToScheme(sch))
+
+	sFact, err := storage.NewFactory(storage.NewConfigListAllMemory())
+	require.NoError(t, err)
 
 	return &clusterTestSuite{
 		t:                  t,
@@ -312,8 +278,8 @@ func getClusterTestSuite(t *testing.T, objects ...runtime.Object) *clusterTestSu
 		brokerSyncer:       &automock.BrokerSyncer{},
 		docsProvider:       &automock.DocsProvider{},
 
-		addonStorage: &automock.AddonStorage{},
-		chartStorage: &automock.ChartStorage{},
+		addonStorage: sFact.Addon(),
+		chartStorage: sFact.Chart(),
 	}
 }
 
@@ -322,8 +288,6 @@ func (ts *clusterTestSuite) assertExpectations() {
 	ts.brokerFacade.AssertExpectations(ts.t)
 	ts.addonGetter.AssertExpectations(ts.t)
 	ts.brokerSyncer.AssertExpectations(ts.t)
-	ts.addonStorage.AssertExpectations(ts.t)
-	ts.chartStorage.AssertExpectations(ts.t)
 	ts.addonGetterFactory.AssertExpectations(ts.t)
 }
 
@@ -340,6 +304,11 @@ func fixClusterAddonsConfiguration() *v1alpha1.ClusterAddonsConfiguration {
 						URL: "http://example.com/index.yaml",
 					},
 				},
+			},
+		},
+		Status: v1alpha1.ClusterAddonsConfigurationStatus{
+			CommonAddonsConfigurationStatus: v1alpha1.CommonAddonsConfigurationStatus{
+				Repositories: fixRepositories(),
 			},
 		},
 	}
@@ -362,18 +331,8 @@ func fixFailedClusterAddonsConfiguration() *v1alpha1.ClusterAddonsConfiguration 
 		},
 		Status: v1alpha1.ClusterAddonsConfigurationStatus{
 			CommonAddonsConfigurationStatus: v1alpha1.CommonAddonsConfigurationStatus{
-				Repositories: []v1alpha1.StatusRepository{
-					{
-						Status: v1alpha1.RepositoryStatusFailed,
-						Addons: []v1alpha1.Addon{
-							{
-								Status:  v1alpha1.AddonStatusFailed,
-								Name:    "redis",
-								Version: "0.0.1",
-							},
-						},
-					},
-				},
+				Phase:        v1alpha1.AddonsConfigurationFailed,
+				Repositories: fixRepositoriesFailed(),
 			},
 		},
 	}
@@ -396,18 +355,8 @@ func fixReadyClusterAddonsConfiguration() *v1alpha1.ClusterAddonsConfiguration {
 		},
 		Status: v1alpha1.ClusterAddonsConfigurationStatus{
 			CommonAddonsConfigurationStatus: v1alpha1.CommonAddonsConfigurationStatus{
-				Repositories: []v1alpha1.StatusRepository{
-					{
-						Status: v1alpha1.RepositoryStatusReady,
-						Addons: []v1alpha1.Addon{
-							{
-								Status:  v1alpha1.AddonStatusReady,
-								Name:    "redis",
-								Version: "0.0.1",
-							},
-						},
-					},
-				},
+				Phase:        v1alpha1.AddonsConfigurationReady,
+				Repositories: fixRepositories(),
 			},
 		},
 	}
@@ -432,19 +381,8 @@ func fixDeletedClusterAddonsConfiguration() *v1alpha1.ClusterAddonsConfiguration
 		},
 		Status: v1alpha1.ClusterAddonsConfigurationStatus{
 			CommonAddonsConfigurationStatus: v1alpha1.CommonAddonsConfigurationStatus{
-				Phase: v1alpha1.AddonsConfigurationReady,
-				Repositories: []v1alpha1.StatusRepository{
-					{
-						Status: v1alpha1.RepositoryStatusReady,
-						Addons: []v1alpha1.Addon{
-							{
-								Status:  v1alpha1.AddonStatusReady,
-								Name:    "redis",
-								Version: "0.0.1",
-							},
-						},
-					},
-				},
+				Phase:        v1alpha1.AddonsConfigurationReady,
+				Repositories: fixRepositories(),
 			},
 		},
 	}
