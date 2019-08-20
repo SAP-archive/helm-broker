@@ -37,7 +37,8 @@ func (r AddonStatusReason) Message() string {
 type RepositoryStatusReason string
 
 const (
-	RepositoryURLFetchingError RepositoryStatusReason = "FetchingIndexError"
+	RepositoryURLFetchingError   RepositoryStatusReason = "FetchingIndexError"
+	RepositoryURLTemplatingError RepositoryStatusReason = "TemplatingURLError"
 )
 
 func (r RepositoryStatusReason) String() string {

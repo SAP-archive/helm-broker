@@ -35,13 +35,14 @@ type common struct {
 	// used to distinguish namespace-scoped and cluster-wide addons configurations
 	namespace internal.Namespace
 
-	commonClient commonClient
-	log          logrus.FieldLogger
+	commonClient    commonClient
+	templateService templateService
+	log             logrus.FieldLogger
 
 	trace string
 }
 
-func newControllerCommon(client client.Client, addonGetterFactory addonGetterFactory, addonStorage addonStorage, chartStorage chartStorage, docsProvider docsProvider, brokerSyncer brokerSyncer, brokerFacade brokerFacade, dstPath string, log logrus.FieldLogger) *common {
+func newControllerCommon(client client.Client, addonGetterFactory addonGetterFactory, addonStorage addonStorage, chartStorage chartStorage, docsProvider docsProvider, brokerSyncer brokerSyncer, brokerFacade brokerFacade, templateService templateService, dstPath string, log logrus.FieldLogger) *common {
 	return &common{
 		addonGetterFactory: addonGetterFactory,
 
@@ -54,8 +55,9 @@ func newControllerCommon(client client.Client, addonGetterFactory addonGetterFac
 		docsProvider: docsProvider,
 		protection:   protection{},
 
-		namespace:    internal.ClusterWide,
-		commonClient: NewCommonClient(client, log),
+		namespace:       internal.ClusterWide,
+		templateService: templateService,
+		commonClient:    NewCommonClient(client, log),
 
 		dstPath: dstPath,
 		log:     log,
@@ -66,7 +68,7 @@ func newControllerCommon(client client.Client, addonGetterFactory addonGetterFac
 func (c *common) SetWorkingNamespace(namespace string) {
 	c.namespace = internal.Namespace(namespace)
 	for _, svc := range []NamespacedService{
-		c.brokerSyncer, c.brokerFacade, c.docsProvider, c.commonClient,
+		c.brokerSyncer, c.brokerFacade, c.docsProvider, c.commonClient, c.templateService,
 	} {
 		svc.SetNamespace(namespace)
 	}
@@ -248,12 +250,23 @@ func (c *common) loadRepositories(repos []v1alpha1.SpecRepository) *repository.C
 		c.log.Infof("- create addons for %q repository", specRepository.URL)
 		repo := repository.NewAddonsRepository(specRepository.URL)
 
+		addonsURL := specRepository.URL
+		if specRepository.SecretRef != nil {
+			c.log.Infof("- templating URL using secret %s/%s", specRepository.SecretRef.Name, specRepository.SecretRef.Namespace)
+			templateURL, err := c.templateService.TemplateURL(specRepository)
+			if err != nil {
+				repo.TemplatingError(err)
+				repositories.AddRepository(repo)
+				c.log.Errorf("while templating repository URL `%s`: %v", specRepository.URL, err)
+				continue
+			}
+			addonsURL = templateURL
+		}
 
-		adds, err := c.createAddons(specRepository.URL)
+		adds, err := c.createAddons(addonsURL)
 		if err != nil {
 			repo.FetchingError(err)
 			repositories.AddRepository(repo)
-
 			c.log.Errorf("while creating addons for repository from %q: %s", specRepository.URL, err)
 			continue
 		}

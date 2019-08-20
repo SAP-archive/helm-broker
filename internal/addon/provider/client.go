@@ -52,8 +52,6 @@ func (d *Client) GetCompleteAddon(entry internal.IndexEntry) (internal.AddonWith
 		return internal.AddonWithCharts{}, errors.Wrapf(err, "while getting Docs URL for addon %v", entry.Name)
 	}
 
-
-
 	return internal.AddonWithCharts{
 		Addon:  a,
 		Charts: c,

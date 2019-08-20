@@ -9,8 +9,6 @@ import (
 )
 
 func TestHttpBasicAuth(t *testing.T) {
-	// todo: uncomment after templating is done
-	t.Skip()
 	// given
 	suite := newTestSuite(t, true, true)
 	defer suite.tearDown()

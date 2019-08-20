@@ -369,7 +369,7 @@ func (ts *testSuite) createSpecRepositories(urls []string, repoKind string, repo
 
 func WithSecretReference(namespace, name string) func(r *v1alpha1.SpecRepository) {
 	return func(r *v1alpha1.SpecRepository) {
-		r.SecretRef = corev1.SecretReference{
+		r.SecretRef = &corev1.SecretReference{
 			Namespace: namespace,
 			Name:      name,
 		}

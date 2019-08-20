@@ -27,12 +27,12 @@ type ReconcileAddonsConfiguration struct {
 }
 
 // NewReconcileAddonsConfiguration returns a new reconcile.Reconciler
-func NewReconcileAddonsConfiguration(mgr manager.Manager, addonGetterFactory addonGetterFactory, chartStorage chartStorage, addonStorage addonStorage, brokerFacade brokerFacade, docsProvider docsProvider, brokerSyncer brokerSyncer, tmpDir string, log logrus.FieldLogger) reconcile.Reconciler {
+func NewReconcileAddonsConfiguration(mgr manager.Manager, addonGetterFactory addonGetterFactory, chartStorage chartStorage, addonStorage addonStorage, brokerFacade brokerFacade, docsProvider docsProvider, brokerSyncer brokerSyncer, templateService templateService, tmpDir string, log logrus.FieldLogger) reconcile.Reconciler {
 	return &ReconcileAddonsConfiguration{
 		log:    log.WithField("controller", "addons"),
 		Client: mgr.GetClient(),
 
-		common: newControllerCommon(mgr.GetClient(), addonGetterFactory, addonStorage, chartStorage, docsProvider, brokerSyncer, brokerFacade, path.Join(tmpDir, "addon-loader-dst"), log),
+		common: newControllerCommon(mgr.GetClient(), addonGetterFactory, addonStorage, chartStorage, docsProvider, brokerSyncer, brokerFacade, templateService, path.Join(tmpDir, "addon-loader-dst"), log),
 	}
 }
 
