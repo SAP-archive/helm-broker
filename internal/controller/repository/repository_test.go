@@ -1,4 +1,4 @@
-package addons
+package repository
 
 import (
 	"testing"
@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestRepositoryController(t *testing.T) {
+func TestRepository(t *testing.T) {
 	// Given
 	tr := NewAddonsRepository("http://example.com/index.yaml")
 
@@ -17,7 +17,7 @@ func TestRepositoryController(t *testing.T) {
 	assert.Equal(t, v1alpha1.RepositoryStatusReady, tr.Repository.Status)
 }
 
-func TestRepositoryController_IsFailed(t *testing.T) {
+func TestRepository_IsFailed(t *testing.T) {
 	// Given
 	tr := NewAddonsRepository("http://example.com/index.yaml")
 
@@ -28,7 +28,7 @@ func TestRepositoryController_IsFailed(t *testing.T) {
 	assert.True(t, tr.IsFailed())
 }
 
-func TestRepositoryController_FetchingError(t *testing.T) {
+func TestRepository_FetchingError(t *testing.T) {
 	// Given
 	tr := NewAddonsRepository("http://example.com/index.yaml")
 

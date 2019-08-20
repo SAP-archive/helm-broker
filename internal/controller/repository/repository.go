@@ -1,4 +1,4 @@
-package addons
+package repository
 
 import (
 	"fmt"
@@ -6,15 +6,15 @@ import (
 	addonsv1alpha1 "github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
 )
 
-// RepositoryController is a wraper for StatusRepository
-type RepositoryController struct {
+// Repository is a wraper for StatusRepository
+type Repository struct {
 	Repository addonsv1alpha1.StatusRepository
-	Addons     []*AddonController
+	Addons     []*Entry
 }
 
-// NewAddonsRepository returns pointer to new RepositoryController with url and ready status
-func NewAddonsRepository(url string) *RepositoryController {
-	return &RepositoryController{
+// NewAddonsRepository returns pointer to new Repository with url and ready status
+func NewAddonsRepository(url string) *Repository {
+	return &Repository{
 		Repository: addonsv1alpha1.StatusRepository{
 			URL:    url,
 			Status: addonsv1alpha1.RepositoryStatusReady,
@@ -23,17 +23,17 @@ func NewAddonsRepository(url string) *RepositoryController {
 }
 
 // Failed sets StatusRepository as failed
-func (ar *RepositoryController) Failed() {
+func (ar *Repository) Failed() {
 	ar.Repository.Status = addonsv1alpha1.RepositoryStatusFailed
 }
 
 // IsFailed checks is StatusRepository is in failed state
-func (ar *RepositoryController) IsFailed() bool {
+func (ar *Repository) IsFailed() bool {
 	return ar.Repository.Status == addonsv1alpha1.RepositoryStatusFailed
 }
 
 // HasFailedAddons returns true if any addon in the repository has status Failed
-func (ar *RepositoryController) HasFailedAddons() bool {
+func (ar *Repository) HasFailedAddons() bool {
 	for _, addon := range ar.Addons {
 		if !addon.IsReady() {
 			return true
@@ -43,7 +43,7 @@ func (ar *RepositoryController) HasFailedAddons() bool {
 }
 
 // FetchingError sets StatusRepository as failed with URLFetchingError as a reason
-func (ar *RepositoryController) FetchingError(err error) {
+func (ar *Repository) FetchingError(err error) {
 	reason := addonsv1alpha1.RepositoryURLFetchingError
 	ar.Failed()
 	ar.Repository.Reason = reason

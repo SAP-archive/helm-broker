@@ -8,20 +8,41 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/alecthomas/jsonschema"
 	"github.com/fatih/structs"
+	"github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
 	cms "github.com/kyma-project/kyma/components/cms-controller-manager/pkg/apis/cms/v1alpha1"
 	"github.com/pkg/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/helm/pkg/proto/hapi/chart"
 )
 
-// AddonID is a Addon identifier as defined by Open Service Broker API.
+// Index contains collection of all addons from the given repository
+type Index struct {
+	Entries map[AddonName][]IndexEntry `json:"entries"`
+}
+
+// IndexEntry contains information about single addon entry
+type IndexEntry struct {
+	// Name is set to index entry key name
+	Name AddonName `json:"-"`
+	// DisplayName is the entry name, currently treated by us as DisplayName
+	DisplayName string       `json:"name"`
+	Description string       `json:"description"`
+	Version     AddonVersion `json:"version"`
+}
+
+// AddonID is a AddonWithCharts identifier as defined by Open Service Broker API.
 type AddonID string
 
-// AddonName is a Addon name as defined by Open Service Broker API.
+// AddonName is a AddonWithCharts name as defined by Open Service Broker API.
 type AddonName string
 
-// AddonPlanID is an identifier of Addon plan as defined by Open Service Broker API.
+// AddonVersion is a AddonWithCharts version which is defined in the index file
+type AddonVersion string
+
+// AddonPlanID is an identifier of AddonWithCharts plan as defined by Open Service Broker API.
 type AddonPlanID string
 
-// AddonPlanName is the name of the Addon plan as defined by Open Service Broker API
+// AddonPlanName is the name of the AddonWithCharts plan as defined by Open Service Broker API
 type AddonPlanName string
 
 // PlanSchemaType describes type of the schema file.
@@ -125,7 +146,7 @@ func (b AddonPlanMetadata) ToMap() map[string]interface{} {
 	return structs.Map(mapped(b))
 }
 
-// AddonTag is a Tag attached to Addon.
+// AddonTag is a Tag attached to AddonWithCharts.
 type AddonTag string
 
 // AddonDocs contains data to create ClusterDocsTopic for every ClusterServiceClass.
@@ -148,6 +169,22 @@ type Addon struct {
 	BindingsRetrievable bool
 	PlanUpdatable       *bool
 	Docs                []AddonDocs
+	Status              v1alpha1.AddonStatus
+	Reason              v1alpha1.AddonStatusReason
+	Message             string
+}
+
+// CommonAddon holds common addon configuration structs
+type CommonAddon struct {
+	Meta   v1.ObjectMeta
+	Spec   v1alpha1.CommonAddonsConfigurationSpec
+	Status v1alpha1.CommonAddonsConfigurationStatus
+}
+
+// AddonWithCharts aggregates an addon with its chart(s)
+type AddonWithCharts struct {
+	Addon  *Addon
+	Charts []*chart.Chart
 }
 
 // IsProvisioningAllowed determines addon can be provision on indicated namespace

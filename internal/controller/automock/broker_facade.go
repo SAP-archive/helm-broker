@@ -8,13 +8,13 @@ type BrokerFacade struct {
 	mock.Mock
 }
 
-// Create provides a mock function with given fields: ns
-func (_m *BrokerFacade) Create(ns string) error {
-	ret := _m.Called(ns)
+// Create provides a mock function with given fields:
+func (_m *BrokerFacade) Create() error {
+	ret := _m.Called()
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
-		r0 = rf(ns)
+	if rf, ok := ret.Get(0).(func() error); ok {
+		r0 = rf()
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -22,13 +22,13 @@ func (_m *BrokerFacade) Create(ns string) error {
 	return r0
 }
 
-// Delete provides a mock function with given fields: ns
-func (_m *BrokerFacade) Delete(ns string) error {
-	ret := _m.Called(ns)
+// Delete provides a mock function with given fields:
+func (_m *BrokerFacade) Delete() error {
+	ret := _m.Called()
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
-		r0 = rf(ns)
+	if rf, ok := ret.Get(0).(func() error); ok {
+		r0 = rf()
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -36,23 +36,28 @@ func (_m *BrokerFacade) Delete(ns string) error {
 	return r0
 }
 
-// Exist provides a mock function with given fields: ns
-func (_m *BrokerFacade) Exist(ns string) (bool, error) {
-	ret := _m.Called(ns)
+// Exist provides a mock function with given fields:
+func (_m *BrokerFacade) Exist() (bool, error) {
+	ret := _m.Called()
 
 	var r0 bool
-	if rf, ok := ret.Get(0).(func(string) bool); ok {
-		r0 = rf(ns)
+	if rf, ok := ret.Get(0).(func() bool); ok {
+		r0 = rf()
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(ns)
+	if rf, ok := ret.Get(1).(func() error); ok {
+		r1 = rf()
 	} else {
 		r1 = ret.Error(1)
 	}
 
 	return r0, r1
+}
+
+// SetNamespace provides a mock function with given fields: namespace
+func (_m *BrokerFacade) SetNamespace(namespace string) {
+	_m.Called(namespace)
 }

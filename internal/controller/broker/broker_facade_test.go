@@ -7,7 +7,6 @@ import (
 	"context"
 
 	"github.com/kubernetes-incubator/service-catalog/pkg/apis/servicecatalog/v1beta1"
-	"github.com/kyma-project/helm-broker/internal/controller/automock"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -25,14 +24,12 @@ func TestServiceBrokerCreateHappyPath(t *testing.T) {
 	// GIVEN
 	require.NoError(t, v1beta1.AddToScheme(scheme.Scheme))
 	cli := fake.NewFakeClientWithScheme(scheme.Scheme)
-	brokerSyncer := &automock.BrokerSyncer{}
-	brokerSyncer.On("SyncServiceBroker", fixDestNs()).Once().Return(nil)
-	defer brokerSyncer.AssertExpectations(t)
 
 	svcURL := fmt.Sprintf("http://%s.%s.svc.cluster.local/ns/%s", fixService(), fixWorkingNs(), "stage")
-	sut := NewBrokersFacade(cli, brokerSyncer, fixWorkingNs(), fixService(), logrus.New())
+	sut := NewBrokersFacade(cli, fixWorkingNs(), fixService(), logrus.New())
 	// WHEN
-	err := sut.Create(fixDestNs())
+	sut.SetNamespace(fixDestNs())
+	err := sut.Create()
 
 	// THEN
 	require.NoError(t, err)
@@ -50,12 +47,11 @@ func TestServiceBrokerDeleteHappyPath(t *testing.T) {
 	// GIVEN
 	require.NoError(t, v1beta1.AddToScheme(scheme.Scheme))
 	cli := fake.NewFakeClientWithScheme(scheme.Scheme)
-	brokerSyncer := &automock.BrokerSyncer{}
-	defer brokerSyncer.AssertExpectations(t)
 
-	sut := NewBrokersFacade(cli, brokerSyncer, fixWorkingNs(), fixService(), logrus.New())
+	sut := NewBrokersFacade(cli, fixWorkingNs(), fixService(), logrus.New())
 	// WHEN
-	err := sut.Delete(fixDestNs())
+	sut.SetNamespace(fixDestNs())
+	err := sut.Delete()
 	// THEN
 	require.NoError(t, err)
 }
@@ -64,12 +60,11 @@ func TestServiceBrokerDeleteNotFoundErrorsIgnored(t *testing.T) {
 	// GIVEN
 	require.NoError(t, v1beta1.AddToScheme(scheme.Scheme))
 	cli := fake.NewFakeClientWithScheme(scheme.Scheme)
-	brokerSyncer := &automock.BrokerSyncer{}
-	defer brokerSyncer.AssertExpectations(t)
 
-	sut := NewBrokersFacade(cli, brokerSyncer, fixWorkingNs(), fixService(), logrus.New())
+	sut := NewBrokersFacade(cli, fixWorkingNs(), fixService(), logrus.New())
 	// WHEN
-	err := sut.Delete(fixDestNs())
+	sut.SetNamespace(fixDestNs())
+	err := sut.Delete()
 	// THEN
 	require.NoError(t, err)
 }
@@ -78,12 +73,11 @@ func TestServiceBrokerDoesNotExist(t *testing.T) {
 	// GIVEN
 	require.NoError(t, v1beta1.AddToScheme(scheme.Scheme))
 	cli := fake.NewFakeClientWithScheme(scheme.Scheme)
-	brokerSyncer := &automock.BrokerSyncer{}
-	defer brokerSyncer.AssertExpectations(t)
 
-	sut := NewBrokersFacade(cli, brokerSyncer, fixWorkingNs(), fixService(), logrus.New())
+	sut := NewBrokersFacade(cli, fixWorkingNs(), fixService(), logrus.New())
 	// WHEN
-	ex, err := sut.Exist(fixDestNs())
+	sut.SetNamespace(fixDestNs())
+	ex, err := sut.Exist()
 	// THEN
 	require.NoError(t, err)
 	assert.False(t, ex)
@@ -98,12 +92,10 @@ func TestServiceBrokerExist(t *testing.T) {
 			Namespace: fixDestNs(),
 		}})
 
-	brokerSyncer := &automock.BrokerSyncer{}
-	defer brokerSyncer.AssertExpectations(t)
-
-	sut := NewBrokersFacade(cli, brokerSyncer, fixWorkingNs(), fixService(), logrus.New())
+	sut := NewBrokersFacade(cli, fixWorkingNs(), fixService(), logrus.New())
 	// WHEN
-	ex, err := sut.Exist(fixDestNs())
+	sut.SetNamespace(fixDestNs())
+	ex, err := sut.Exist()
 	// THEN
 	require.NoError(t, err)
 	assert.True(t, ex)

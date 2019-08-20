@@ -7,6 +7,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/kyma-project/helm-broker/internal"
 	"github.com/kyma-project/helm-broker/internal/addon"
 	"github.com/kyma-project/helm-broker/internal/addon/provider"
 	"github.com/kyma-project/helm-broker/platform/logger/spy"
@@ -26,7 +27,7 @@ func TestRepositoryClientSuccess(t *testing.T) {
 	addonLoader, err := provider.NewClient(fakeRepo, addon.NewLoader(tmpDir, log), log)
 	require.NoError(t, err)
 
-	entry := addon.EntryDTO{
+	entry := internal.IndexEntry{
 		Name:    "redis",
 		Version: "0.0.1",
 	}
@@ -55,7 +56,7 @@ func (p *fakeRepository) IndexReader() (io.ReadCloser, error) {
 }
 
 // AddonLoadInfo returns info how to load addon
-func (p *fakeRepository) AddonLoadInfo(name addon.Name, version addon.Version) (provider.LoadType, string, error) {
+func (p *fakeRepository) AddonLoadInfo(name internal.AddonName, version internal.AddonVersion) (provider.LoadType, string, error) {
 	docsURL, err := p.AddonDocURL(name, version)
 	if err != nil {
 		return 0, "", err
@@ -64,7 +65,7 @@ func (p *fakeRepository) AddonLoadInfo(name addon.Name, version addon.Version) (
 }
 
 // AddonDocURL returns download url for given addon
-func (p *fakeRepository) AddonDocURL(name addon.Name, version addon.Version) (string, error) {
+func (p *fakeRepository) AddonDocURL(name internal.AddonName, version internal.AddonVersion) (string, error) {
 	return fmt.Sprintf("%s/%s-%s.tgz", p.path, name, version), nil
 }
 

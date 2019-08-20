@@ -41,24 +41,24 @@ func (d *Client) Cleanup() error {
 	return d.concreteGetter.Cleanup()
 }
 
-// GetCompleteAddon returns a addon with his charts as CompleteAddon instance.
-func (d *Client) GetCompleteAddon(entry addon.EntryDTO) (addon.CompleteAddon, error) {
+// GetCompleteAddon returns a addon with his charts as AddonWithCharts instance.
+func (d *Client) GetCompleteAddon(entry internal.IndexEntry) (internal.AddonWithCharts, error) {
 	b, c, err := d.loadAddonAndCharts(entry.Name, entry.Version)
 	if err != nil {
-		return addon.CompleteAddon{}, errors.Wrapf(err, "while loading addon %v", entry.Name)
+		return internal.AddonWithCharts{}, errors.Wrapf(err, "while loading addon %v", entry.Name)
 	}
 	b.RepositoryURL, err = d.concreteGetter.AddonDocURL(entry.Name, entry.Version)
 	if err != nil {
-		return addon.CompleteAddon{}, errors.Wrapf(err, "while getting Docs URL for addon %v", entry.Name)
+		return internal.AddonWithCharts{}, errors.Wrapf(err, "while getting Docs URL for addon %v", entry.Name)
 	}
-	return addon.CompleteAddon{
+	return internal.AddonWithCharts{
 		Addon:  b,
 		Charts: c,
 	}, nil
 }
 
 // GetIndex returns all entries from given repo index
-func (d *Client) GetIndex() (*addon.IndexDTO, error) {
+func (d *Client) GetIndex() (*internal.Index, error) {
 	idxReader, err := d.concreteGetter.IndexReader()
 	if err != nil {
 		return nil, errors.Wrap(err, "while getting index file")
@@ -69,7 +69,7 @@ func (d *Client) GetIndex() (*addon.IndexDTO, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "while reading index file")
 	}
-	idx := addon.IndexDTO{}
+	idx := internal.Index{}
 	if err = yaml.Unmarshal(bytes, &idx); err != nil {
 		return nil, errors.Wrap(err, "while unmarshaling index file")
 	}
@@ -84,7 +84,7 @@ func (d *Client) GetIndex() (*addon.IndexDTO, error) {
 	return &idx, nil
 }
 
-func (d *Client) loadAddonAndCharts(entryName addon.Name, version addon.Version) (*internal.Addon, []*chart.Chart, error) {
+func (d *Client) loadAddonAndCharts(entryName internal.AddonName, version internal.AddonVersion) (*internal.Addon, []*chart.Chart, error) {
 	lType, path, err := d.concreteGetter.AddonLoadInfo(entryName, version)
 	if err != nil {
 		return nil, nil, addon.NewFetchingError(errors.Wrapf(err, "while reading addon archive for name [%s] and version [%v]", entryName, version))

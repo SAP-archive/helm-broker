@@ -12,11 +12,12 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/kubernetes-incubator/service-catalog/pkg/apis/servicecatalog/v1beta1"
 	"github.com/kyma-project/helm-broker/internal"
-	"github.com/kyma-project/helm-broker/internal/addon"
 	"github.com/kyma-project/helm-broker/internal/controller/automock"
 	"github.com/kyma-project/helm-broker/internal/platform/logger/spy"
+	"github.com/kyma-project/helm-broker/internal/storage"
 	"github.com/kyma-project/helm-broker/pkg/apis"
 	"github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
+	cms "github.com/kyma-project/kyma/components/cms-controller-manager/pkg/apis/cms/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/api/core/v1"
@@ -26,6 +27,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/record"
+	"k8s.io/helm/pkg/proto/hapi/chart"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -41,25 +43,20 @@ func TestReconcileAddonsConfiguration_AddAddonsProcess(t *testing.T) {
 	indexDTO := fixIndexDTO()
 	tmpDir := os.TempDir()
 
-	ts.concreteGetter.On("GetIndex").Return(indexDTO, nil)
-	ts.concreteGetter.On("Cleanup").Return(nil)
+	ts.addonGetter.On("GetIndex").Return(indexDTO, nil)
+	ts.addonGetter.On("Cleanup").Return(nil)
 	for _, entry := range indexDTO.Entries {
 		for _, e := range entry {
 			completeAddon := fixAddonWithDocsURL(string(e.Name), string(e.Name), "example.com", "example.com")
 
-			ts.concreteGetter.On("GetCompleteAddon", e).
+			ts.addonGetter.On("GetCompleteAddon", e).
 				Return(completeAddon, nil)
-
-			ts.addonStorage.On("Upsert", internal.Namespace(fixAddonsCfg.Namespace), completeAddon.Addon).
-				Return(false, nil)
-			ts.chartStorage.On("Upsert", internal.Namespace(fixAddonsCfg.Namespace), completeAddon.Charts[0]).
-				Return(false, nil)
-			ts.docsProvider.On("EnsureDocsTopic", completeAddon.Addon, fixAddonsCfg.Namespace).Return(nil)
+			ts.docsProvider.On("EnsureDocsTopic", completeAddon.Addon).Return(nil)
 		}
 	}
-	ts.brokerFacade.On("Exist", fixAddonsCfg.Namespace).Return(false, nil).Once()
-	ts.brokerFacade.On("Create", fixAddonsCfg.Namespace).Return(nil).Once()
-	ts.addonGetterFactory.On("NewGetter", fixAddonsCfg.Spec.Repositories[0].URL, path.Join(tmpDir, "addon-loader-dst")).Return(ts.concreteGetter, nil).Once()
+	ts.brokerFacade.On("Exist").Return(false, nil).Once()
+	ts.brokerFacade.On("Create").Return(nil).Once()
+	ts.addonGetterFactory.On("NewGetter", fixAddonsCfg.Spec.Repositories[0].URL, path.Join(tmpDir, "addon-loader-dst")).Return(ts.addonGetter, nil).Once()
 	defer ts.assertExpectations()
 
 	// WHEN
@@ -83,24 +80,19 @@ func TestReconcileAddonsConfiguration_AddAddonsProcess_ErrorIfBrokerExist(t *tes
 	indexDTO := fixIndexDTO()
 	tmpDir := os.TempDir()
 
-	ts.concreteGetter.On("GetIndex").Return(indexDTO, nil)
-	ts.concreteGetter.On("Cleanup").Return(nil)
+	ts.addonGetter.On("GetIndex").Return(indexDTO, nil)
+	ts.addonGetter.On("Cleanup").Return(nil)
 	for _, entry := range indexDTO.Entries {
 		for _, e := range entry {
 			completeAddon := fixAddonWithDocsURL(string(e.Name), string(e.Name), "example.com", "example.com")
 
-			ts.concreteGetter.On("GetCompleteAddon", e).
+			ts.addonGetter.On("GetCompleteAddon", e).
 				Return(completeAddon, nil)
-
-			ts.addonStorage.On("Upsert", internal.Namespace(fixAddonsCfg.Namespace), completeAddon.Addon).
-				Return(false, nil)
-			ts.chartStorage.On("Upsert", internal.Namespace(fixAddonsCfg.Namespace), completeAddon.Charts[0]).
-				Return(false, nil)
-			ts.docsProvider.On("EnsureDocsTopic", completeAddon.Addon, fixAddonsCfg.Namespace).Return(nil)
+			ts.docsProvider.On("EnsureDocsTopic", completeAddon.Addon).Return(nil)
 		}
 	}
-	ts.brokerFacade.On("Exist", fixAddonsCfg.Namespace).Return(false, errors.New("")).Once()
-	ts.addonGetterFactory.On("NewGetter", fixAddonsCfg.Spec.Repositories[0].URL, path.Join(tmpDir, "addon-loader-dst")).Return(ts.concreteGetter, nil).Once()
+	ts.brokerFacade.On("Exist").Return(false, errors.New("")).Once()
+	ts.addonGetterFactory.On("NewGetter", fixAddonsCfg.Spec.Repositories[0].URL, path.Join(tmpDir, "addon-loader-dst")).Return(ts.addonGetter, nil).Once()
 	defer ts.assertExpectations()
 
 	// WHEN
@@ -126,25 +118,20 @@ func TestReconcileAddonsConfiguration_UpdateAddonsProcess(t *testing.T) {
 	indexDTO := fixIndexDTO()
 	tmpDir := os.TempDir()
 
-	ts.concreteGetter.On("GetIndex").Return(indexDTO, nil)
-	ts.concreteGetter.On("Cleanup").Return(nil)
+	ts.addonGetter.On("GetIndex").Return(indexDTO, nil)
+	ts.addonGetter.On("Cleanup").Return(nil)
 	for _, entry := range indexDTO.Entries {
 		for _, e := range entry {
 			completeAddon := fixAddonWithDocsURL(string(e.Name), string(e.Name), "example.com", "example.com")
 
-			ts.concreteGetter.On("GetCompleteAddon", e).
+			ts.addonGetter.On("GetCompleteAddon", e).
 				Return(completeAddon, nil)
-
-			ts.addonStorage.On("Upsert", internal.Namespace(fixAddonsCfg.Namespace), completeAddon.Addon).
-				Return(false, nil)
-			ts.chartStorage.On("Upsert", internal.Namespace(fixAddonsCfg.Namespace), completeAddon.Charts[0]).
-				Return(false, nil)
-			ts.docsProvider.On("EnsureDocsTopic", completeAddon.Addon, fixAddonsCfg.Namespace).Return(nil)
+			ts.docsProvider.On("EnsureDocsTopic", completeAddon.Addon).Return(nil)
 		}
 	}
-	ts.brokerFacade.On("Exist", fixAddonsCfg.Namespace).Return(false, nil).Once()
-	ts.brokerFacade.On("Create", fixAddonsCfg.Namespace).Return(nil).Once()
-	ts.addonGetterFactory.On("NewGetter", fixAddonsCfg.Spec.Repositories[0].URL, path.Join(tmpDir, "addon-loader-dst")).Return(ts.concreteGetter, nil).Once()
+	ts.brokerFacade.On("Exist").Return(false, nil).Once()
+	ts.brokerFacade.On("Create").Return(nil).Once()
+	ts.addonGetterFactory.On("NewGetter", fixAddonsCfg.Spec.Repositories[0].URL, path.Join(tmpDir, "addon-loader-dst")).Return(ts.addonGetter, nil).Once()
 	defer ts.assertExpectations()
 
 	// WHEN
@@ -166,16 +153,16 @@ func TestReconcileAddonsConfiguration_UpdateAddonsProcess_ConflictingAddons(t *t
 	indexDTO := fixIndexDTO()
 	tmpDir := os.TempDir()
 
-	ts.concreteGetter.On("GetIndex").Return(indexDTO, nil)
-	ts.concreteGetter.On("Cleanup").Return(nil)
+	ts.addonGetter.On("GetIndex").Return(indexDTO, nil)
+	ts.addonGetter.On("Cleanup").Return(nil)
 	for _, entry := range indexDTO.Entries {
 		for _, e := range entry {
 			completeAddon := fixAddonWithDocsURL(string(e.Name), string(e.Name), "example.com", "example.com")
-			ts.concreteGetter.On("GetCompleteAddon", e).
+			ts.addonGetter.On("GetCompleteAddon", e).
 				Return(completeAddon, nil)
 		}
 	}
-	ts.addonGetterFactory.On("NewGetter", fixAddonsCfg.Spec.Repositories[0].URL, path.Join(tmpDir, "addon-loader-dst")).Return(ts.concreteGetter, nil).Once()
+	ts.addonGetterFactory.On("NewGetter", fixAddonsCfg.Spec.Repositories[0].URL, path.Join(tmpDir, "addon-loader-dst")).Return(ts.addonGetter, nil).Once()
 	defer ts.assertExpectations()
 
 	// WHEN
@@ -196,22 +183,14 @@ func TestReconcileAddonsConfiguration_UpdateAddonsProcess_ConflictingAddons(t *t
 func TestReconcileAddonsConfiguration_DeleteAddonsProcess(t *testing.T) {
 	// GIVEN
 	fixAddonsCfg := fixDeletedAddonsConfiguration()
-	fixAddon := fixAddonWithEmptyDocs("id", fixAddonsCfg.Status.Repositories[0].Addons[0].Name, "example.com").Addon
-	addonVer := *semver.MustParse(fixAddonsCfg.Status.Repositories[0].Addons[0].Version)
 	ts := getTestSuite(t, fixAddonsCfg)
+	tmpDir := os.TempDir()
 
-	ts.brokerFacade.On("Delete", fixAddonsCfg.Namespace).Return(nil).Once()
-	ts.addonStorage.
-		On("Get", internal.Namespace(fixAddonsCfg.Namespace), internal.AddonName(fixAddonsCfg.Status.Repositories[0].Addons[0].Name), addonVer).
-		Return(fixAddon, nil)
-	ts.addonStorage.On("Remove", internal.Namespace(fixAddonsCfg.Namespace), fixAddon.Name, addonVer).Return(nil)
-	ts.chartStorage.On("Remove", internal.Namespace(fixAddonsCfg.Namespace), fixAddon.Plans[internal.AddonPlanID(fmt.Sprintf("plan-%s", fixAddon.Name))].ChartRef.Name, fixAddon.Plans[internal.AddonPlanID(fmt.Sprintf("plan-%s", fixAddon.Name))].ChartRef.Version).Return(nil)
-
-	ts.docsProvider.On("EnsureDocsTopicRemoved", string(fixAddon.ID), fixAddonsCfg.Namespace).Return(nil)
+	ts.brokerFacade.On("Delete").Return(nil).Once()
 	defer ts.assertExpectations()
 
 	// WHEN
-	reconciler := NewReconcileAddonsConfiguration(ts.mgr, ts.addonGetterFactory, ts.chartStorage, ts.addonStorage, ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, os.TempDir(), spy.NewLogDummy())
+	reconciler := NewReconcileAddonsConfiguration(ts.mgr, ts.addonGetterFactory, ts.chartStorage, ts.addonStorage, ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, tmpDir, spy.NewLogDummy())
 
 	// THEN
 	result, err := reconciler.Reconcile(reconcile.Request{NamespacedName: types.NamespacedName{Namespace: fixAddonsCfg.Namespace, Name: fixAddonsCfg.Name}})
@@ -228,22 +207,14 @@ func TestReconcileAddonsConfiguration_DeleteAddonsProcess_ReconcileOtherAddons(t
 	// GIVEN
 	failedAddCfg := fixFailedAddonsConfiguration()
 	fixAddonsCfg := fixDeletedAddonsConfiguration()
-	fixAddon := fixAddonWithEmptyDocs("id", fixAddonsCfg.Status.Repositories[0].Addons[0].Name, "example.com").Addon
-	addonVer := *semver.MustParse(fixAddonsCfg.Status.Repositories[0].Addons[0].Version)
 	ts := getTestSuite(t, fixAddonsCfg, failedAddCfg)
+	tmpDir := os.TempDir()
 
-	ts.brokerFacade.On("Delete", fixAddonsCfg.Namespace).Return(nil).Once()
-	ts.addonStorage.
-		On("Get", internal.Namespace(fixAddonsCfg.Namespace), internal.AddonName(fixAddonsCfg.Status.Repositories[0].Addons[0].Name), addonVer).
-		Return(fixAddon, nil)
-	ts.addonStorage.On("Remove", internal.Namespace(fixAddonsCfg.Namespace), fixAddon.Name, addonVer).Return(nil)
-	ts.chartStorage.On("Remove", internal.Namespace(fixAddonsCfg.Namespace), fixAddon.Plans[internal.AddonPlanID(fmt.Sprintf("plan-%s", fixAddon.Name))].ChartRef.Name, fixAddon.Plans[internal.AddonPlanID(fmt.Sprintf("plan-%s", fixAddon.Name))].ChartRef.Version).Return(nil)
-
-	ts.docsProvider.On("EnsureDocsTopicRemoved", string(fixAddon.ID), fixAddonsCfg.Namespace).Return(nil)
+	ts.brokerFacade.On("Delete").Return(nil).Once()
 	defer ts.assertExpectations()
 
 	// WHEN
-	reconciler := NewReconcileAddonsConfiguration(ts.mgr, ts.addonGetterFactory, ts.chartStorage, ts.addonStorage, ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, os.TempDir(), spy.NewLogDummy())
+	reconciler := NewReconcileAddonsConfiguration(ts.mgr, ts.addonGetterFactory, ts.chartStorage, ts.addonStorage, ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, tmpDir, spy.NewLogDummy())
 
 	// THEN
 	result, err := reconciler.Reconcile(reconcile.Request{NamespacedName: types.NamespacedName{Namespace: fixAddonsCfg.Namespace, Name: fixAddonsCfg.Name}})
@@ -265,12 +236,13 @@ func TestReconcileAddonsConfiguration_DeleteAddonsProcess_Error(t *testing.T) {
 	// GIVEN
 	fixAddonsCfg := fixDeletedAddonsConfiguration()
 	ts := getTestSuite(t, fixAddonsCfg)
+	tmpDir := os.TempDir()
 
-	ts.brokerFacade.On("Delete", fixAddonsCfg.Namespace).Return(errors.New("")).Once()
+	ts.brokerFacade.On("Delete").Return(errors.New("")).Once()
 	defer ts.assertExpectations()
 
 	// WHEN
-	reconciler := NewReconcileAddonsConfiguration(ts.mgr, ts.addonGetterFactory, ts.chartStorage, ts.addonStorage, ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, os.TempDir(), spy.NewLogDummy())
+	reconciler := NewReconcileAddonsConfiguration(ts.mgr, ts.addonGetterFactory, ts.chartStorage, ts.addonStorage, ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, tmpDir, spy.NewLogDummy())
 
 	// THEN
 	result, err := reconciler.Reconcile(reconcile.Request{NamespacedName: types.NamespacedName{Namespace: fixAddonsCfg.Namespace, Name: fixAddonsCfg.Name}})
@@ -282,6 +254,36 @@ func TestReconcileAddonsConfiguration_DeleteAddonsProcess_Error(t *testing.T) {
 	err = ts.mgr.GetClient().Get(context.Background(), types.NamespacedName{Namespace: fixAddonsCfg.Namespace, Name: fixAddonsCfg.Name}, &res)
 	assert.NoError(t, err)
 	assert.Contains(t, res.Finalizers, v1alpha1.FinalizerAddonsConfiguration)
+}
+
+func fixRepositories() []v1alpha1.StatusRepository {
+	return []v1alpha1.StatusRepository{
+		{
+			Status: v1alpha1.RepositoryStatusReady,
+			Addons: []v1alpha1.Addon{
+				{
+					Status:  v1alpha1.AddonStatusReady,
+					Name:    "redis",
+					Version: "0.0.1",
+				},
+			},
+		},
+	}
+}
+
+func fixRepositoriesFailed() []v1alpha1.StatusRepository {
+	return []v1alpha1.StatusRepository{
+		{
+			Status: v1alpha1.RepositoryStatusFailed,
+			Addons: []v1alpha1.Addon{
+				{
+					Status:  v1alpha1.AddonStatusFailed,
+					Name:    "redis",
+					Version: "0.0.1",
+				},
+			},
+		},
+	}
 }
 
 func fixAddonsConfiguration() *v1alpha1.AddonsConfiguration {
@@ -298,6 +300,12 @@ func fixAddonsConfiguration() *v1alpha1.AddonsConfiguration {
 						URL: "http://example.com/index.yaml",
 					},
 				},
+			},
+		},
+		Status: v1alpha1.AddonsConfigurationStatus{
+			CommonAddonsConfigurationStatus: v1alpha1.CommonAddonsConfigurationStatus{
+				Phase:        v1alpha1.AddonsConfigurationFailed,
+				Repositories: fixRepositories(),
 			},
 		},
 	}
@@ -321,19 +329,8 @@ func fixFailedAddonsConfiguration() *v1alpha1.AddonsConfiguration {
 		},
 		Status: v1alpha1.AddonsConfigurationStatus{
 			CommonAddonsConfigurationStatus: v1alpha1.CommonAddonsConfigurationStatus{
-				Phase: v1alpha1.AddonsConfigurationFailed,
-				Repositories: []v1alpha1.StatusRepository{
-					{
-						Status: v1alpha1.RepositoryStatusFailed,
-						Addons: []v1alpha1.Addon{
-							{
-								Status:  v1alpha1.AddonStatusFailed,
-								Name:    "redis",
-								Version: "0.0.1",
-							},
-						},
-					},
-				},
+				Phase:        v1alpha1.AddonsConfigurationFailed,
+				Repositories: fixRepositoriesFailed(),
 			},
 		},
 	}
@@ -357,19 +354,8 @@ func fixReadyAddonsConfiguration() *v1alpha1.AddonsConfiguration {
 		},
 		Status: v1alpha1.AddonsConfigurationStatus{
 			CommonAddonsConfigurationStatus: v1alpha1.CommonAddonsConfigurationStatus{
-				Phase: v1alpha1.AddonsConfigurationReady,
-				Repositories: []v1alpha1.StatusRepository{
-					{
-						Status: v1alpha1.RepositoryStatusReady,
-						Addons: []v1alpha1.Addon{
-							{
-								Status:  v1alpha1.AddonStatusReady,
-								Name:    "redis",
-								Version: "0.0.1",
-							},
-						},
-					},
-				},
+				Phase:        v1alpha1.AddonsConfigurationReady,
+				Repositories: fixRepositories(),
 			},
 		},
 	}
@@ -395,27 +381,16 @@ func fixDeletedAddonsConfiguration() *v1alpha1.AddonsConfiguration {
 		},
 		Status: v1alpha1.AddonsConfigurationStatus{
 			CommonAddonsConfigurationStatus: v1alpha1.CommonAddonsConfigurationStatus{
-				Phase: v1alpha1.AddonsConfigurationReady,
-				Repositories: []v1alpha1.StatusRepository{
-					{
-						Status: v1alpha1.RepositoryStatusReady,
-						Addons: []v1alpha1.Addon{
-							{
-								Status:  v1alpha1.AddonStatusReady,
-								Name:    "redis",
-								Version: "0.0.1",
-							},
-						},
-					},
-				},
+				Phase:        v1alpha1.AddonsConfigurationReady,
+				Repositories: fixRepositories(),
 			},
 		},
 	}
 }
 
-func fixIndexDTO() *addon.IndexDTO {
-	return &addon.IndexDTO{
-		Entries: map[addon.Name][]addon.EntryDTO{
+func fixIndexDTO() *internal.Index {
+	return &internal.Index{
+		Entries: map[internal.AddonName][]internal.IndexEntry{
 			"redis": {
 				{
 					Name:        "redis",
@@ -437,12 +412,12 @@ type testSuite struct {
 	t                  *testing.T
 	mgr                manager.Manager
 	addonGetterFactory *automock.AddonGetterFactory
-	concreteGetter     *automock.AddonGetter
+	addonGetter        *automock.AddonGetter
 	brokerFacade       *automock.BrokerFacade
 	docsProvider       *automock.DocsProvider
 	brokerSyncer       *automock.BrokerSyncer
-	addonStorage       *automock.AddonStorage
-	chartStorage       *automock.ChartStorage
+	addonStorage       storage.Addon
+	chartStorage       storage.Chart
 }
 
 func getTestSuite(t *testing.T, objects ...runtime.Object) *testSuite {
@@ -452,18 +427,27 @@ func getTestSuite(t *testing.T, objects ...runtime.Object) *testSuite {
 	require.NoError(t, v1beta1.AddToScheme(sch))
 	require.NoError(t, v1.AddToScheme(sch))
 
-	return &testSuite{
+	sFact, err := storage.NewFactory(storage.NewConfigListAllMemory())
+	require.NoError(t, err)
+
+	ts := &testSuite{
 		t:                  t,
 		mgr:                getFakeManager(t, fake.NewFakeClientWithScheme(sch, objects...), sch),
 		brokerFacade:       &automock.BrokerFacade{},
 		addonGetterFactory: &automock.AddonGetterFactory{},
-		concreteGetter:     &automock.AddonGetter{},
+		addonGetter:        &automock.AddonGetter{},
 		brokerSyncer:       &automock.BrokerSyncer{},
 		docsProvider:       &automock.DocsProvider{},
 
-		addonStorage: &automock.AddonStorage{},
-		chartStorage: &automock.ChartStorage{},
+		addonStorage: sFact.Addon(),
+		chartStorage: sFact.Chart(),
 	}
+
+	ts.brokerFacade.On("SetNamespace", fixAddonsConfiguration().Namespace).Return(nil).Once()
+	ts.brokerSyncer.On("SetNamespace", fixAddonsConfiguration().Namespace).Return(nil).Once()
+	ts.docsProvider.On("SetNamespace", fixAddonsConfiguration().Namespace).Return(nil).Once()
+
+	return ts
 }
 
 type fakeManager struct {
@@ -473,12 +457,10 @@ type fakeManager struct {
 }
 
 func (ts *testSuite) assertExpectations() {
-	ts.concreteGetter.AssertExpectations(ts.t)
+	ts.addonGetter.AssertExpectations(ts.t)
 	ts.brokerFacade.AssertExpectations(ts.t)
 	ts.docsProvider.AssertExpectations(ts.t)
 	ts.brokerSyncer.AssertExpectations(ts.t)
-	ts.addonStorage.AssertExpectations(ts.t)
-	ts.chartStorage.AssertExpectations(ts.t)
 	ts.addonGetterFactory.AssertExpectations(ts.t)
 }
 
@@ -532,5 +514,85 @@ func getFakeManager(t *testing.T, cli client.Client, sch *runtime.Scheme) manage
 		t:      t,
 		client: cli,
 		sch:    sch,
+	}
+}
+
+func fixAddonWithDocsURL(id, name, url, docsURL string) internal.AddonWithCharts {
+	chartName := fmt.Sprintf("chart-%s", name)
+	chartVersion := semver.MustParse("1.0.0")
+	return internal.AddonWithCharts{
+		Addon: &internal.Addon{
+			ID:            internal.AddonID(id),
+			Name:          internal.AddonName(name),
+			Description:   "simple description",
+			Version:       *semver.MustParse("0.0.1"),
+			RepositoryURL: url,
+			Plans: map[internal.AddonPlanID]internal.AddonPlan{
+				internal.AddonPlanID(fmt.Sprintf("plan-%s", name)): {
+					ChartRef: internal.ChartRef{
+						Name:    internal.ChartName(chartName),
+						Version: *chartVersion,
+					},
+				},
+			},
+			Docs: []internal.AddonDocs{
+				{
+					Template: cms.CommonDocsTopicSpec{
+						Sources: []cms.Source{
+							{
+								URL: docsURL,
+							},
+						},
+					},
+				},
+			},
+		},
+		Charts: []*chart.Chart{
+			{
+				Metadata: &chart.Metadata{
+					Name:    chartName,
+					Version: chartVersion.String(),
+				},
+			},
+		},
+	}
+}
+
+func fixAddonWithEmptyDocs(id, name, url string) internal.AddonWithCharts {
+	chartName := fmt.Sprintf("chart-%s", name)
+	chartVersion := semver.MustParse("1.0.0")
+	return internal.AddonWithCharts{
+		Addon: &internal.Addon{
+			ID:            internal.AddonID(id),
+			Name:          internal.AddonName(name),
+			Description:   "simple description",
+			Version:       *semver.MustParse("0.0.1"),
+			RepositoryURL: url,
+			Plans: map[internal.AddonPlanID]internal.AddonPlan{
+				internal.AddonPlanID(fmt.Sprintf("plan-%s", name)): {
+					ChartRef: internal.ChartRef{
+						Name:    internal.ChartName(chartName),
+						Version: *chartVersion,
+					},
+				},
+			},
+			Docs: []internal.AddonDocs{
+				{
+					Template: cms.CommonDocsTopicSpec{
+						Sources: []cms.Source{
+							{},
+						},
+					},
+				},
+			},
+		},
+		Charts: []*chart.Chart{
+			{
+				Metadata: &chart.Metadata{
+					Name:    chartName,
+					Version: chartVersion.String(),
+				},
+			},
+		},
 	}
 }

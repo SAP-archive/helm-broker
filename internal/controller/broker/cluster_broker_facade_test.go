@@ -7,7 +7,6 @@ import (
 	"context"
 
 	"github.com/kubernetes-incubator/service-catalog/pkg/apis/servicecatalog/v1beta1"
-	"github.com/kyma-project/helm-broker/internal/controller/automock"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -21,12 +20,9 @@ func TestClusterServiceBrokerCreateHappyPath(t *testing.T) {
 	// GIVEN
 	require.NoError(t, v1beta1.AddToScheme(scheme.Scheme))
 	cli := fake.NewFakeClientWithScheme(scheme.Scheme)
-	brokerSyncer := &automock.ClusterBrokerSyncer{}
-	brokerSyncer.On("Sync").Once().Return(nil)
-	defer brokerSyncer.AssertExpectations(t)
 
 	svcURL := fmt.Sprintf("http://%s.%s.svc.cluster.local/cluster", fixService(), fixWorkingNs())
-	sut := NewClusterBrokersFacade(cli, brokerSyncer, fixWorkingNs(), fixService(), fixBrokerName(), logrus.New())
+	sut := NewClusterBrokersFacade(cli, fixWorkingNs(), fixService(), fixBrokerName(), logrus.New())
 	// WHEN
 	err := sut.Create()
 
@@ -45,10 +41,8 @@ func TestClusterServiceBrokerDeleteHappyPath(t *testing.T) {
 	// GIVEN
 	require.NoError(t, v1beta1.AddToScheme(scheme.Scheme))
 	cli := fake.NewFakeClientWithScheme(scheme.Scheme)
-	brokerSyncer := &automock.ClusterBrokerSyncer{}
-	defer brokerSyncer.AssertExpectations(t)
 
-	sut := NewClusterBrokersFacade(cli, brokerSyncer, fixWorkingNs(), fixService(), fixBrokerName(), logrus.New())
+	sut := NewClusterBrokersFacade(cli, fixWorkingNs(), fixService(), fixBrokerName(), logrus.New())
 	// WHEN
 	err := sut.Delete()
 	// THEN
@@ -59,10 +53,8 @@ func TestClusterServiceBrokerDeleteNotFoundErrorsIgnored(t *testing.T) {
 	// GIVEN
 	require.NoError(t, v1beta1.AddToScheme(scheme.Scheme))
 	cli := fake.NewFakeClientWithScheme(scheme.Scheme)
-	brokerSyncer := &automock.ClusterBrokerSyncer{}
-	defer brokerSyncer.AssertExpectations(t)
 
-	sut := NewClusterBrokersFacade(cli, brokerSyncer, fixWorkingNs(), fixService(), fixBrokerName(), logrus.New())
+	sut := NewClusterBrokersFacade(cli, fixWorkingNs(), fixService(), fixBrokerName(), logrus.New())
 	// WHEN
 	err := sut.Delete()
 	// THEN
@@ -73,10 +65,8 @@ func TestClusterServiceBrokerDoesNotExist(t *testing.T) {
 	// GIVEN
 	require.NoError(t, v1beta1.AddToScheme(scheme.Scheme))
 	cli := fake.NewFakeClientWithScheme(scheme.Scheme)
-	brokerSyncer := &automock.ClusterBrokerSyncer{}
-	defer brokerSyncer.AssertExpectations(t)
 
-	sut := NewClusterBrokersFacade(cli, brokerSyncer, fixWorkingNs(), fixService(), fixBrokerName(), logrus.New())
+	sut := NewClusterBrokersFacade(cli, fixWorkingNs(), fixService(), fixBrokerName(), logrus.New())
 	// WHEN
 	ex, err := sut.Exist()
 	// THEN
@@ -92,10 +82,7 @@ func TestClusterServiceBrokerExist(t *testing.T) {
 			Name: fixBrokerName(),
 		}})
 
-	brokerSyncer := &automock.ClusterBrokerSyncer{}
-	defer brokerSyncer.AssertExpectations(t)
-
-	sut := NewClusterBrokersFacade(cli, brokerSyncer, fixWorkingNs(), fixService(), fixBrokerName(), logrus.New())
+	sut := NewClusterBrokersFacade(cli, fixWorkingNs(), fixService(), fixBrokerName(), logrus.New())
 	// WHEN
 	ex, err := sut.Exist()
 	// THEN
