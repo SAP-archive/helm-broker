@@ -13,6 +13,7 @@ import (
 	"github.com/pkg/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/helm/pkg/proto/hapi/chart"
+	corev1 "k8s.io/api/core/v1"
 )
 
 // Index contains collection of all addons from the given repository
@@ -172,6 +173,7 @@ type Addon struct {
 	Status              v1alpha1.AddonStatus
 	Reason              v1alpha1.AddonStatusReason
 	Message             string
+	SecretRef           corev1.SecretReference
 }
 
 // CommonAddon holds common addon configuration structs

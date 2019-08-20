@@ -44,7 +44,7 @@ const (
 // SpecRepository define the addon repository
 type SpecRepository struct {
 	URL       string             `json:"url"`
-	SecretRef v1.SecretReference `json:"secretRef"`
+	SecretRef *v1.SecretReference `json:"secretRef"`
 }
 
 // CommonAddonsConfigurationSpec defines the desired state of (Cluster)AddonsConfiguration

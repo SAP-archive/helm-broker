@@ -168,7 +168,6 @@ func (c *common) OnAdd(addon *internal.CommonAddon, lastStatus v1alpha1.CommonAd
 		}
 	case v1alpha1.AddonsConfigurationReady:
 		saved = c.saveAddons(repositories)
-
 		c.statusSnapshot(&addon.Status, repositories)
 		if err = c.updateAddonStatus(addon); err != nil {
 			return errors.Wrap(err, "while update addons configuration status")
@@ -248,6 +247,7 @@ func (c *common) loadRepositories(repos []v1alpha1.SpecRepository) *repository.C
 	for _, specRepository := range repos {
 		c.log.Infof("- create addons for %q repository", specRepository.URL)
 		repo := repository.NewAddonsRepository(specRepository.URL)
+
 
 		adds, err := c.createAddons(specRepository.URL)
 		if err != nil {
