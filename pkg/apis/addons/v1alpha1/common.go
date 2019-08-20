@@ -2,6 +2,7 @@ package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/api/core/v1"
 )
 
 // FinalizerAddonsConfiguration defines the finalizer used by Controller, must be qualified name.
@@ -42,7 +43,8 @@ const (
 
 // SpecRepository define the addon repository
 type SpecRepository struct {
-	URL string `json:"url"`
+	URL       string             `json:"url"`
+	SecretRef v1.SecretReference `json:"secretRef"`
 }
 
 // CommonAddonsConfigurationSpec defines the desired state of (Cluster)AddonsConfiguration
