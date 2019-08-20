@@ -65,17 +65,19 @@ func (rc *Collection) ReadyAddons() []*Entry {
 
 // IsRepositoriesFailed informs if any of repositories in collection is in failed status
 func (rc *Collection) IsRepositoriesFailed() bool {
+	result := false
 	for _, repository := range rc.Repositories {
 		if repository.IsFailed() {
-			return true
+			result = true
+			continue
 		}
 		if repository.HasFailedAddons() {
 			repository.Failed()
-			return true
+			result = true
 		}
 	}
 
-	return false
+	return result
 }
 
 type idConflictData struct {

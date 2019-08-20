@@ -51,7 +51,11 @@ func (a *CommonClient) UpdateConfiguration(addon *internal.CommonAddon) error {
 			ad.Finalizers = addon.Meta.Finalizers
 			ad.Spec.CommonAddonsConfigurationSpec = addon.Spec
 
-			return a.Update(context.Background(), ad)
+			if err := a.Update(context.Background(), ad); err != nil {
+				return err
+			}
+			addon.Meta.Generation = ad.Generation
+			return nil
 		}
 		ad := &v1alpha1.ClusterAddonsConfiguration{}
 		if err := a.Get(context.Background(), types.NamespacedName{Name: addon.Meta.Name}, ad); err != nil {
@@ -60,7 +64,11 @@ func (a *CommonClient) UpdateConfiguration(addon *internal.CommonAddon) error {
 		ad.ObjectMeta.Finalizers = addon.Meta.Finalizers
 		ad.Spec.CommonAddonsConfigurationSpec = addon.Spec
 
-		return a.Update(context.Background(), ad)
+		if err := a.Update(context.Background(), ad); err != nil {
+			return err
+		}
+		addon.Meta.Generation = ad.Generation
+		return nil
 	})
 	if err != nil {
 		return errors.Wrapf(err, "while updating addons configuration %s/%s", a.namespace, addon.Meta.Name)

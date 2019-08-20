@@ -31,7 +31,7 @@ func NewAddon(cli clientv3.KV) (*Addon, error) {
 	return d, nil
 }
 
-// Addon implements etcd storage for AddonWithCharts entities.
+// Addon implements etcd storage for Addon entities.
 type Addon struct {
 	generic
 }
@@ -58,7 +58,7 @@ func (s *Addon) Upsert(namespace internal.Namespace, b *internal.Addon) (bool, e
 		return false, errors.Wrap(err, "while calling database in ID space")
 	}
 
-	// AddonWithCharts is immutable so for simplicity we are duplicating write into Name/Version namespace
+	// Addon is immutable so for simplicity we are duplicating write into Name/Version namespace
 	if _, err := s.kv.Put(context.TODO(), s.nameVersionKey(namespace, nv), dso, clientv3.WithPrevKV()); err != nil {
 		return false, errors.Wrap(err, "while calling database in NameVersion space")
 	}
@@ -111,7 +111,7 @@ func (s *Addon) encodeDMToDSO(dm *internal.Addon) (string, error) {
 	buf := bytes.Buffer{}
 	dso, err := newAddonDSO(dm)
 	if err != nil {
-		return "", errors.Wrap(err, "while encoding AddonWithCharts to DSO")
+		return "", errors.Wrap(err, "while encoding Addon to DSO")
 	}
 	enc := gob.NewEncoder(&buf)
 	if err := enc.Encode(dso); err != nil {
@@ -280,7 +280,7 @@ func newAddonDSO(in *internal.Addon) (*addonDSO, error) {
 	for k, v := range in.Plans {
 		var err error
 		if dsoPlans[k], err = newAddonPlanDSO(v); err != nil {
-			return nil, errors.Wrap(err, "while converting AddonWithCharts to DSO")
+			return nil, errors.Wrap(err, "while converting Addon to DSO")
 		}
 	}
 	return &addonDSO{

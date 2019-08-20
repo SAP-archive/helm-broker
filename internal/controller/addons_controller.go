@@ -50,7 +50,7 @@ func (r *ReconcileAddonsConfiguration) Reconcile(request reconcile.Request) (rec
 		Status: addon.Status.CommonAddonsConfigurationStatus,
 	}
 
-	return r.common.Reconcile(commonAddon, fmt.Sprintf("AddonsConfiguration `%s/%s`", addon.Name, addon.Namespace))
+	return r.common.Reconcile(commonAddon, fmt.Sprintf("AddonsConfiguration `%s/%s`", commonAddon.Meta.Name, commonAddon.Meta.Namespace))
 }
 
 // AddonsConfigurationController holds a controller logic
