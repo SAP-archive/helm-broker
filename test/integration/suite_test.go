@@ -28,6 +28,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 
+	"strings"
+
 	"github.com/kyma-project/helm-broker/internal/assetstore"
 	"github.com/kyma-project/helm-broker/internal/assetstore/automock"
 	"github.com/kyma-project/helm-broker/internal/bind"
@@ -59,9 +61,12 @@ const (
 
 	sourceHTTP = "http"
 	sourceGit  = "git"
+
+	basicPassword = "pAssword"
+	basicUsername = "user001"
 )
 
-func newTestSuite(t *testing.T, docsEnabled bool) *testSuite {
+func newTestSuite(t *testing.T, docsEnabled, httpBasicAuth bool) *testSuite {
 	sch, err := v1alpha1.SchemeBuilder.Build()
 	require.NoError(t, err)
 	require.NoError(t, apis.AddToScheme(sch))
@@ -90,7 +95,17 @@ func newTestSuite(t *testing.T, docsEnabled bool) *testSuite {
 	server := httptest.NewServer(brokerServer.CreateHandler())
 
 	// server with addons repository
-	repoServer := httptest.NewServer(http.FileServer(http.Dir("testdata")))
+	staticSvr := http.FileServer(http.Dir("testdata"))
+	repoServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if httpBasicAuth {
+			u, p, ok := r.BasicAuth()
+			assert.True(t, ok, "basic auth required")
+			assert.Equal(t, basicUsername, u)
+			assert.Equal(t, basicPassword, p)
+		}
+
+		staticSvr.ServeHTTP(w, r)
+	}))
 
 	// setup and start kube-apiserver
 	environment := &envtest.Environment{}
@@ -297,7 +312,7 @@ func (ts *testSuite) deleteClusterAddonsConfiguration(name string) {
 		}}))
 }
 
-func (ts *testSuite) createAddonsConfiguration(namespace, name string, urls []string, repoKind string) {
+func (ts *testSuite) createAddonsConfiguration(namespace, name string, urls []string, repoKind string, repoModifiers ...func(r *v1alpha1.SpecRepository)) {
 	err := ts.dynamicClient.Create(context.TODO(), &v1alpha1.AddonsConfiguration{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      name,
@@ -305,7 +320,7 @@ func (ts *testSuite) createAddonsConfiguration(namespace, name string, urls []st
 		},
 		Spec: v1alpha1.AddonsConfigurationSpec{
 			CommonAddonsConfigurationSpec: v1alpha1.CommonAddonsConfigurationSpec{
-				Repositories: ts.createSpecRepositories(urls, repoKind),
+				Repositories: ts.createSpecRepositories(urls, repoKind, repoModifiers...),
 			},
 		},
 	})
@@ -315,20 +330,20 @@ func (ts *testSuite) createAddonsConfiguration(namespace, name string, urls []st
 	}
 }
 
-func (ts *testSuite) createClusterAddonsConfiguration(name string, urls []string, repoKind string) {
+func (ts *testSuite) createClusterAddonsConfiguration(name string, urls []string, repoKind string, repoModifiers ...func(r *v1alpha1.SpecRepository)) {
 	ts.dynamicClient.Create(context.TODO(), &v1alpha1.ClusterAddonsConfiguration{
 		ObjectMeta: v1.ObjectMeta{
 			Name: name,
 		},
 		Spec: v1alpha1.ClusterAddonsConfigurationSpec{
 			CommonAddonsConfigurationSpec: v1alpha1.CommonAddonsConfigurationSpec{
-				Repositories: ts.createSpecRepositories(urls, repoKind),
+				Repositories: ts.createSpecRepositories(urls, repoKind, repoModifiers...),
 			},
 		},
 	})
 }
 
-func (ts *testSuite) createSpecRepositories(urls []string, repoKind string) []v1alpha1.SpecRepository {
+func (ts *testSuite) createSpecRepositories(urls []string, repoKind string, repoModifiers ...func(r *v1alpha1.SpecRepository)) []v1alpha1.SpecRepository {
 	// v1alpha1.SpecRepository cannot be null, needs to be empty array
 	if len(urls) == 0 {
 		return []v1alpha1.SpecRepository{{}}
@@ -346,9 +361,39 @@ func (ts *testSuite) createSpecRepositories(urls []string, repoKind string) []v1
 			ts.t.Fatalf("Unsupported source kind: %s", repoKind)
 		}
 
-		repositories = append(repositories, v1alpha1.SpecRepository{URL: fullURL})
+		specRepoItem := v1alpha1.SpecRepository{URL: fullURL}
+		for _, m := range repoModifiers {
+			m(&specRepoItem)
+		}
+		repositories = append(repositories, specRepoItem)
 	}
 	return repositories
+}
+
+func WithSecretReference(namespace, name string) func(r *v1alpha1.SpecRepository) {
+	return func(r *v1alpha1.SpecRepository) {
+		r.SecretRef = corev1.SecretReference{
+			Namespace: namespace,
+			Name:      name,
+		}
+	}
+}
+
+func WithHTTPBasicAuth(username, password string) func(r *v1alpha1.SpecRepository) {
+	return func(r *v1alpha1.SpecRepository) {
+		r.URL = strings.Replace(r.URL, "http://", fmt.Sprintf("http://%s:%s@", username, password), 1)
+		fmt.Println(r.URL)
+	}
+}
+
+func (ts *testSuite) createSecret(namespace, name string, values map[string]string) {
+	ts.dynamicClient.Create(context.TODO(), &corev1.Secret{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+		StringData: values,
+	})
 }
 
 func (ts *testSuite) updateAddonsConfigurationRepositories(namespace, name string, urls []string, repoKind string) {
