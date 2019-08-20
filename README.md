@@ -46,14 +46,14 @@ This section explains how to use the Helm-Broker.
 
 If you have installed Helm-Broker with Service-Catalog, you can add an Addon repository and provision Redis instance.
 
-Add Addon repository configuration:
+Configure Helm Broker to use an addons repository with Redis Addon:
 ```bash
 kubectl apply -f contrib/sample-addons.yaml
 ```
 
-You can find more addons in the [repository](https://github.com/kyma-project/addons). If you want to use other Addons repository, plase read the following [document](https://kyma-project.io/docs/master/components/helm-broker#details-create-addons-repository-supported-protocols).
+You can find more addons in the [repository](https://github.com/kyma-project/addons). If you want to use other Addons repository, please read the following [document](https://kyma-project.io/docs/master/components/helm-broker#details-create-addons-repository-supported-protocols).
 
-After the Helm-Broker processing the addons configuration you can see ClusterServiceClasses:
+After the Helm-Broker processing the addons configuration you can see Redis ClusterServiceClass:
 
 ```bash
 kubectl get clusterserviceclass
