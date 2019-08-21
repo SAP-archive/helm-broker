@@ -108,7 +108,7 @@ Use the following environment variables to configure the Controller component of
 | **APP_KUBECONFIG_PATH** | No |  | Provides the path to the `kubeconfig` file that you need to run an application outside of the cluster. |
 | **APP_NAMESPACE** | Yes | | Specifies the Namespace where the Helm Broker is installed. |
 | **APP_SERVICE_NAME** | Yes | | Specifies the name of the Kubernetes service that exposes the Broker. |
-| **APP_CLUSTER_SERVICE_BROKER_NAME** | Yes | | The name of the ClusterServiceBroker resource which registers the Helm-Broker into the Service-Catalog. |
+| **APP_CLUSTER_SERVICE_BROKER_NAME** | Yes | | Specifies the name of the ClusterServiceBroker resource which registers the Helm Broker in the Service Catalog. |
 | **APP_DEVELOP_MODE** | No | false | If `true` insecure HTTP based repositories are allowed. |
 | **APP_DOCUMENTATION_ENABLED** | No | false | Indicates if Helm-Broker should upload addons documentation to the [Headless CMS](https://kyma-project.io/docs/components/headless-cms/). |
 
