@@ -87,7 +87,6 @@ kubectl get secret redis -o=jsonpath="{.data.REDIS_PASSWORD}" | base64 -D
 
 Use the following environment variables to configure the Broker component of the Helm Broker:
 
-#### Broker
 
 | Name | Required | Default | Description |
 |-----|---------|--------|------------|
