@@ -2,7 +2,7 @@
 
 To run the Helm Broker without building a binary file, follow these steps:
 
-Start minikube:
+1. Start Minikube:
 ```bash
 minikube start
 ```
