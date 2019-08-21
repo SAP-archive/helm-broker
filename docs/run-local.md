@@ -1,4 +1,4 @@
-## Run Helm-Broker local version
+# Run the Helm Broker locally
 
 To run the application without building a binary file, follow these steps:
 
