@@ -11,7 +11,7 @@ For more information, read the [Helm Broker documentation](https://kyma-project.
 To run the project, download these tools:
 
 * [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
-* [the Helm CLI](https://github.com/kubernetes/helm#install)
+* [Helm CLI](https://github.com/kubernetes/helm#install)
 * [Minikube](https://kubernetes.io/docs/tasks/tools/install-minikube/) for local installation
 
 ## Installation 
