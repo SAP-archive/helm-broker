@@ -50,7 +50,7 @@ kubectl apply -f contrib/sample-addons.yaml
 ```
 
 
-After the Helm-Broker processing the addons configuration you can see Redis ClusterServiceClass:
+After the Helm Broker processes the addons' configuration, you can see the Redis ClusterServiceClass:
 
 ```bash
 kubectl get clusterserviceclass
