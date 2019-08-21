@@ -49,7 +49,6 @@ If you have installed the Helm Broker with the Service Catalog, you can add your
 kubectl apply -f contrib/sample-addons.yaml
 ```
 
-You can find more addons in the [repository](https://github.com/kyma-project/addons). If you want to use other Addons repository, please read the following [document](https://kyma-project.io/docs/master/components/helm-broker#details-create-addons-repository-supported-protocols).
 
 After the Helm-Broker processing the addons configuration you can see Redis ClusterServiceClass:
 
