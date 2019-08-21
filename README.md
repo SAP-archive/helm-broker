@@ -103,7 +103,7 @@ Use the following environment variables to configure the Controller component of
 
 | Name | Required | Default | Description |
 |-----|---------|--------|------------|
-| **APP_CONFIG_FILE_NAME** | No | | Specifies the path to a config YAML file.|
+| **APP_CONFIG_FILE_NAME** | No | | Specifies the path to the configuration `.yaml` file.  |
 | **APP_TMP_DIR** | Yes | | Path to a temporary directory, used for unpacking addons archives or cloning Git repositories. |
 | **APP_KUBECONFIG_PATH** | No |  | The path to the `kubeconfig` file that you need to run an application outside of the cluster. |
 | **APP_NAMESPACE** | Yes | | The namespace, where Helm-Broker is installed. |
