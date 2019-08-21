@@ -41,7 +41,7 @@ Now you can test the broker using the **/v2/catalog** endpoint
 curl -H "X-Broker-API-Version: 2.13" localhost:8080/cluster/v2/catalog
 ```
 
-Start the controller:
+5. Start the Controller:
 ```bash
 APP_KUBECONFIG_PATH=/Users/$User/.kube/config \
 APP_DOCUMENTATION_ENABLED=false \
