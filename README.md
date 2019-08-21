@@ -122,7 +122,7 @@ To set up the project, download these tools:
 
 >**NOTE:** The versions of Go and Dep are compliant with the `buildpack` used by Prow. For more details, read [this](https://github.com/kyma-project/test-infra/blob/master/prow/images/buildpack-golang/README.md) document.
 
-Before each commit, use the `before-commit.sh` script, which tests your changes and builds binaries. If you want to run Helm-Broker locally, please read [running locally document](/docs/run-local.md)
+Before each commit, use the `before-commit.sh` script which tests your changes and builds binaries. If you want to run the Helm Broker locally, read [this](/docs/run-local.md) document.
 
 Integration tests checks if all part of Helm-Broker works together. It starts `kube-apiserver` with `etcd`, setups the controller and the broker. Before you run it, please install [Kubebuilder](https://github.com/kubernetes-sigs/kubebuilder). You can run integration tests using the follwoing command:
 ```bash
