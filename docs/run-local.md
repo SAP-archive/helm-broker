@@ -1,6 +1,6 @@
 # Run the Helm Broker locally
 
-To run the application without building a binary file, follow these steps:
+To run the Helm Broker without building a binary file, follow these steps:
 
 Start minikube:
 ```bash
