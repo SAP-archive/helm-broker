@@ -76,7 +76,7 @@ kubectl apply -f contrib/redis-binding.yaml
 kubectl get secret redis -o yaml
 ```
 
-You can see decoded values using the following commands:
+Use the following commands to see the decoded values:
 ```bash
 kubectl get secret redis -o=jsonpath="{.data.HOST}" | base64 -D
 kubectl get secret redis -o=jsonpath="{.data.PORT}" | base64 -D
