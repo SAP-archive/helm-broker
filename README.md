@@ -106,7 +106,7 @@ Use the following environment variables to configure the Controller component of
 | **APP_CONFIG_FILE_NAME** | No | | Specifies the path to the configuration `.yaml` file.  |
 | **APP_TMP_DIR** | Yes | | Provides a path to a temporary directory that is used to unpack addons archives or to clone Git repositories. |
 | **APP_KUBECONFIG_PATH** | No |  | Provides the path to the `kubeconfig` file that you need to run an application outside of the cluster. |
-| **APP_NAMESPACE** | Yes | | The namespace, where Helm-Broker is installed. |
+| **APP_NAMESPACE** | Yes | | Specifies the Namespace where the Helm Broker is installed. |
 | **APP_SERVICE_NAME** | Yes | | The name of the Kubernetes Service which is exposing the broker. |
 | **APP_CLUSTER_SERVICE_BROKER_NAME** | Yes | | The name of the ClusterServiceBroker resource which registers the Helm-Broker into the Service-Catalog. |
 | **APP_DEVELOP_MODE** | No | false | If `true` insecure HTTP based repositories are allowed. |
