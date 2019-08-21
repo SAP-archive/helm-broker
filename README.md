@@ -71,7 +71,7 @@ kubectl get serviceinstance
 kubectl apply -f contrib/redis-binding.yaml
 ```
 
-Check the secret containing Redis credentials:
+5. Check the Secret that contains Redis credentials:
 ```bash
 kubectl get secret redis -o yaml
 ```
