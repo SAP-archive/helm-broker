@@ -61,7 +61,7 @@ kubectl get clusterserviceclass
 kubectl apply -f contrib/redis-instance.yaml
 ```
 
-Now you can check the status of the Redis instance:
+3. Check the status of the Redis instance:
 ```bash
 kubectl get serviceinstance
 ```
