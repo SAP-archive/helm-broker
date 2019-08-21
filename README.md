@@ -95,7 +95,7 @@ Use the following environment variables to configure the Broker component of the
 | **APP_CONFIG_FILE_NAME** | No | | Specifies the path to the configuration `.yaml` file. |
 | **APP_HELM_TILLER_TLS_ENABLED** | No | `true` | Specifies the TLS configuration for the Tiller. If set to `true`, the TLS communication with Tiller is required. |
 | **APP_HELM_TILLER_HOST** | No | | Specifies the host address of the Tiller release server. |
-| **APP_HELM_TILLER_INSECURE** | No | false | Controls whether the broker verifies the Tiller's certificate. |
+| **APP_HELM_TILLER_INSECURE** | No | `false` | If set to `true`, the Broker verifies the Tiller's certificate. |
 | **APP_HELM_TILLER_KEY** | No | | Provides the path to the PEM-encoded private key file. |
 | **APP_HELM_TILLER_CRT** | No | | Provides the path to the PEM-encoded certificate file. |
 
