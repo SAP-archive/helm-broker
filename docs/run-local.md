@@ -35,7 +35,7 @@ APP_CONFIG_FILE_NAME=contrib/local-etcd-config.yaml \
 go run cmd/broker/main.go
 ```
 
-Now you can test the broker using the **/v2/catalog** endpoint
+Now you can test the Broker using the **/v2/catalog** endpoint.
 
 ```bash
 curl -H "X-Broker-API-Version: 2.13" localhost:8080/cluster/v2/catalog
