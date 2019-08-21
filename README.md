@@ -42,7 +42,6 @@ helm install charts/helm-broker --name helm-broker --namespace helm-broker
 
 This section explains how to use the Helm-Broker.
 
-### Provisioning services provided by the Helm-Broker
 
 If you have installed the Helm Broker with the Service Catalog, you can add your addon repositories and provision ServiceInstances. Read [this](https://kyma-project.io/docs/master/components/helm-broker#details-create-addons-repository) document to learn how. You can find more ready-to-use addons [here](https://github.com/kyma-project/addons). Follow this example to configure the Helm Broker and provision the Redis instance:
 
