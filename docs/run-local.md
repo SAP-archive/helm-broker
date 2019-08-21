@@ -7,7 +7,7 @@ To run the Helm Broker without building a binary file, follow these steps:
 minikube start
 ```
 
-Create necessary CRDs:
+2. Create necessary CRDs:
 ```bash
 kubectl apply -f config/crds/
 ```
