@@ -56,7 +56,7 @@ After the Helm-Broker processing the addons configuration you can see Redis Clus
 kubectl get clusterserviceclass
 ```
 
-Provision Redis instance:
+2. Provision the Redis instance:
 ```bash
 kubectl apply -f contrib/redis-instance.yaml
 ```
