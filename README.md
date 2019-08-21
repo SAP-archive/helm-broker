@@ -152,7 +152,7 @@ export DOCKER_TAG=latest
 make push-image
 ```
 
-Now you can install Helm-Broker with you custom image using the following command:
+5. Install the Helm Broker with your custom image using the following command:
 ```bash
 helm install charts/helm-broker \
  --name helm-broker \
