@@ -100,7 +100,7 @@ Use the following environment variables to configure the Broker component of the
 | **APP_HELM_TILLER_KEY** | No | | A path to PEM-encoded private key file. |
 | **APP_HELM_TILLER_CRT** | No | | A path to PEM-encoded certificate file. |
 
-#### Controller
+Use the following environment variables to configure the Controller component of the Helm Broker:
 
 | Name | Required | Default | Description |
 |-----|---------|--------|------------|
