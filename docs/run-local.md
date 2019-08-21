@@ -27,7 +27,7 @@ docker run \
   --initial-advertise-peer-urls http://0.0.0.0:2380
 ```
 
-start the broker:
+4. Start the Broker:
 ```bash
 APP_HELM_TILLER_TLS_ENABLED=false \
 APP_KUBECONFIG_PATH=/Users/$User/.kube/config \
