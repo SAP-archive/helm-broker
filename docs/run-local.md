@@ -12,7 +12,7 @@ minikube start
 kubectl apply -f config/crds/
 ```
 
-Start Etcd in a Docker container:
+3. Start etcd in a Docker container:
 ```bash
 docker run \
   -p 2379:2379 \
