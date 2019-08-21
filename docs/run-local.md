@@ -55,7 +55,7 @@ go run cmd/controller/main.go -metrics-addr ":8081"
 
 >**NOTE:**  Not all features are available when you run the Helm Broker locally. All features which perform actions with Tiller do not work. Additionally, the controller performs operation on ClusterServiceBroker/ServiceBroker resources, which are part of Service Catalog.
 
-You can run the controller and the broker configured with in-memory storage (without etcd), but then the broker cannot read data stored by the controller:
+>**NOTE:** You can run the Controller and the Broker configured with the in-memory storage (without etcd), but then the Broker cannot read data stored by the Controller:
 
 ```bash
 APP_HELM_TILLER_TLS_ENABLED=false \
