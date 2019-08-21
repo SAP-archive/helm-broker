@@ -147,7 +147,7 @@ export DOCKER_PUSH_DIRECTORY=your-project
 export DOCKER_TAG=latest
 ```
 
-4. Push to the registry:
+4. Push the image to the registry:
 ```bash
 make push-image
 ```
