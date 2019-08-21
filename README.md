@@ -97,7 +97,7 @@ Use the following environment variables to configure the Broker component of the
 | **APP_HELM_TILLER_HOST** | No | | Specifies the host address of the Tiller release server. |
 | **APP_HELM_TILLER_INSECURE** | No | false | Controls whether the broker verifies the Tiller's certificate. |
 | **APP_HELM_TILLER_KEY** | No | | Provides the path to the PEM-encoded private key file. |
-| **APP_HELM_TILLER_CRT** | No | | A path to PEM-encoded certificate file. |
+| **APP_HELM_TILLER_CRT** | No | | Provides the path to the PEM-encoded certificate file. |
 
 Use the following environment variables to configure the Controller component of the Helm Broker:
 
