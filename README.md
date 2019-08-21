@@ -91,7 +91,7 @@ Use the following environment variables to configure the Broker component of the
 | Name | Required | Default | Description |
 |-----|:---------:|--------|------------|
 | **APP_PORT** | No | `8080` | The port on which the HTTP server listens. |
-| **APP_KUBECONFIG_PATH** | No |  | The path to the `kubeconfig` file that you need to run an application outside of the cluster. |
+| **APP_KUBECONFIG_PATH** | No |  | Provides the path to the `kubeconfig` file that you need to run an application outside of the cluster. |
 | **APP_CONFIG_FILE_NAME** | No | | Specifies the path to a config YAML file.|
 | **APP_HELM_TILLER_TLS_ENABLED** | No | true | Specifies the tls configuration with the Tiller. If `true` the TLS communication with Tiller is required. |
 | **APP_HELM_TILLER_HOST** | No | | Specifies the host address of the Tiller release server. |
