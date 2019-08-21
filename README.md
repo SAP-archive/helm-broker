@@ -66,7 +66,7 @@ Now you can check the status of the Redis instance:
 kubectl get serviceinstance
 ```
 
-Create a redis binding:
+4. Create a binding for the Redis instance:
 ```bash
 kubectl apply -f contrib/redis-binding.yaml
 ```
