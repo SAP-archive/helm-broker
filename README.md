@@ -163,7 +163,7 @@ helm install charts/helm-broker \
  --set global.helm_controller.version=${DOCKER_TAG}
 ```
 
-If you have installed Helm-Broker already, you can upgrade it to use new images:
+If you already have the Helm Broker installed, you can upgrade it to use new images:
 ```bash
 helm upgrade helm-broker charts/helm-broker \
  --set global.helm_broker.image="${DOCKER_PUSH_REPOSITORY}${DOCKER_PUSH_DIRECTORY}/helm-broker" \
