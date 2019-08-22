@@ -53,7 +53,7 @@ APP_DEVELOP_MODE=true \
 go run cmd/controller/main.go -metrics-addr ":8081"
 ```
 
->**NOTE:** Not all features are available when you run the Helm Broker locally. All features which perform actions with Tiller do not work. Additionally, the Controller performs operations on ClusterServiceBroker/ServiceBroker resources, which needs the Service Catalog to work properly.
+>**NOTE:** Not all features are available when you run the Helm Broker locally. All features which perform actions with Tiller do not work. Moreover, the Controller performs operations on ClusterServiceBroker/ServiceBroker resources, which needs the Service Catalog to work properly.
 
 You can run the Controller and the Broker configured with the in-memory storage, but then the Broker cannot read data stored by the Controller. To run the Broker and the Controller without etcd, run these commands:
 
