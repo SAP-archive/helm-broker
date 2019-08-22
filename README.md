@@ -126,7 +126,7 @@ To set up the project, download these tools:
 
 Before each commit, use the `before-commit.sh` script which tests your changes and builds binaries. If you want to run the Helm Broker locally, read [this](/docs/run-local.md) document.
 
-Integration tests check if all parts of the Helm-Broker work together. They start `kube-apiserver` with `etcd`, sets up the Controller and the Broker. Before you run it, install [Kubebuilder](https://github.com/kubernetes-sigs/kubebuilder). You can run integration tests using the following command:
+Integration tests check if all parts of the Helm Broker work together. They start kube-apiserver with etcd, set up the Controller and the Broker. Install [Kubebuilder](https://github.com/kubernetes-sigs/kubebuilder) before you run integration tests. Run tests using the following command:
 ```bash
 make integration-test
 ```
