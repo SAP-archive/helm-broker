@@ -129,6 +129,8 @@ Integration tests check if all parts of the Helm-Broker work together. They star
 make integration-test
 ```
 
+### Build Docker images
+
 If you want to build Docker images with your changes and push them to a registry, follow these steps:
 1. Run tests and build binaries:
 ```bash
