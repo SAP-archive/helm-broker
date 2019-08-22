@@ -8,9 +8,43 @@ import (
 	"github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
 )
 
+func TestHttpBasicAuth(t *testing.T) {
+	// todo: uncomment after templating is done
+	t.Skip()
+	// given
+	suite := newTestSuite(t, true, true)
+	defer suite.tearDown()
+
+	t.Run("namespaced", func(t *testing.T) {
+		suite.createSecret("stage", "data-ns", map[string]string{"username": basicUsername, "password": basicPassword})
+
+		// when
+		suite.createAddonsConfiguration("stage", addonsConfigName, []string{redisAndAccTestRepo}, sourceHTTP,
+			WithSecretReference("stage", "data-ns"),
+			WithHTTPBasicAuth("{username}", "{password}"))
+
+		// then
+		suite.waitForAddonsConfigurationPhase("stage", addonsConfigName, v1alpha1.AddonsConfigurationReady)
+		suite.waitForServicesInCatalogEndpoint("ns/stage", []string{redisAddonID, accTestAddonID})
+	})
+
+	t.Run("cluster", func(t *testing.T) {
+		suite.createSecret("stage", "data-cluster", map[string]string{"username": basicUsername, "password": basicPassword})
+
+		// when
+		suite.createClusterAddonsConfiguration(addonsConfigName, []string{redisAndAccTestRepo}, sourceHTTP,
+			WithSecretReference("stage", "data-cluster"),
+			WithHTTPBasicAuth("{username}", "{password}"))
+
+		// then
+		suite.waitForClusterAddonsConfigurationPhase(addonsConfigName, v1alpha1.AddonsConfigurationReady)
+		suite.waitForServicesInCatalogEndpoint("cluster", []string{redisAddonID, accTestAddonID})
+	})
+}
+
 func TestGetCatalogHappyPath(t *testing.T) {
 	// given
-	suite := newTestSuite(t, true)
+	suite := newTestSuite(t, true, false)
 	defer suite.tearDown()
 
 	for name, c := range map[string]struct {
@@ -97,7 +131,7 @@ func TestGetCatalogHappyPath(t *testing.T) {
 
 func TestAddonsConflicts(t *testing.T) {
 	// given
-	suite := newTestSuite(t, true)
+	suite := newTestSuite(t, true, false)
 	defer suite.tearDown()
 
 	for name, c := range map[string]struct {
@@ -237,7 +271,7 @@ func TestAddonsConflicts(t *testing.T) {
 
 func TestDocsTopic(t *testing.T) {
 	// given
-	suite := newTestSuite(t, true)
+	suite := newTestSuite(t, true, false)
 	defer suite.tearDown()
 
 	for name, c := range map[string]struct {
@@ -305,7 +339,7 @@ func TestDocsTopic(t *testing.T) {
 }
 
 func TestDisabledDocs(t *testing.T) {
-	suite := newTestSuite(t, false)
+	suite := newTestSuite(t, false, false)
 	defer suite.tearDown()
 
 	t.Run("namespaced", func(t *testing.T) {

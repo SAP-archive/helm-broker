@@ -11,6 +11,7 @@ build:
 
 .PHONY: integration-test
 integration-test:
+	export KUBEBUILDER_CONTROLPLANE_START_TIMEOUT=2m
 	go test -tags=integration ./test/integration/
 
 .PHONY: pull-licenses
