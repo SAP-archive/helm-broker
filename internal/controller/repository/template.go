@@ -58,10 +58,10 @@ func (t *Template) TemplateURL(repository v1alpha1.SpecRepository) (string, erro
 		if !ok {
 			return "", fmt.Errorf("secret does not contain `%s` field", fieldName)
 		}
-		result = strings.Replace(result, val, string(tmp), 1)
+		result = strings.Replace(result, val, string(tmp), -1)
 	}
 
-	return result, nil
+	return strings.Replace(result, "\n", "", -1), nil
 }
 
 func (t *Template) findURLTemplates(url string) []string {

@@ -252,7 +252,7 @@ func (c *common) loadRepositories(repos []v1alpha1.SpecRepository) *repository.C
 
 		addonsURL := specRepository.URL
 		if specRepository.SecretRef != nil {
-			c.log.Infof("- templating URL using secret %s/%s", specRepository.SecretRef.Name, specRepository.SecretRef.Namespace)
+			c.log.Infof("- templating URL using secret `%s/%s`", specRepository.SecretRef.Name, specRepository.SecretRef.Namespace)
 			templateURL, err := c.templateService.TemplateURL(specRepository)
 			if err != nil {
 				repo.TemplatingError(err)
@@ -267,7 +267,7 @@ func (c *common) loadRepositories(repos []v1alpha1.SpecRepository) *repository.C
 		if err != nil {
 			repo.FetchingError(err)
 			repositories.AddRepository(repo)
-			c.log.Errorf("while creating addons for repository from %q: %s", specRepository.URL, err)
+			c.log.Errorf("while creating addons for repository from %s: %v", specRepository.URL, err)
 			continue
 		}
 
@@ -447,7 +447,7 @@ func (c *common) reprocessConfigurationsInConflict(deletedAddonsIDs []string, li
 			if hasConflict := c.isConfigurationInConflict(id, configuration.Status); hasConflict {
 				c.log.Infof("- reprocessing conflicting addons configuration `%s/%s`", configuration.Meta.Namespace, configuration.Meta.Name)
 				if err := c.commonClient.ReprocessRequest(configuration.Meta.Name); err != nil {
-					return errors.Wrapf(err, "while reprocessing conflicting addons configuration %s", configuration.Meta.Name)
+					return errors.Wrapf(err, "while reprocessing conflicting addons configuration `%s`", configuration.Meta.Name)
 				}
 			}
 		}
