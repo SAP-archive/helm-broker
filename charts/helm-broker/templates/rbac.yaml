@@ -10,7 +10,7 @@ metadata:
 rules:
 - apiGroups: [""]
   resources: ["secrets", "configmaps", "services"]
-  verbs: ["get"]
+  verbs: ["get", "list", "watch"]
 - apiGroups: [""]
   resources: ["pods"]
   verbs: ["get", "list"]
