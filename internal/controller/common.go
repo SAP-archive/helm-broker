@@ -250,17 +250,12 @@ func (c *common) loadRepositories(repos []v1alpha1.SpecRepository) *repository.C
 		c.log.Infof("- create addons for %q repository", specRepository.URL)
 		repo := repository.NewAddonsRepository(specRepository.URL)
 
-		addonsURL := specRepository.URL
-		if specRepository.SecretRef != nil {
-			c.log.Infof("- templating URL using secret `%s/%s`", specRepository.SecretRef.Name, specRepository.SecretRef.Namespace)
-			templateURL, err := c.templateService.TemplateURL(specRepository)
-			if err != nil {
-				repo.TemplatingError(err)
-				repositories.AddRepository(repo)
-				c.log.Errorf("while templating repository URL `%s`: %v", specRepository.URL, err)
-				continue
-			}
-			addonsURL = templateURL
+		addonsURL, err := c.templateService.TemplateURL(specRepository)
+		if err != nil {
+			repo.TemplatingError(err)
+			repositories.AddRepository(repo)
+			c.log.Errorf("while templating repository URL `%s`: %v", specRepository.URL, err)
+			continue
 		}
 
 		adds, err := c.createAddons(addonsURL)

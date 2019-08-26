@@ -13,6 +13,7 @@ import (
 	"github.com/kubernetes-incubator/service-catalog/pkg/apis/servicecatalog/v1beta1"
 	"github.com/kyma-project/helm-broker/internal"
 	"github.com/kyma-project/helm-broker/internal/controller/automock"
+	"github.com/kyma-project/helm-broker/internal/controller/repository"
 	"github.com/kyma-project/helm-broker/internal/platform/logger/spy"
 	"github.com/kyma-project/helm-broker/internal/storage"
 	"github.com/kyma-project/helm-broker/pkg/apis"
@@ -416,7 +417,7 @@ type testSuite struct {
 	brokerFacade       *automock.BrokerFacade
 	docsProvider       *automock.DocsProvider
 	brokerSyncer       *automock.BrokerSyncer
-	templateService    *automock.TemplateService
+	templateService    *repository.Template
 	addonStorage       storage.Addon
 	chartStorage       storage.Chart
 }
@@ -431,15 +432,16 @@ func getTestSuite(t *testing.T, objects ...runtime.Object) *testSuite {
 	sFact, err := storage.NewFactory(storage.NewConfigListAllMemory())
 	require.NoError(t, err)
 
+	cli := fake.NewFakeClientWithScheme(sch, objects...)
 	ts := &testSuite{
 		t:                  t,
-		mgr:                getFakeManager(t, fake.NewFakeClientWithScheme(sch, objects...), sch),
+		mgr:                getFakeManager(t, cli, sch),
 		brokerFacade:       &automock.BrokerFacade{},
 		addonGetterFactory: &automock.AddonGetterFactory{},
 		addonGetter:        &automock.AddonGetter{},
 		brokerSyncer:       &automock.BrokerSyncer{},
 		docsProvider:       &automock.DocsProvider{},
-		templateService:    &automock.TemplateService{},
+		templateService:    repository.NewTemplate(cli),
 
 		addonStorage: sFact.Addon(),
 		chartStorage: sFact.Chart(),
@@ -448,7 +450,6 @@ func getTestSuite(t *testing.T, objects ...runtime.Object) *testSuite {
 	ts.brokerFacade.On("SetNamespace", fixAddonsConfiguration().Namespace).Return(nil).Once()
 	ts.brokerSyncer.On("SetNamespace", fixAddonsConfiguration().Namespace).Return(nil).Once()
 	ts.docsProvider.On("SetNamespace", fixAddonsConfiguration().Namespace).Return(nil).Once()
-	ts.templateService.On("SetNamespace", fixAddonsConfiguration().Namespace).Return(nil).Once()
 
 	return ts
 }
@@ -465,7 +466,6 @@ func (ts *testSuite) assertExpectations() {
 	ts.docsProvider.AssertExpectations(ts.t)
 	ts.brokerSyncer.AssertExpectations(ts.t)
 	ts.addonGetterFactory.AssertExpectations(ts.t)
-	ts.templateService.AssertExpectations(ts.t)
 }
 
 func (fakeManager) Add(manager.Runnable) error {

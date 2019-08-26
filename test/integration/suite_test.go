@@ -62,7 +62,7 @@ const (
 	sourceHTTP = "http"
 	sourceGit  = "git"
 
-	basicPassword = "pAssword"
+	basicPassword = "pAssword{"
 	basicUsername = "user001"
 )
 
@@ -379,7 +379,6 @@ func WithSecretReference(namespace, name string) func(r *v1alpha1.SpecRepository
 func WithHTTPBasicAuth(username, password string) func(r *v1alpha1.SpecRepository) {
 	return func(r *v1alpha1.SpecRepository) {
 		r.URL = strings.Replace(r.URL, "http://", fmt.Sprintf("http://%s:%s@", username, password), 1)
-		fmt.Println(r.URL)
 	}
 }
 

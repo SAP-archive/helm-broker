@@ -10,6 +10,7 @@ import (
 
 	"github.com/kubernetes-incubator/service-catalog/pkg/apis/servicecatalog/v1beta1"
 	"github.com/kyma-project/helm-broker/internal/controller/automock"
+	"github.com/kyma-project/helm-broker/internal/controller/repository"
 	"github.com/kyma-project/helm-broker/internal/storage"
 	"github.com/kyma-project/helm-broker/pkg/apis"
 	"github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
@@ -255,7 +256,7 @@ type clusterTestSuite struct {
 	brokerFacade       *automock.BrokerFacade
 	docsProvider       *automock.DocsProvider
 	brokerSyncer       *automock.BrokerSyncer
-	templateService    *automock.TemplateService
+	templateService    *repository.Template
 	addonStorage       storage.Addon
 	chartStorage       storage.Chart
 }
@@ -270,15 +271,16 @@ func getClusterTestSuite(t *testing.T, objects ...runtime.Object) *clusterTestSu
 	sFact, err := storage.NewFactory(storage.NewConfigListAllMemory())
 	require.NoError(t, err)
 
+	cli := fake.NewFakeClientWithScheme(sch, objects...)
 	return &clusterTestSuite{
 		t:                  t,
-		mgr:                getFakeManager(t, fake.NewFakeClientWithScheme(sch, objects...), sch),
+		mgr:                getFakeManager(t, cli, sch),
 		brokerFacade:       &automock.BrokerFacade{},
 		addonGetterFactory: &automock.AddonGetterFactory{},
 		addonGetter:        &automock.AddonGetter{},
 		brokerSyncer:       &automock.BrokerSyncer{},
 		docsProvider:       &automock.DocsProvider{},
-		templateService:    &automock.TemplateService{},
+		templateService:    repository.NewTemplate(cli),
 
 		addonStorage: sFact.Addon(),
 		chartStorage: sFact.Chart(),
@@ -291,7 +293,6 @@ func (ts *clusterTestSuite) assertExpectations() {
 	ts.addonGetter.AssertExpectations(ts.t)
 	ts.brokerSyncer.AssertExpectations(ts.t)
 	ts.addonGetterFactory.AssertExpectations(ts.t)
-	ts.templateService.AssertExpectations(ts.t)
 }
 
 func fixClusterAddonsConfiguration() *v1alpha1.ClusterAddonsConfiguration {

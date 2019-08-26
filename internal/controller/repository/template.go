@@ -7,6 +7,8 @@ import (
 
 	"regexp"
 
+	"net/url"
+
 	"github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
@@ -20,6 +22,8 @@ type Template struct {
 
 	namespace string
 }
+
+var reg = regexp.MustCompile("\\{(.*?)\\}")
 
 // NewTemplate returns a new Template service
 func NewTemplate(cli client.Client) *Template {
@@ -38,6 +42,9 @@ func (t *Template) TemplateURL(repository v1alpha1.SpecRepository) (string, erro
 	templateParameters := t.findURLTemplates(repository.URL)
 	if len(templateParameters) == 0 {
 		return repository.URL, nil
+	}
+	if repository.SecretRef == nil {
+		return "", fmt.Errorf("template fields `%v` provided but secretRef is empty", templateParameters)
 	}
 
 	fetchNS := t.namespace
@@ -58,14 +65,12 @@ func (t *Template) TemplateURL(repository v1alpha1.SpecRepository) (string, erro
 		if !ok {
 			return "", fmt.Errorf("secret does not contain `%s` field", fieldName)
 		}
-		result = strings.Replace(result, val, string(tmp), -1)
+		result = strings.Replace(result, val, url.QueryEscape(string(tmp)), -1)
 	}
 
 	return strings.Replace(result, "\n", "", -1), nil
 }
 
 func (t *Template) findURLTemplates(url string) []string {
-	reg := regexp.MustCompile("\\{(.*?)\\}")
-
 	return reg.FindAllString(url, -1)
 }
