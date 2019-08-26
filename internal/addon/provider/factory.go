@@ -51,10 +51,6 @@ func (cli *ClientFactory) NewGetter(rawURL, instPath string) (AddonClient, error
 		return nil, err
 	}
 
-	if fullRealAddr != rawURL {
-		cli.log.Infof("[TRACE] go-getter detectors rewrote %q to %q", rawURL, fullRealAddr)
-	}
-
 	// get schema + source address
 	fullRealAddrURL, err := url.Parse(fullRealAddr)
 	if err != nil {

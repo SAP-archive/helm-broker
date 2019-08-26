@@ -4,6 +4,7 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/kyma-project/helm-broker/internal"
 	"github.com/kyma-project/helm-broker/internal/addon/provider"
+	"github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
 	"k8s.io/helm/pkg/proto/hapi/chart"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -68,6 +69,12 @@ type commonClient interface {
 	ListConfigurations() ([]internal.CommonAddon, error)
 	ReprocessRequest(addonName string) error
 	IsNamespaceScoped() bool
+}
+
+//go:generate mockery -name=templateService -output=automock -outpkg=automock -case=underscore
+type templateService interface {
+	NamespacedService
+	TemplateURL(repository v1alpha1.SpecRepository) (string, error)
 }
 
 type commonReconciler interface {

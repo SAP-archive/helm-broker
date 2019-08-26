@@ -35,13 +35,14 @@ type common struct {
 	// used to distinguish namespace-scoped and cluster-wide addons configurations
 	namespace internal.Namespace
 
-	commonClient commonClient
-	log          logrus.FieldLogger
+	commonClient    commonClient
+	templateService templateService
+	log             logrus.FieldLogger
 
 	trace string
 }
 
-func newControllerCommon(client client.Client, addonGetterFactory addonGetterFactory, addonStorage addonStorage, chartStorage chartStorage, docsProvider docsProvider, brokerSyncer brokerSyncer, brokerFacade brokerFacade, dstPath string, log logrus.FieldLogger) *common {
+func newControllerCommon(client client.Client, addonGetterFactory addonGetterFactory, addonStorage addonStorage, chartStorage chartStorage, docsProvider docsProvider, brokerSyncer brokerSyncer, brokerFacade brokerFacade, templateService templateService, dstPath string, log logrus.FieldLogger) *common {
 	return &common{
 		addonGetterFactory: addonGetterFactory,
 
@@ -54,8 +55,9 @@ func newControllerCommon(client client.Client, addonGetterFactory addonGetterFac
 		docsProvider: docsProvider,
 		protection:   protection{},
 
-		namespace:    internal.ClusterWide,
-		commonClient: NewCommonClient(client, log),
+		namespace:       internal.ClusterWide,
+		templateService: templateService,
+		commonClient:    NewCommonClient(client, log),
 
 		dstPath: dstPath,
 		log:     log,
@@ -66,7 +68,7 @@ func newControllerCommon(client client.Client, addonGetterFactory addonGetterFac
 func (c *common) SetWorkingNamespace(namespace string) {
 	c.namespace = internal.Namespace(namespace)
 	for _, svc := range []NamespacedService{
-		c.brokerSyncer, c.brokerFacade, c.docsProvider, c.commonClient,
+		c.brokerSyncer, c.brokerFacade, c.docsProvider, c.commonClient, c.templateService,
 	} {
 		svc.SetNamespace(namespace)
 	}
@@ -168,7 +170,6 @@ func (c *common) OnAdd(addon *internal.CommonAddon, lastStatus v1alpha1.CommonAd
 		}
 	case v1alpha1.AddonsConfigurationReady:
 		saved = c.saveAddons(repositories)
-
 		c.statusSnapshot(&addon.Status, repositories)
 		if err = c.updateAddonStatus(addon); err != nil {
 			return errors.Wrap(err, "while update addons configuration status")
@@ -249,12 +250,19 @@ func (c *common) loadRepositories(repos []v1alpha1.SpecRepository) *repository.C
 		c.log.Infof("- create addons for %q repository", specRepository.URL)
 		repo := repository.NewAddonsRepository(specRepository.URL)
 
-		adds, err := c.createAddons(specRepository.URL)
+		addonsURL, err := c.templateService.TemplateURL(specRepository)
+		if err != nil {
+			repo.TemplatingError(err)
+			repositories.AddRepository(repo)
+			c.log.Errorf("while templating repository URL `%s`: %v", specRepository.URL, err)
+			continue
+		}
+
+		adds, err := c.createAddons(addonsURL)
 		if err != nil {
 			repo.FetchingError(err)
 			repositories.AddRepository(repo)
-
-			c.log.Errorf("while creating addons for repository from %q: %s", specRepository.URL, err)
+			c.log.Errorf("while creating addons for repository from %s: %v", specRepository.URL, err)
 			continue
 		}
 
@@ -434,7 +442,7 @@ func (c *common) reprocessConfigurationsInConflict(deletedAddonsIDs []string, li
 			if hasConflict := c.isConfigurationInConflict(id, configuration.Status); hasConflict {
 				c.log.Infof("- reprocessing conflicting addons configuration `%s/%s`", configuration.Meta.Namespace, configuration.Meta.Name)
 				if err := c.commonClient.ReprocessRequest(configuration.Meta.Name); err != nil {
-					return errors.Wrapf(err, "while reprocessing conflicting addons configuration %s", configuration.Meta.Name)
+					return errors.Wrapf(err, "while reprocessing conflicting addons configuration `%s`", configuration.Meta.Name)
 				}
 			}
 		}

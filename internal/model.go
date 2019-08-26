@@ -11,6 +11,7 @@ import (
 	"github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
 	cms "github.com/kyma-project/kyma/components/cms-controller-manager/pkg/apis/cms/v1alpha1"
 	"github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/helm/pkg/proto/hapi/chart"
 )
@@ -172,6 +173,7 @@ type Addon struct {
 	Status              v1alpha1.AddonStatus
 	Reason              v1alpha1.AddonStatusReason
 	Message             string
+	SecretRef           corev1.SecretReference
 }
 
 // CommonAddon holds common addon configuration structs

@@ -49,3 +49,11 @@ func (ar *Repository) FetchingError(err error) {
 	ar.Repository.Reason = reason
 	ar.Repository.Message = fmt.Sprintf(reason.Message(), err.Error())
 }
+
+// TemplatingError sets StatusRepository as failed with URLTemplatingError as a reason
+func (ar *Repository) TemplatingError(err error) {
+	reason := addonsv1alpha1.RepositoryURLTemplatingError
+	ar.Failed()
+	ar.Repository.Reason = reason
+	ar.Repository.Message = fmt.Sprintf(reason.Message(), err.Error())
+}

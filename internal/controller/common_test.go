@@ -48,7 +48,7 @@ func TestCommon_OnAdd(t *testing.T) {
 			ts := getClusterTestSuite(t, tc.obj...)
 			defer ts.assertExpectations()
 			common := newControllerCommon(ts.mgr.GetClient(), ts.addonGetterFactory, ts.addonStorage, ts.chartStorage,
-				ts.docsProvider, ts.brokerSyncer, ts.brokerFacade, "", logrus.New())
+				ts.docsProvider, ts.brokerSyncer, ts.brokerFacade, ts.templateService, "", logrus.New())
 
 			ts.brokerFacade.On("Exist").Return(false, nil)
 			ts.brokerFacade.On("Create").Return(nil).Once()
@@ -109,7 +109,7 @@ func TestCommon_OnDelete(t *testing.T) {
 		t.Run(tn, func(t *testing.T) {
 			ts := getClusterTestSuite(t, tc.obj...)
 			common := newControllerCommon(ts.mgr.GetClient(), ts.addonGetterFactory, ts.addonStorage, ts.chartStorage,
-				ts.docsProvider, ts.brokerSyncer, ts.brokerFacade, "", logrus.New())
+				ts.docsProvider, ts.brokerSyncer, ts.brokerFacade, ts.templateService, "", logrus.New())
 
 			ts.brokerFacade.On("Delete").Return(nil).Once()
 
@@ -152,7 +152,7 @@ func TestCommon_OnAdd_NamespaceScoped(t *testing.T) {
 			ts := getTestSuite(t, tc.obj...)
 			defer ts.assertExpectations()
 			common := newControllerCommon(ts.mgr.GetClient(), ts.addonGetterFactory, ts.addonStorage, ts.chartStorage,
-				ts.docsProvider, ts.brokerSyncer, ts.brokerFacade, "", logrus.New())
+				ts.docsProvider, ts.brokerSyncer, ts.brokerFacade, ts.templateService, "", logrus.New())
 
 			ts.brokerFacade.On("Exist").Return(false, nil)
 			ts.brokerFacade.On("Create").Return(nil).Once()
@@ -217,7 +217,7 @@ func TestCommon_OnDelete_NamespaceScoped(t *testing.T) {
 		t.Run(tn, func(t *testing.T) {
 			ts := getTestSuite(t, tc.obj...)
 			common := newControllerCommon(ts.mgr.GetClient(), ts.addonGetterFactory, ts.addonStorage, ts.chartStorage,
-				ts.docsProvider, ts.brokerSyncer, ts.brokerFacade, "", logrus.New())
+				ts.docsProvider, ts.brokerSyncer, ts.brokerFacade, ts.templateService, "", logrus.New())
 
 			ts.brokerFacade.On("Delete").Return(nil).Once()
 
@@ -242,7 +242,7 @@ func TestCommon_PrepareForProcessing(t *testing.T) {
 		t.Run(tn, func(t *testing.T) {
 			ts := getTestSuite(t, tc.obj...)
 			common := newControllerCommon(ts.mgr.GetClient(), ts.addonGetterFactory, ts.addonStorage, ts.chartStorage,
-				ts.docsProvider, ts.brokerSyncer, ts.brokerFacade, "", logrus.New())
+				ts.docsProvider, ts.brokerSyncer, ts.brokerFacade, ts.templateService, "", logrus.New())
 
 			ts.brokerFacade.On("Delete").Return(nil).Once()
 
@@ -265,7 +265,7 @@ func TestCommon_PrepareForProcessing_NamespaceScoped(t *testing.T) {
 		t.Run(tn, func(t *testing.T) {
 			ts := getTestSuite(t, tc.obj...)
 			common := newControllerCommon(ts.mgr.GetClient(), ts.addonGetterFactory, ts.addonStorage, ts.chartStorage,
-				ts.docsProvider, ts.brokerSyncer, ts.brokerFacade, "", logrus.New())
+				ts.docsProvider, ts.brokerSyncer, ts.brokerFacade, ts.templateService, "", logrus.New())
 
 			ts.brokerFacade.On("Delete").Return(nil).Once()
 
