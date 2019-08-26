@@ -115,6 +115,9 @@ spec:
         - mountPath: /etc/certs
           name: helm-certs
           readOnly: true
+        - mountPath: /root/.ssh
+          name: ssh-cfg
+          readOnly: true
         ports:
         - containerPort: {{ .Values.global.service.internalPort }}
         # Temporary solution for readiness probe
@@ -144,6 +147,9 @@ spec:
       - name: config-volume
         configMap:
           name: helm-config-map
+      - name: ssh-cfg
+          configMap:
+            name: ssh-cfg
       - name: helm-certs
         secret:
           secretName: helm-secret
