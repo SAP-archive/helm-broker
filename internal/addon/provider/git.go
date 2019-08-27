@@ -109,13 +109,15 @@ func (g *GitGetter) AddonDocURL(name internal.AddonName, version internal.AddonV
 	if err != nil {
 		return "", exerr.Wrapf(err, "while creating archive '%s'", pathToTgz)
 	}
+	defer func() {
+		os.Remove(pathToTgz)
+	}()
 
 	file, err := os.Open(pathToTgz)
 	if err != nil {
 		return "", exerr.Wrapf(err, "while opening file '%s'", pathToTgz)
 	}
 	defer func() {
-		os.Remove(pathToTgz)
 		file.Close()
 	}()
 

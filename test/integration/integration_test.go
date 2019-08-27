@@ -344,19 +344,34 @@ func TestDisabledDocs(t *testing.T) {
 		suite.assertNoServicesInCatalogEndpoint("ns/stage")
 
 		// when
-		suite.createAddonsConfiguration("stage", "addon1", []string{accTestRepo}, sourceHTTP)
+		suite.createAddonsConfiguration("stage", "addon1", []string{redisAndAccTestRepo}, sourceHTTP)
 
 		// then
 		suite.waitForAddonsConfigurationPhase("stage", "addon1", v1alpha1.AddonsConfigurationReady)
+	})
+	t.Run("namespaced-git", func(t *testing.T) {
+		// when
+		suite.createAddonsConfiguration("stage", "addon2", []string{redisAndAccTestRepo}, sourceGit)
+
+		// then
+		suite.waitForAddonsConfigurationPhase("stage", "addon2", v1alpha1.AddonsConfigurationReady)
 	})
 
 	t.Run("cluster", func(t *testing.T) {
 		suite.assertNoServicesInCatalogEndpoint("cluster")
 
 		// when
-		suite.createClusterAddonsConfiguration("addon1", []string{accTestRepo}, sourceHTTP)
+		suite.createClusterAddonsConfiguration("addon1", []string{redisAndAccTestRepo}, sourceHTTP)
 
 		// then
 		suite.waitForClusterAddonsConfigurationPhase("addon1", v1alpha1.AddonsConfigurationReady)
+	})
+
+	t.Run("cluster-Git", func(t *testing.T) {
+		// when
+		suite.createClusterAddonsConfiguration("addon2", []string{redisAndAccTestRepo}, sourceGit)
+
+		// then
+		suite.waitForClusterAddonsConfigurationPhase("addon2", v1alpha1.AddonsConfigurationReady)
 	})
 }
