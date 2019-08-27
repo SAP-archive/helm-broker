@@ -24,7 +24,7 @@ func TestRepositoryClientSuccess(t *testing.T) {
 	require.NoError(t, err)
 	defer os.RemoveAll(tmpDir)
 
-	addonLoader, err := provider.NewClient(fakeRepo, addon.NewLoader(tmpDir, log), log)
+	addonLoader, err := provider.NewClient(fakeRepo, addon.NewLoader(tmpDir, log), true, log)
 	require.NoError(t, err)
 
 	entry := internal.IndexEntry{
@@ -42,6 +42,7 @@ func TestRepositoryClientSuccess(t *testing.T) {
 
 	require.NoError(t, gotAddonErr)
 	assert.NotEmpty(t, gotAddon)
+	assert.NotEmpty(t, gotAddon.Addon.RepositoryURL)
 }
 
 // fakeRepository provide access to addons repository

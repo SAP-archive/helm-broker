@@ -20,10 +20,12 @@ type Client struct {
 	log                 *logrus.Entry
 	addonLoader         addonLoader
 	concreteGetter      RepositoryGetter
+
+	documentationEnabled bool
 }
 
 // NewClient returns new instance of Client
-func NewClient(concreteGetter RepositoryGetter, addonLoader addonLoader, log logrus.FieldLogger) (*Client, error) {
+func NewClient(concreteGetter RepositoryGetter, addonLoader addonLoader, docsEnabled bool, log logrus.FieldLogger) (*Client, error) {
 	specifiedSchemRegex, err := regexp.Compile(`^([A-Za-z0-9]+)::(.+)$`)
 	if err != nil {
 		return nil, err
@@ -33,6 +35,7 @@ func NewClient(concreteGetter RepositoryGetter, addonLoader addonLoader, log log
 		addonLoader:         addonLoader,
 		log:                 log.WithField("service", "addonClient"),
 		concreteGetter:      concreteGetter,
+		documentationEnabled: docsEnabled,
 	}, nil
 }
 
@@ -47,9 +50,12 @@ func (d *Client) GetCompleteAddon(entry internal.IndexEntry) (internal.AddonWith
 	if err != nil {
 		return internal.AddonWithCharts{}, errors.Wrapf(err, "while loading addon %v", entry.Name)
 	}
-	a.RepositoryURL, err = d.concreteGetter.AddonDocURL(entry.Name, entry.Version)
-	if err != nil {
-		return internal.AddonWithCharts{}, errors.Wrapf(err, "while getting Docs URL for addon %v", entry.Name)
+
+	if d.documentationEnabled {
+		a.RepositoryURL, err = d.concreteGetter.AddonDocURL(entry.Name, entry.Version)
+		if err != nil {
+			return internal.AddonWithCharts{}, errors.Wrapf(err, "while getting Docs URL for addon %v", entry.Name)
+		}
 	}
 
 	return internal.AddonWithCharts{

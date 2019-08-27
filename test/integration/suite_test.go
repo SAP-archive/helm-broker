@@ -122,7 +122,11 @@ func newTestSuite(t *testing.T, docsEnabled, httpBasicAuth bool) *testSuite {
 	}
 
 	uploadClient := &automock.Client{}
-	uploadClient.On("Upload", mock.AnythingOfType("string"), mock.Anything).Return(assetstore.UploadedFile{}, nil)
+	if docsEnabled {
+		uploadClient.On("Upload", mock.AnythingOfType("string"), mock.Anything).Return(assetstore.UploadedFile{}, nil)
+	} else {
+		uploadClient.On("Upload", mock.AnythingOfType("string"), mock.Anything).Return(assetstore.UploadedFile{}, fmt.Errorf("Upload must not be called, the service does not exists"))
+	}
 
 	mgr := controller.SetupAndStartController(restConfig, &config.ControllerConfig{
 		DevelopMode:              true, // DevelopMode allows "http" urls
