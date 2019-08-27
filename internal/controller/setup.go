@@ -72,7 +72,7 @@ func SetupAndStartController(cfg *rest.Config, ctrCfg *config.ControllerConfig, 
 		lg.Infof("Disabling support for HTTP protocol because DevelopMode is set to false.")
 	}
 
-	addonGetterFactory, err := provider.NewClientFactory(allowedGetters, addon.NewLoader(ctrCfg.TmpDir, lg), ctrCfg.DocumentationEnabled, lg)
+	addonGetterFactory, err := provider.NewClientFactory(allowedGetters, addon.NewLoader(ctrCfg.TmpDir, lg), lg)
 	fatalOnError(err, "cannot setup addon getter")
 
 	// Creating controllers

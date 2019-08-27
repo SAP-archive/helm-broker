@@ -27,11 +27,10 @@ type ClientFactory struct {
 	specifiedSchemRegex *regexp.Regexp
 	log                 *logrus.Entry
 	addonLoader         addonLoader
-	docsEnabled         bool
 }
 
 // NewClientFactory returns new instance of the ClientFactory
-func NewClientFactory(allowedGetters map[string]Provider, addonLoader addonLoader, docsEnabled bool, log logrus.FieldLogger) (*ClientFactory, error) {
+func NewClientFactory(allowedGetters map[string]Provider, addonLoader addonLoader, log logrus.FieldLogger) (*ClientFactory, error) {
 	specifiedSchemRegex, err := regexp.Compile(`^([A-Za-z0-9]+)::(.+)$`)
 	if err != nil {
 		return nil, err
@@ -41,7 +40,6 @@ func NewClientFactory(allowedGetters map[string]Provider, addonLoader addonLoade
 		gettersProviders:    allowedGetters,
 		addonLoader:         addonLoader,
 		log:                 log.WithField("service", "addonClientFactory"),
-		docsEnabled: docsEnabled,
 	}, nil
 }
 
@@ -72,7 +70,7 @@ func (cli *ClientFactory) NewGetter(rawURL, instPath string) (AddonClient, error
 		return nil, err
 	}
 
-	addonClient, err := NewClient(concreteGetter, cli.addonLoader, cli.docsEnabled, cli.log.WithField("getterScheme", scheme))
+	addonClient, err := NewClient(concreteGetter, cli.addonLoader, cli.log.WithField("getterScheme", scheme))
 	if err != nil {
 		return nil, err
 	}
