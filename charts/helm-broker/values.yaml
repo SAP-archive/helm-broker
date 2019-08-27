@@ -16,8 +16,8 @@ global:
     image: eu.gcr.io/kyma-project/develop/helm-broker
     version: 2f5ab382
   helm_controller:
-    image: eu.gcr.io/kyma-project/pr/helm-controller
-    version: PR-19
+    image: eu.gcr.io/kyma-project/develop/helm-controller
+    version: 2f5ab382
   # helm broker service parameters
   service:
     type: NodePort
