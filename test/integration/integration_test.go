@@ -341,22 +341,61 @@ func TestDisabledDocs(t *testing.T) {
 	defer suite.tearDown()
 
 	t.Run("namespaced", func(t *testing.T) {
+		// given
 		suite.assertNoServicesInCatalogEndpoint("ns/stage")
 
 		// when
-		suite.createAddonsConfiguration("stage", "addon1", []string{accTestRepo}, sourceHTTP)
+		suite.createAddonsConfiguration("stage", "addon1", []string{redisRepo}, sourceHTTP)
 
 		// then
 		suite.waitForAddonsConfigurationPhase("stage", "addon1", v1alpha1.AddonsConfigurationReady)
+		suite.waitForServicesInCatalogEndpoint("ns/stage", []string{redisAddonID})
+
+		suite.deleteAddonsConfiguration("stage", "addon1")
+		suite.waitForEmptyCatalogResponse("ns/stage")
+	})
+	t.Run("namespaced-git", func(t *testing.T) {
+		// given
+		suite.assertNoServicesInCatalogEndpoint("ns/stage")
+
+		// when
+		suite.createAddonsConfiguration("stage", "addon2", []string{redisRepo}, sourceGit)
+
+		// then
+		suite.waitForAddonsConfigurationPhase("stage", "addon2", v1alpha1.AddonsConfigurationReady)
+		suite.waitForServicesInCatalogEndpoint("ns/stage", []string{redisAddonIDGit})
+
+		suite.deleteAddonsConfiguration("stage", "addon2")
+		suite.waitForEmptyCatalogResponse("ns/stage")
 	})
 
 	t.Run("cluster", func(t *testing.T) {
+		// given
 		suite.assertNoServicesInCatalogEndpoint("cluster")
 
 		// when
-		suite.createClusterAddonsConfiguration("addon1", []string{accTestRepo}, sourceHTTP)
+		suite.createClusterAddonsConfiguration("addon1", []string{redisRepo}, sourceHTTP)
 
 		// then
 		suite.waitForClusterAddonsConfigurationPhase("addon1", v1alpha1.AddonsConfigurationReady)
+		suite.waitForServicesInCatalogEndpoint("cluster", []string{redisAddonID})
+
+		suite.deleteClusterAddonsConfiguration("addon1")
+		suite.waitForEmptyCatalogResponse("cluster")
+	})
+
+	t.Run("cluster-Git", func(t *testing.T) {
+		// given
+		suite.assertNoServicesInCatalogEndpoint("cluster")
+
+		// when
+		suite.createClusterAddonsConfiguration("addon2", []string{redisRepo}, sourceGit)
+
+		// then
+		suite.waitForClusterAddonsConfigurationPhase("addon2", v1alpha1.AddonsConfigurationReady)
+		suite.waitForServicesInCatalogEndpoint("cluster", []string{redisAddonIDGit})
+
+		suite.deleteClusterAddonsConfiguration("addon2")
+		suite.waitForEmptyCatalogResponse("cluster")
 	})
 }

@@ -148,8 +148,8 @@ spec:
         configMap:
           name: helm-config-map
       - name: ssh-cfg
-          configMap:
-            name: ssh-cfg
+        configMap:
+          name: ssh-cfg
       - name: helm-certs
         secret:
           secretName: helm-secret

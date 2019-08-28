@@ -4,6 +4,7 @@ package integration_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -18,7 +19,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -122,7 +123,11 @@ func newTestSuite(t *testing.T, docsEnabled, httpBasicAuth bool) *testSuite {
 	}
 
 	uploadClient := &automock.Client{}
-	uploadClient.On("Upload", mock.AnythingOfType("string"), mock.Anything).Return(assetstore.UploadedFile{}, nil)
+	if docsEnabled {
+		uploadClient.On("Upload", mock.AnythingOfType("string"), mock.Anything).Return(assetstore.UploadedFile{}, nil)
+	} else {
+		uploadClient.On("Upload", mock.AnythingOfType("string"), mock.Anything).Return(assetstore.UploadedFile{}, errors.New("Upload must not be called, the service does not exists"))
+	}
 
 	mgr := controller.SetupAndStartController(restConfig, &config.ControllerConfig{
 		DevelopMode:              true, // DevelopMode allows "http" urls
@@ -414,7 +419,7 @@ func (ts *testSuite) assertDocsTopicExist(namespace, name string) {
 	err := wait.Poll(1*time.Second, 30*time.Second, func() (done bool, err error) {
 		key := types.NamespacedName{Name: name, Namespace: namespace}
 		err = ts.dynamicClient.Get(context.TODO(), key, &docsTopic)
-		if errors.IsNotFound(err) {
+		if apierrors.IsNotFound(err) {
 			ts.t.Logf("DocsTopic %q not found. Retry...", key)
 			return false, nil
 		}
@@ -434,7 +439,7 @@ func (ts *testSuite) assertClusterDocsTopicExist(name string) {
 	err := wait.Poll(1*time.Second, 30*time.Second, func() (done bool, err error) {
 		key := types.NamespacedName{Name: name}
 		err = ts.dynamicClient.Get(context.TODO(), key, &clusterDocsTopic)
-		if errors.IsNotFound(err) {
+		if apierrors.IsNotFound(err) {
 			ts.t.Logf("ClusterDocsTopic %q not found. Retry...", key)
 			return false, nil
 		}

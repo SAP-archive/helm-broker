@@ -23,23 +23,25 @@ type addonLoader interface {
 
 // ClientFactory knows how to build the concrete RepositoryGetter for given addon repository URL.
 type ClientFactory struct {
-	gettersProviders    map[string]Provider
-	specifiedSchemRegex *regexp.Regexp
-	log                 *logrus.Entry
-	addonLoader         addonLoader
+	gettersProviders            map[string]Provider
+	specifiedSchemRegex         *regexp.Regexp
+	log                         *logrus.Entry
+	addonLoader                 addonLoader
+	documentationEnabledEnabled bool
 }
 
 // NewClientFactory returns new instance of the ClientFactory
-func NewClientFactory(allowedGetters map[string]Provider, addonLoader addonLoader, log logrus.FieldLogger) (*ClientFactory, error) {
+func NewClientFactory(allowedGetters map[string]Provider, addonLoader addonLoader, documentationEnabled bool, log logrus.FieldLogger) (*ClientFactory, error) {
 	specifiedSchemRegex, err := regexp.Compile(`^([A-Za-z0-9]+)::(.+)$`)
 	if err != nil {
 		return nil, err
 	}
 	return &ClientFactory{
-		specifiedSchemRegex: specifiedSchemRegex,
-		gettersProviders:    allowedGetters,
-		addonLoader:         addonLoader,
-		log:                 log.WithField("service", "addonClientFactory"),
+		specifiedSchemRegex:         specifiedSchemRegex,
+		gettersProviders:            allowedGetters,
+		addonLoader:                 addonLoader,
+		log:                         log.WithField("service", "addonClientFactory"),
+		documentationEnabledEnabled: documentationEnabled,
 	}, nil
 }
 
@@ -70,7 +72,7 @@ func (cli *ClientFactory) NewGetter(rawURL, instPath string) (AddonClient, error
 		return nil, err
 	}
 
-	addonClient, err := NewClient(concreteGetter, cli.addonLoader, cli.log.WithField("getterScheme", scheme))
+	addonClient, err := NewClient(concreteGetter, cli.addonLoader, cli.documentationEnabledEnabled, cli.log.WithField("getterScheme", scheme))
 	if err != nil {
 		return nil, err
 	}
