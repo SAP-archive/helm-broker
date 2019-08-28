@@ -14,15 +14,16 @@ global:
     version: v20190325-ff66a3a
   helm_broker:
     image: eu.gcr.io/kyma-project/develop/helm-broker
-    version: 2f5ab382
+    version: "02064180"
   helm_controller:
     image: eu.gcr.io/kyma-project/develop/helm-controller
-    version: 2f5ab382
+    version: "02064180"
   # helm broker service parameters
   service:
     type: NodePort
     externalPort: 80
     internalPort: 8081
+    ctrlInternalPort: 8080
   # etcd port uses by helm broker
   etcdClientPort: 2379
   # temporary directory size limit uses in broker/controller containers

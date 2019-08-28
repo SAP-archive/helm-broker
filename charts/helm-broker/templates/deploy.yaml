@@ -119,7 +119,7 @@ spec:
           name: ssh-cfg
           readOnly: true
         ports:
-        - containerPort: {{ .Values.global.service.internalPort }}
+        - containerPort: {{ .Values.global.service.ctrlInternalPort }}
         # Temporary solution for readiness probe
         # Ref: https://github.com/istio/istio/issues/2628
         readinessProbe:
