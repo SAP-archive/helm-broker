@@ -14,10 +14,10 @@ global:
     version: v20190325-ff66a3a
   helm_broker:
     image: eu.gcr.io/kyma-project/develop/helm-broker
-    version: "02064180"
+    version: 54bb24ad
   helm_controller:
     image: eu.gcr.io/kyma-project/develop/helm-controller
-    version: "02064180"
+    version: 54bb24ad
   # helm broker service parameters
   service:
     type: NodePort
