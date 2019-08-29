@@ -44,6 +44,10 @@ import (
 	dtv1alpha1 "github.com/kyma-project/kyma/components/cms-controller-manager/pkg/apis/cms/v1alpha1"
 )
 
+func init() {
+	EnsureHgInstalled()
+}
+
 const (
 	pollingInterval = 100 * time.Millisecond
 
@@ -73,6 +77,7 @@ const (
 )
 
 func newTestSuite(t *testing.T, docsEnabled, httpBasicAuth bool) *testSuite {
+
 	sch, err := v1alpha1.SchemeBuilder.Build()
 	require.NoError(t, err)
 	require.NoError(t, apis.AddToScheme(sch))

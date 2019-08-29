@@ -138,6 +138,9 @@ func TestGetCatalogHappyPath(t *testing.T) {
 	}
 }
 
+// TestAddonsConflicts check Helm Broker contract with conflicts on Addons.
+// It's tested only with HTTP, testing other protocols do not make sense, cause
+// conflicts resolving is in higher layer, so it's protocol agnostic.
 func TestAddonsConflicts(t *testing.T) {
 	// given
 	suite := newTestSuite(t, true, false)
@@ -152,16 +155,6 @@ func TestAddonsConflicts(t *testing.T) {
 			kind:    sourceHTTP,
 			redisID: redisAddonID,
 			testID:  accTestAddonID,
-		},
-		"namespaced-git": {
-			kind:    sourceGit,
-			redisID: redisAddonIDGit,
-			testID:  accTestAddonIDGit,
-		},
-		"namespaced-hg": { //TODO: We really need that??
-			kind:    sourceHg,
-			redisID: redisAddonIDHg,
-			testID:  accTestAddonIDHg,
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
@@ -288,6 +281,10 @@ func TestAddonsConflicts(t *testing.T) {
 	}
 }
 
+// TestDocsTopic check Helm Broker  with conflicts on Addons.
+// It's tested only with HTTP and GIT protocols.
+// Test case with GIT protocol covers also implementation
+// for GCS, HG, and S3 because they are using the same abstraction factory.
 func TestDocsTopic(t *testing.T) {
 	// given
 	suite := newTestSuite(t, true, false)
@@ -307,11 +304,6 @@ func TestDocsTopic(t *testing.T) {
 			kind:        sourceGit,
 			addonName:   addonsConfigNameGit,
 			docsTopicID: accTestAddonIDGit,
-		},
-		"namespaced-hg": {
-			kind:        sourceHg,
-			addonName:   addonsConfigNameHg,
-			docsTopicID: accTestAddonIDHg,
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
@@ -345,11 +337,6 @@ func TestDocsTopic(t *testing.T) {
 			addonName:   addonsConfigNameGit,
 			docsTopicID: accTestAddonIDGit,
 		},
-		"cluster-hg": {
-			kind:        sourceHg,
-			addonName:   addonsConfigNameHg,
-			docsTopicID: accTestAddonIDHg,
-		},
 	} {
 		t.Run(name, func(t *testing.T) {
 			suite.createClusterAddonsConfiguration(c.addonName, []string{redisAndAccTestRepo}, c.kind)
@@ -367,6 +354,10 @@ func TestDocsTopic(t *testing.T) {
 	}
 }
 
+// TestDisabledDocs check Helm Broker  with conflicts on Addons.
+// It's tested only with HTTP and GIT protocols.
+// Test case with GIT protocol covers also implementation
+// for GCS, HG, and S3 because they are using the same abstraction factory.
 func TestDisabledDocs(t *testing.T) {
 	suite := newTestSuite(t, false, false)
 	defer suite.tearDown()
@@ -385,11 +376,6 @@ func TestDisabledDocs(t *testing.T) {
 			kind:      sourceGit,
 			addonName: addonsConfigNameGit,
 			redisID:   redisAddonIDGit,
-		},
-		"namespaced-hg": {
-			kind:      sourceHg,
-			addonName: addonsConfigNameHg,
-			redisID:   redisAddonIDHg,
 		},
 	} {
 		t.Run(tn, func(t *testing.T) {
@@ -422,11 +408,6 @@ func TestDisabledDocs(t *testing.T) {
 			kind:      sourceGit,
 			addonName: addonsConfigNameGit,
 			redisID:   redisAddonIDGit,
-		},
-		"cluster-hg": {
-			kind:      sourceHg,
-			addonName: addonsConfigNameHg,
-			redisID:   redisAddonIDHg,
 		},
 	} {
 		t.Run(tn, func(t *testing.T) {
