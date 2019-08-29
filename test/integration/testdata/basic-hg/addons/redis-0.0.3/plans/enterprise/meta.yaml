@@ -1,0 +1,6 @@
+name: enterprise
+id: a6078798-70a1-4674-af90-123-123-123
+description: "Enterprise plan"
+displayName: Enterprise
+
+bindable: true

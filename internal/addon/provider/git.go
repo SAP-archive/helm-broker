@@ -15,6 +15,7 @@ type GitGetterCreator struct {
 // functionality for loading addon from any Git repository.
 func (g GitGetterCreator) NewGit(addr, src string) (RepositoryGetter, error) {
 	return NewClientModeDirGetter(ClientModeDirGetterCfg{
+		Protocol:   "git",
 		Underlying: &getter.GitGetter{},
 		TmpDir:     g.TmpDir,
 		Cli:        g.Cli,

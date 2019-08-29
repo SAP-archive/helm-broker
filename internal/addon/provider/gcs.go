@@ -15,6 +15,7 @@ type GCSGetterCreator struct {
 // functionality for loading addon from any GCS repository.
 func (g GCSGetterCreator) NewGCS(addr, src string) (RepositoryGetter, error) {
 	return NewClientModeDirGetter(ClientModeDirGetterCfg{
+		Protocol:   "gcs",
 		Underlying: &getter.GCSGetter{},
 		TmpDir:     g.TmpDir,
 		Cli:        g.Cli,

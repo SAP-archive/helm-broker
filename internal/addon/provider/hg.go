@@ -15,6 +15,7 @@ type HgGetterCreator struct {
 // functionality for loading addon from any  Mercurial repository.
 func (g HgGetterCreator) NewHg(addr, src string) (RepositoryGetter, error) {
 	return NewClientModeDirGetter(ClientModeDirGetterCfg{
+		Protocol:   "hg",
 		Underlying: &getter.HgGetter{},
 		TmpDir:     g.TmpDir,
 		Cli:        g.Cli,

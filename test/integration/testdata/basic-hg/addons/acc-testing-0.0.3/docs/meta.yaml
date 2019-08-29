@@ -1,0 +1,9 @@
+docs:
+  - template:
+      displayName: "Documentation for acceptance testing bundle"
+      description: "Overall documentation"
+      sources:
+        - type: markdown
+          name: markdown-files
+          mode: package
+          filter: docs/

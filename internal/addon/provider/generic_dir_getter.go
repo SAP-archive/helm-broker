@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -29,8 +28,9 @@ type ClientModeDirGetter struct {
 	addonDirPath string
 	docsURL      string
 
-	cli    assetstore.Client
-	tmpDir string
+	cli      assetstore.Client
+	tmpDir   string
+	protocol string
 }
 
 // ClientModeDirGetterCfg holds input parameters for ClientModeDirGetter constructor
@@ -40,17 +40,18 @@ type ClientModeDirGetterCfg struct {
 	Underlying getter.Getter
 	Addr       string
 	Src        string
+	Protocol   string
 }
 
 // NewClientModeDirGetter returns new instance of ClientModeDirGetter
 func NewClientModeDirGetter(in ClientModeDirGetterCfg) (RepositoryGetter, error) {
 	finalDst := path.Join(in.Src, rand.String(10))
-	gitAddr, indexPath := getter.SourceDirSubdir(in.Addr)
+	upstreamAddr, indexPath := getter.SourceDirSubdir(in.Addr)
 	if indexPath == "" {
-		return nil, errors.New("index path needs to be provided. Check documentation about using git protocol")
+		return nil, fmt.Errorf("index path needs to be provided. Check documentation about using %s protocol", in.Protocol)
 	}
 
-	ru, err := url.Parse(gitAddr)
+	ru, err := url.Parse(upstreamAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -60,16 +61,18 @@ func NewClientModeDirGetter(in ClientModeDirGetterCfg) (RepositoryGetter, error)
 	}
 
 	return &ClientModeDirGetter{
-		underlying:   in.Underlying,
-		dst:          finalDst,
+		protocol:   in.Protocol,
+		underlying: in.Underlying,
+		tmpDir:     in.TmpDir,
+		cli:        in.Cli,
+
 		idxPath:      indexPath,
-		tmpDir:       in.TmpDir,
-		cli:          in.Cli,
+		dst:          finalDst,
 		addonDirPath: strings.TrimRight(indexPath, path.Base(indexPath)),
 	}, nil
 }
 
-// Cleanup  removes folder where git repository was cloned.
+// Cleanup  removes folder where repository was cloned.
 func (g *ClientModeDirGetter) Cleanup() error {
 	return os.RemoveAll(g.dst)
 }

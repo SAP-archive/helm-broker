@@ -63,6 +63,12 @@ func TestGetCatalogHappyPath(t *testing.T) {
 			redisID:   redisAddonIDGit,
 			testID:    accTestAddonIDGit,
 		},
+		"namespaced-hg": {
+			kind:      sourceHg,
+			addonName: addonsConfigNameHg,
+			redisID:   redisAddonIDHg,
+			testID:    accTestAddonIDHg,
+		},
 	} {
 		t.Run(name, func(t *testing.T) {
 			suite.assertNoServicesInCatalogEndpoint("ns/stage")
@@ -107,6 +113,11 @@ func TestGetCatalogHappyPath(t *testing.T) {
 			addonName: addonsConfigNameGit,
 			redisID:   redisAddonIDGit,
 		},
+		"cluster-hg": {
+			kind:      sourceHg,
+			addonName: addonsConfigNameHg,
+			redisID:   redisAddonIDHg,
+		},
 	} {
 		t.Run(name, func(t *testing.T) {
 			suite.assertNoServicesInCatalogEndpoint("cluster")
@@ -146,6 +157,11 @@ func TestAddonsConflicts(t *testing.T) {
 			kind:    sourceGit,
 			redisID: redisAddonIDGit,
 			testID:  accTestAddonIDGit,
+		},
+		"namespaced-hg": { //TODO: We really need that??
+			kind:    sourceHg,
+			redisID: redisAddonIDHg,
+			testID:  accTestAddonIDHg,
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
@@ -213,6 +229,11 @@ func TestAddonsConflicts(t *testing.T) {
 			kind:    sourceGit,
 			redisID: redisAddonIDGit,
 			testID:  accTestAddonIDGit,
+		},
+		"cluster-hg": {
+			kind:    sourceHg,
+			redisID: redisAddonIDHg,
+			testID:  accTestAddonIDHg,
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
@@ -287,6 +308,11 @@ func TestDocsTopic(t *testing.T) {
 			addonName:   addonsConfigNameGit,
 			docsTopicID: accTestAddonIDGit,
 		},
+		"namespaced-hg": {
+			kind:        sourceHg,
+			addonName:   addonsConfigNameHg,
+			docsTopicID: accTestAddonIDHg,
+		},
 	} {
 		t.Run(name, func(t *testing.T) {
 			// when
@@ -319,6 +345,11 @@ func TestDocsTopic(t *testing.T) {
 			addonName:   addonsConfigNameGit,
 			docsTopicID: accTestAddonIDGit,
 		},
+		"cluster-hg": {
+			kind:        sourceHg,
+			addonName:   addonsConfigNameHg,
+			docsTopicID: accTestAddonIDHg,
+		},
 	} {
 		t.Run(name, func(t *testing.T) {
 			suite.createClusterAddonsConfiguration(c.addonName, []string{redisAndAccTestRepo}, c.kind)
@@ -340,62 +371,77 @@ func TestDisabledDocs(t *testing.T) {
 	suite := newTestSuite(t, false, false)
 	defer suite.tearDown()
 
-	t.Run("namespaced", func(t *testing.T) {
-		// given
-		suite.assertNoServicesInCatalogEndpoint("ns/stage")
+	for tn, tc := range map[string]struct {
+		kind      string
+		addonName string
+		redisID   string
+	}{
+		"namespaced-http": {
+			kind:      sourceHTTP,
+			addonName: addonsConfigName,
+			redisID:   redisAddonID,
+		},
+		"namespaced-git": {
+			kind:      sourceGit,
+			addonName: addonsConfigNameGit,
+			redisID:   redisAddonIDGit,
+		},
+		"namespaced-hg": {
+			kind:      sourceHg,
+			addonName: addonsConfigNameHg,
+			redisID:   redisAddonIDHg,
+		},
+	} {
+		t.Run(tn, func(t *testing.T) {
+			// given
+			suite.assertNoServicesInCatalogEndpoint("ns/stage")
 
-		// when
-		suite.createAddonsConfiguration("stage", "addon1", []string{redisRepo}, sourceHTTP)
+			// when
+			suite.createAddonsConfiguration("stage", tc.addonName, []string{redisRepo}, tc.kind)
 
-		// then
-		suite.waitForAddonsConfigurationPhase("stage", "addon1", v1alpha1.AddonsConfigurationReady)
-		suite.waitForServicesInCatalogEndpoint("ns/stage", []string{redisAddonID})
+			// then
+			suite.waitForAddonsConfigurationPhase("stage", tc.addonName, v1alpha1.AddonsConfigurationReady)
+			suite.waitForServicesInCatalogEndpoint("ns/stage", []string{tc.redisID})
 
-		suite.deleteAddonsConfiguration("stage", "addon1")
-		suite.waitForEmptyCatalogResponse("ns/stage")
-	})
-	t.Run("namespaced-git", func(t *testing.T) {
-		// given
-		suite.assertNoServicesInCatalogEndpoint("ns/stage")
+			suite.deleteAddonsConfiguration("stage", tc.addonName)
+			suite.waitForEmptyCatalogResponse("ns/stage")
+		})
+	}
 
-		// when
-		suite.createAddonsConfiguration("stage", "addon2", []string{redisRepo}, sourceGit)
+	for tn, tc := range map[string]struct {
+		kind      string
+		addonName string
+		redisID   string
+	}{
+		"cluster-http": {
+			kind:      sourceHTTP,
+			addonName: addonsConfigName,
+			redisID:   redisAddonID,
+		},
+		"cluster-git": {
+			kind:      sourceGit,
+			addonName: addonsConfigNameGit,
+			redisID:   redisAddonIDGit,
+		},
+		"cluster-hg": {
+			kind:      sourceHg,
+			addonName: addonsConfigNameHg,
+			redisID:   redisAddonIDHg,
+		},
+	} {
+		t.Run(tn, func(t *testing.T) {
+			// given
+			suite.assertNoServicesInCatalogEndpoint("cluster")
 
-		// then
-		suite.waitForAddonsConfigurationPhase("stage", "addon2", v1alpha1.AddonsConfigurationReady)
-		suite.waitForServicesInCatalogEndpoint("ns/stage", []string{redisAddonIDGit})
+			// when
+			suite.createClusterAddonsConfiguration(tc.addonName, []string{redisRepo}, tc.kind)
 
-		suite.deleteAddonsConfiguration("stage", "addon2")
-		suite.waitForEmptyCatalogResponse("ns/stage")
-	})
+			// then
+			suite.waitForClusterAddonsConfigurationPhase(tc.addonName, v1alpha1.AddonsConfigurationReady)
+			suite.waitForServicesInCatalogEndpoint("cluster", []string{tc.redisID})
 
-	t.Run("cluster", func(t *testing.T) {
-		// given
-		suite.assertNoServicesInCatalogEndpoint("cluster")
-
-		// when
-		suite.createClusterAddonsConfiguration("addon1", []string{redisRepo}, sourceHTTP)
-
-		// then
-		suite.waitForClusterAddonsConfigurationPhase("addon1", v1alpha1.AddonsConfigurationReady)
-		suite.waitForServicesInCatalogEndpoint("cluster", []string{redisAddonID})
-
-		suite.deleteClusterAddonsConfiguration("addon1")
-		suite.waitForEmptyCatalogResponse("cluster")
-	})
-
-	t.Run("cluster-Git", func(t *testing.T) {
-		// given
-		suite.assertNoServicesInCatalogEndpoint("cluster")
-
-		// when
-		suite.createClusterAddonsConfiguration("addon2", []string{redisRepo}, sourceGit)
-
-		// then
-		suite.waitForClusterAddonsConfigurationPhase("addon2", v1alpha1.AddonsConfigurationReady)
-		suite.waitForServicesInCatalogEndpoint("cluster", []string{redisAddonIDGit})
-
-		suite.deleteClusterAddonsConfiguration("addon2")
-		suite.waitForEmptyCatalogResponse("cluster")
-	})
+			suite.deleteClusterAddonsConfiguration(tc.addonName)
+			suite.waitForEmptyCatalogResponse("cluster")
+		})
+	}
 }

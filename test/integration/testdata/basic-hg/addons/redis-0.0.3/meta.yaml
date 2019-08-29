@@ -1,0 +1,13 @@
+name: redis
+version: 0.0.3
+id: 91c753f0-813b-4bf0-a6b6-123-123-123
+description: "Redis package"
+displayName: Redis
+
+tags: database, cache
+providerDisplayName: bitnami
+longDescription: Redis is an advanced key-value cache and store
+documentationURL: https://github.com/bitnami/bitnami-docker-redis
+supportURL: http://slack.oss.bitnami.com/
+imageURL: https://upload.wikimedia.org/wikipedia/en/6/6b/Redis_Logo.svg
+bindable: true
