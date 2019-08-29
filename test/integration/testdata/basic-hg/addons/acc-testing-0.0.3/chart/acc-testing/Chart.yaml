@@ -1,5 +1,0 @@
-apiVersion: v1
-appVersion: "1.0"
-description: Acceptance testing chart
-name: acc-testing
-version: 0.0.2
