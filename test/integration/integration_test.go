@@ -63,6 +63,12 @@ func TestGetCatalogHappyPath(t *testing.T) {
 			redisID:   redisAddonIDGit,
 			testID:    accTestAddonIDGit,
 		},
+		"namespaced-hg": {
+			kind:      sourceHg,
+			addonName: addonsConfigNameHg,
+			redisID:   redisAddonIDHg,
+			testID:    accTestAddonIDHg,
+		},
 	} {
 		t.Run(name, func(t *testing.T) {
 			suite.assertNoServicesInCatalogEndpoint("ns/stage")
@@ -107,6 +113,11 @@ func TestGetCatalogHappyPath(t *testing.T) {
 			addonName: addonsConfigNameGit,
 			redisID:   redisAddonIDGit,
 		},
+		"cluster-hg": {
+			kind:      sourceHg,
+			addonName: addonsConfigNameHg,
+			redisID:   redisAddonIDHg,
+		},
 	} {
 		t.Run(name, func(t *testing.T) {
 			suite.assertNoServicesInCatalogEndpoint("cluster")
@@ -127,6 +138,9 @@ func TestGetCatalogHappyPath(t *testing.T) {
 	}
 }
 
+// TestAddonsConflicts check Helm Broker contract with conflicts on Addons.
+// It's tested only with HTTP, testing other protocols do not make sense, cause
+// conflicts resolving is in higher layer, so it's protocol agnostic.
 func TestAddonsConflicts(t *testing.T) {
 	// given
 	suite := newTestSuite(t, true, false)
@@ -141,11 +155,6 @@ func TestAddonsConflicts(t *testing.T) {
 			kind:    sourceHTTP,
 			redisID: redisAddonID,
 			testID:  accTestAddonID,
-		},
-		"namespaced-git": {
-			kind:    sourceGit,
-			redisID: redisAddonIDGit,
-			testID:  accTestAddonIDGit,
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
@@ -214,6 +223,11 @@ func TestAddonsConflicts(t *testing.T) {
 			redisID: redisAddonIDGit,
 			testID:  accTestAddonIDGit,
 		},
+		"cluster-hg": {
+			kind:    sourceHg,
+			redisID: redisAddonIDHg,
+			testID:  accTestAddonIDHg,
+		},
 	} {
 		t.Run(name, func(t *testing.T) {
 			first := "first-" + c.kind
@@ -267,6 +281,10 @@ func TestAddonsConflicts(t *testing.T) {
 	}
 }
 
+// TestDocsTopic check Helm Broker  with conflicts on Addons.
+// It's tested only with HTTP and GIT protocols.
+// Test case with GIT protocol covers also implementation
+// for GCS, HG, and S3 because they are using the same abstraction factory.
 func TestDocsTopic(t *testing.T) {
 	// given
 	suite := newTestSuite(t, true, false)
@@ -336,66 +354,75 @@ func TestDocsTopic(t *testing.T) {
 	}
 }
 
+// TestDisabledDocs check Helm Broker  with conflicts on Addons.
+// It's tested only with HTTP and GIT protocols.
+// Test case with GIT protocol covers also implementation
+// for GCS, HG, and S3 because they are using the same abstraction factory.
 func TestDisabledDocs(t *testing.T) {
 	suite := newTestSuite(t, false, false)
 	defer suite.tearDown()
 
-	t.Run("namespaced", func(t *testing.T) {
-		// given
-		suite.assertNoServicesInCatalogEndpoint("ns/stage")
+	for tn, tc := range map[string]struct {
+		kind      string
+		addonName string
+		redisID   string
+	}{
+		"namespaced-http": {
+			kind:      sourceHTTP,
+			addonName: addonsConfigName,
+			redisID:   redisAddonID,
+		},
+		"namespaced-git": {
+			kind:      sourceGit,
+			addonName: addonsConfigNameGit,
+			redisID:   redisAddonIDGit,
+		},
+	} {
+		t.Run(tn, func(t *testing.T) {
+			// given
+			suite.assertNoServicesInCatalogEndpoint("ns/stage")
 
-		// when
-		suite.createAddonsConfiguration("stage", "addon1", []string{redisRepo}, sourceHTTP)
+			// when
+			suite.createAddonsConfiguration("stage", tc.addonName, []string{redisRepo}, tc.kind)
 
-		// then
-		suite.waitForAddonsConfigurationPhase("stage", "addon1", v1alpha1.AddonsConfigurationReady)
-		suite.waitForServicesInCatalogEndpoint("ns/stage", []string{redisAddonID})
+			// then
+			suite.waitForAddonsConfigurationPhase("stage", tc.addonName, v1alpha1.AddonsConfigurationReady)
+			suite.waitForServicesInCatalogEndpoint("ns/stage", []string{tc.redisID})
 
-		suite.deleteAddonsConfiguration("stage", "addon1")
-		suite.waitForEmptyCatalogResponse("ns/stage")
-	})
-	t.Run("namespaced-git", func(t *testing.T) {
-		// given
-		suite.assertNoServicesInCatalogEndpoint("ns/stage")
+			suite.deleteAddonsConfiguration("stage", tc.addonName)
+			suite.waitForEmptyCatalogResponse("ns/stage")
+		})
+	}
 
-		// when
-		suite.createAddonsConfiguration("stage", "addon2", []string{redisRepo}, sourceGit)
+	for tn, tc := range map[string]struct {
+		kind      string
+		addonName string
+		redisID   string
+	}{
+		"cluster-http": {
+			kind:      sourceHTTP,
+			addonName: addonsConfigName,
+			redisID:   redisAddonID,
+		},
+		"cluster-git": {
+			kind:      sourceGit,
+			addonName: addonsConfigNameGit,
+			redisID:   redisAddonIDGit,
+		},
+	} {
+		t.Run(tn, func(t *testing.T) {
+			// given
+			suite.assertNoServicesInCatalogEndpoint("cluster")
 
-		// then
-		suite.waitForAddonsConfigurationPhase("stage", "addon2", v1alpha1.AddonsConfigurationReady)
-		suite.waitForServicesInCatalogEndpoint("ns/stage", []string{redisAddonIDGit})
+			// when
+			suite.createClusterAddonsConfiguration(tc.addonName, []string{redisRepo}, tc.kind)
 
-		suite.deleteAddonsConfiguration("stage", "addon2")
-		suite.waitForEmptyCatalogResponse("ns/stage")
-	})
+			// then
+			suite.waitForClusterAddonsConfigurationPhase(tc.addonName, v1alpha1.AddonsConfigurationReady)
+			suite.waitForServicesInCatalogEndpoint("cluster", []string{tc.redisID})
 
-	t.Run("cluster", func(t *testing.T) {
-		// given
-		suite.assertNoServicesInCatalogEndpoint("cluster")
-
-		// when
-		suite.createClusterAddonsConfiguration("addon1", []string{redisRepo}, sourceHTTP)
-
-		// then
-		suite.waitForClusterAddonsConfigurationPhase("addon1", v1alpha1.AddonsConfigurationReady)
-		suite.waitForServicesInCatalogEndpoint("cluster", []string{redisAddonID})
-
-		suite.deleteClusterAddonsConfiguration("addon1")
-		suite.waitForEmptyCatalogResponse("cluster")
-	})
-
-	t.Run("cluster-Git", func(t *testing.T) {
-		// given
-		suite.assertNoServicesInCatalogEndpoint("cluster")
-
-		// when
-		suite.createClusterAddonsConfiguration("addon2", []string{redisRepo}, sourceGit)
-
-		// then
-		suite.waitForClusterAddonsConfigurationPhase("addon2", v1alpha1.AddonsConfigurationReady)
-		suite.waitForServicesInCatalogEndpoint("cluster", []string{redisAddonIDGit})
-
-		suite.deleteClusterAddonsConfiguration("addon2")
-		suite.waitForEmptyCatalogResponse("cluster")
-	})
+			suite.deleteClusterAddonsConfiguration(tc.addonName)
+			suite.waitForEmptyCatalogResponse("cluster")
+		})
+	}
 }

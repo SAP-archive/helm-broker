@@ -147,3 +147,21 @@ func (r *gitRepo) removeTmpDir() {
 	}
 	r.t.Logf("Temp dir with repository %q was removed", r.dir)
 }
+
+func fakeHgRepoURL(index string) string {
+	p := filepath.Join("./testdata/basic-hg/")
+	p, err := filepath.Abs(p)
+	if err != nil {
+		panic(err)
+	}
+	p = fmtFileURL(p)
+	return fmt.Sprintf("%s//addons/%s", p, index)
+}
+
+func fmtFileURL(path string) string {
+	// Make sure that we don't start with "/" since we add that below.
+	if path[0] == '/' {
+		path = path[1:]
+	}
+	return fmt.Sprintf("file:///%s", path)
+}

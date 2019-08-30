@@ -44,6 +44,10 @@ import (
 	dtv1alpha1 "github.com/kyma-project/kyma/components/cms-controller-manager/pkg/apis/cms/v1alpha1"
 )
 
+func init() {
+	EnsureHgInstalled()
+}
+
 const (
 	pollingInterval = 100 * time.Millisecond
 
@@ -56,18 +60,24 @@ const (
 	accTestAddonIDGit   = "6308335c-1ace-48ef-a253-47a5c31dd52c"
 	addonsConfigNameGit = "git-addons"
 
+	redisAddonIDHg     = "91c753f0-813b-4bf0-a6b6-123-123-123"
+	accTestAddonIDHg   = "6308335c-1ace-48ef-a253-123-123-123"
+	addonsConfigNameHg = "hg-addons"
+
 	redisRepo           = "index-redis.yaml"
 	accTestRepo         = "index-acc-testing.yaml"
 	redisAndAccTestRepo = "index.yaml"
 
 	sourceHTTP = "http"
 	sourceGit  = "git"
+	sourceHg   = "hg"
 
 	basicPassword = "pAssword{"
 	basicUsername = "user001"
 )
 
 func newTestSuite(t *testing.T, docsEnabled, httpBasicAuth bool) *testSuite {
+
 	sch, err := v1alpha1.SchemeBuilder.Build()
 	require.NoError(t, err)
 	require.NoError(t, apis.AddToScheme(sch))
@@ -280,7 +290,7 @@ func (ts *testSuite) waitForAddonsConfigurationPhase(namespace, name string, exp
 }
 
 func (ts *testSuite) waitForPhase(obj runtime.Object, status *v1alpha1.CommonAddonsConfigurationStatus, nn types.NamespacedName, expectedPhase v1alpha1.AddonsConfigurationPhase) {
-	timeoutCh := time.After(3 * time.Second)
+	timeoutCh := time.After(5 * time.Second)
 	for {
 		err := ts.dynamicClient.Get(context.TODO(), nn, obj)
 		require.NoError(ts.t, err)
@@ -359,6 +369,8 @@ func (ts *testSuite) createSpecRepositories(urls []string, repoKind string, repo
 			fullURL = ts.repoServer.URL + "/" + url
 		case sourceGit:
 			fullURL = "git::" + ts.gitRepository.path(url)
+		case sourceHg:
+			fullURL = "hg::" + fakeHgRepoURL(url)
 		default:
 			ts.t.Fatalf("Unsupported source kind: %s", repoKind)
 		}
