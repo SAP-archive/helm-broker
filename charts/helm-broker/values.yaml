@@ -21,9 +21,6 @@ global:
   # helm broker service parameters
   service:
     type: NodePort
-    externalPort: 80
-    internalPort: 8081
-    ctrlInternalPort: 8080
   # etcd port uses by helm broker
   etcdClientPort: 2379
   # temporary directory size limit uses in broker/controller containers
@@ -32,7 +29,11 @@ global:
 broker:
   tillerTLSInsecure: true
   tillerTLSEnabled: false
+  externalPort: 80
+  internalPort: 8070
 
 ctrl:
   # enable/disable docs topics support for helm controller
   documentationEnabled: false
+  internalPort: 8080
+  statusPort: 8081

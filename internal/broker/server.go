@@ -3,7 +3,6 @@ package broker
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -19,6 +18,7 @@ import (
 	osb "github.com/pmorie/go-open-service-broker-client/v2"
 
 	"github.com/kyma-project/helm-broker/internal"
+	"github.com/kyma-project/helm-broker/pkg/health"
 )
 
 //go:generate mockery -name=catalogGetter -output=automock -outpkg=automock -case=underscore
@@ -124,10 +124,8 @@ func (srv *Server) run(ctx context.Context, addr string, listenAndServe func(srv
 func (srv *Server) CreateHandler() http.Handler {
 	var rtr = mux.NewRouter()
 
-	rtr.HandleFunc("/statusz", func(w http.ResponseWriter, req *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		fmt.Fprint(w, "OK")
-	}).Methods("GET")
+	rtr.HandleFunc(health.HandleLive()).Methods("GET")
+	rtr.HandleFunc(health.HandleReady()).Methods("GET")
 
 	rtr.Handle("/metrics", promhttp.Handler())
 

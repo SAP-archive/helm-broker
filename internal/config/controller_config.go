@@ -30,6 +30,7 @@ type ControllerConfig struct {
 	KubeconfigPath           string `envconfig:"optional"`
 	Namespace                string
 	ServiceName              string
+	Port                     int
 	ClusterServiceBrokerName string
 	Storage                  []storage.Config `valid:"required"`
 	DevelopMode              bool

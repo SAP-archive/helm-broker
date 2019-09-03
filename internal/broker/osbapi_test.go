@@ -164,25 +164,6 @@ Polling:
 	return false
 }
 
-func TestOSBAPIStatusSuccess(t *testing.T) {
-	// GIVEN
-	ts := newOSBAPITestSuite(t)
-	ts.ServerRun()
-	defer ts.ServerShutdown()
-
-	client := &http.Client{}
-	req, _ := http.NewRequest("GET", fmt.Sprintf("http://%s/statusz", ts.ServerAddr), nil)
-	req.Header.Set(osb.APIVersionHeader, "2.13")
-
-	// WHEN
-	resp, err := client.Do(req)
-
-	// THEN
-	require.NoError(t, err)
-	resp.Body.Close()
-	assert.Equal(t, http.StatusOK, resp.StatusCode)
-}
-
 func TestOSBAPICatalogSuccess(t *testing.T) {
 	// GIVEN
 	ts := newOSBAPITestSuite(t)
