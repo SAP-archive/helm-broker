@@ -60,7 +60,7 @@ func TestCommon_OnAdd(t *testing.T) {
 			err = ts.mgr.GetClient().Get(context.Background(), types.NamespacedName{Name: failedConfiguration.Name, Namespace: failedConfiguration.Namespace}, result)
 			require.NoError(t, err)
 
-			assert.Equal(t, uint64(1), result.Spec.ReprocessRequest)
+			assert.Equal(t, int64(1), result.Spec.ReprocessRequest)
 			assert.Equal(t, v1alpha1.AddonsConfigurationFailed, result.Status.Phase)
 		})
 	}
@@ -166,7 +166,7 @@ func TestCommon_OnAdd_NamespaceScoped(t *testing.T) {
 			err = ts.mgr.GetClient().Get(context.Background(), types.NamespacedName{Name: failedConfiguration.Name, Namespace: failedConfiguration.Namespace}, result)
 			require.NoError(t, err)
 
-			assert.Equal(t, uint64(1), result.Spec.ReprocessRequest)
+			assert.Equal(t, int64(1), result.Spec.ReprocessRequest)
 			assert.Equal(t, v1alpha1.AddonsConfigurationFailed, result.Status.Phase)
 		})
 
