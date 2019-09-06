@@ -64,14 +64,12 @@ func SetupAndStartController(cfg *rest.Config, ctrCfg *config.ControllerConfig, 
 		gitGetterFactory = provider.GitGetterCreator{Cli: uploadClient, TmpDir: ctrCfg.TmpDir}
 		hgGetterFactory  = provider.HgGetterCreator{Cli: uploadClient, TmpDir: ctrCfg.TmpDir}
 		s3GetterFactory  = provider.S3GetterCreator{Cli: uploadClient, TmpDir: ctrCfg.TmpDir}
-		gcsGetterFactory = provider.GCSGetterCreator{Cli: uploadClient, TmpDir: ctrCfg.TmpDir}
 	)
 
 	allowedGetters := map[string]provider.Provider{
 		"git":   gitGetterFactory.NewGit,
 		"hg":    hgGetterFactory.NewHg,
 		"s3":    s3GetterFactory.NewS3,
-		"gcs":   gcsGetterFactory.NewGCS,
 		"https": provider.NewHTTP,
 	}
 	if ctrCfg.DevelopMode {

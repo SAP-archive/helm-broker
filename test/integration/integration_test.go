@@ -297,7 +297,7 @@ func TestAddonsConflicts(t *testing.T) {
 // TestDocsTopic check Helm Broker  with conflicts on Addons.
 // It's tested only with HTTP and GIT protocols.
 // Test case with GIT protocol covers also implementation
-// for GCS, HG, and S3 because they are using the same abstraction factory.
+// for HG and S3 because they are using the same abstraction factory.
 func TestDocsTopic(t *testing.T) {
 	// given
 	suite := newTestSuite(t, true, false)
@@ -370,7 +370,7 @@ func TestDocsTopic(t *testing.T) {
 // TestDisabledDocs check Helm Broker  with conflicts on Addons.
 // It's tested only with HTTP and GIT protocols.
 // Test case with GIT protocol covers also implementation
-// for GCS, HG, and S3 because they are using the same abstraction factory.
+// for HG and S3 because they are using the same abstraction factory.
 func TestDisabledDocs(t *testing.T) {
 	suite := newTestSuite(t, false, false)
 	defer suite.tearDown()
