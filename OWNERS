@@ -1,5 +1,5 @@
 filters:
-  ".*":
+  '.*':
     approvers:
       - polskikiel
       - mszostok
@@ -9,7 +9,7 @@ filters:
       - adamwalach
     labels:
       - area/service-catalog
-  "\\.md$|/docs/|^milv\.config\.yaml$"
+  '\.md$|/docs/|^milv\.config\.yaml$':
     approvers:
       - kazydek
       - klaudiagrz
