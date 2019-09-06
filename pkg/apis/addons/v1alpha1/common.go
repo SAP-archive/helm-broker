@@ -51,7 +51,9 @@ type SpecRepository struct {
 type CommonAddonsConfigurationSpec struct {
 	// ReprocessRequest is strictly increasing, non-negative integer counter
 	// that can be incremented by a user to manually trigger the reprocessing action of given CR.
-	ReprocessRequest uint64           `json:"reprocessRequest,omitempty"`
+	// TODO: Use validation webhook to block negative values, explanation:
+	// https://github.com/kubernetes/community/blob/db7f270f2d04b497767ebbc59c5aea595d67ea2c/contributors/devel/sig-architecture/api-conventions.md#primitive-types
+	ReprocessRequest int64            `json:"reprocessRequest,omitempty"`
 	Repositories     []SpecRepository `json:"repositories"`
 }
 
