@@ -14,21 +14,21 @@ import (
 	"testing"
 	"time"
 
-	"github.com/minio/minio-go"
+	minio "github.com/minio/minio-go"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 const (
-	access_key    = "MFMJRX021PJLB5V0Q0U1"
-	access_secret = "t3fETPMs7Ca6G5wq2bogJJiqocMcxaNCwOC3aOvj"
-	minio_ip      = "127.0.0.1"
-	minio_port    = "9000"
+	accessKey    = "MFMJRX021PJLB5V0Q0U1"
+	accessSecret = "t3fETPMs7Ca6G5wq2bogJJiqocMcxaNCwOC3aOvj"
+	minioIP      = "127.0.0.1"
+	minioPort    = "9000"
 
-	addon_s3_source = "testdata/addons-s3.tgz"
-	bucket_name     = "addon-test"
-	bucket_dir      = "addons"
-	bucket_region   = "us-east-1"
+	addonS3Source = "testdata/addons-s3.tgz"
+	bucketName    = "addon-test"
+	bucketDir     = "addons"
+	bucketRegion  = "us-east-1"
 )
 
 type minioServer struct {
@@ -42,7 +42,7 @@ type minioServer struct {
 
 func runMinioServer(t *testing.T, tmpDir string) (*minioServer, error) {
 	// create minio client to communicate with minio server
-	minioClient, err := minio.New(fmt.Sprintf("%s:%s", minio_ip, minio_port), access_key, access_secret, false)
+	minioClient, err := minio.New(fmt.Sprintf("%s:%s", minioIP, minioPort), accessKey, accessSecret, false)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +50,7 @@ func runMinioServer(t *testing.T, tmpDir string) (*minioServer, error) {
 	minioSrv := &minioServer{
 		t:           t,
 		client:      minioClient,
-		addonSource: addon_s3_source,
+		addonSource: addonS3Source,
 		minioTmp:    fmt.Sprintf("%s/minio", strings.TrimRight(tmpDir, "/")),
 	}
 
@@ -88,12 +88,12 @@ func runMinioServer(t *testing.T, tmpDir string) (*minioServer, error) {
 }
 
 func (m *minioServer) setEnv() error {
-	err := os.Setenv("MINIO_ACCESS_KEY", access_key)
+	err := os.Setenv("MINIO_ACCESS_KEY", accessKey)
 	if err != nil {
 		return err
 	}
 
-	err = os.Setenv("MINIO_SECRET_KEY", access_secret)
+	err = os.Setenv("MINIO_SECRET_KEY", accessSecret)
 	if err != nil {
 		return err
 	}
@@ -109,7 +109,7 @@ func (m *minioServer) startMinioServer() error {
 		return errors.Wrap(err, "while creating minio tmp directory")
 	}
 
-	cmd := exec.Command("minio", "server", fmt.Sprintf("--address=:%s", minio_port), minioSrvTmp)
+	cmd := exec.Command("minio", "server", fmt.Sprintf("--address=:%s", minioPort), minioSrvTmp)
 	err := cmd.Start()
 	if err != nil {
 		return errors.Wrap(err, "while starting minio server")
@@ -235,21 +235,21 @@ func (m *minioServer) clearMinio() error {
 }
 
 func (m *minioServer) createBucket() error {
-	m.t.Logf("Create bucket: %q", bucket_name)
+	m.t.Logf("Create bucket: %q", bucketName)
 
-	err := m.client.MakeBucket(bucket_name, bucket_region)
+	err := m.client.MakeBucket(bucketName, bucketRegion)
 	if err != nil {
 		return errors.Wrap(err, "while creating bucket")
 	}
 
 	err = wait.Poll(1*time.Second, 20*time.Second, func() (done bool, err error) {
-		_, err = m.client.BucketExists(bucket_name)
+		_, err = m.client.BucketExists(bucketName)
 		if err != nil {
-			m.t.Logf("bucket %q not exist (%s). retry...", bucket_name, err)
+			m.t.Logf("bucket %q not exist (%s). retry...", bucketName, err)
 			return false, nil
 		}
 
-		m.t.Logf("Bucket %q exist", bucket_name)
+		m.t.Logf("Bucket %q exist", bucketName)
 		return true, nil
 	})
 	if err != nil {
@@ -302,8 +302,8 @@ func (m *minioServer) fillBucket() error {
 			}
 
 			_, err = m.client.FPutObject(
-				bucket_name,
-				fmt.Sprintf("%s/%s", bucket_dir, strings.TrimLeft(header.Name, "./")),
+				bucketName,
+				fmt.Sprintf("%s/%s", bucketDir, strings.TrimLeft(header.Name, "./")),
 				path,
 				minio.PutObjectOptions{})
 			if err != nil {
@@ -316,7 +316,7 @@ func (m *minioServer) fillBucket() error {
 
 	m.t.Log("Set bucket policy")
 	policy := `{"Version": "2012-10-17","Statement": [{"Action": ["s3:GetObject"],"Effect": "Allow","Principal": {"AWS": ["*"]},"Resource": ["arn:aws:s3:::addon-test/*"],"Sid": "AddPerm"}]}`
-	err = m.client.SetBucketPolicy(bucket_name, policy)
+	err = m.client.SetBucketPolicy(bucketName, policy)
 	if err != nil {
 		return errors.Wrap(err, "while setting policy for bucket")
 	}
@@ -327,12 +327,12 @@ func (m *minioServer) fillBucket() error {
 func (m *minioServer) minioURL(index string) string {
 	return fmt.Sprintf(
 		"http://%s:%s/%s/%s//addons/%s?aws_access_key_id=%s&aws_access_key_secret=%s&region=%s",
-		minio_ip,
-		minio_port,
-		bucket_name,
-		bucket_dir,
+		minioIP,
+		minioPort,
+		bucketName,
+		bucketDir,
 		index,
-		access_key,
-		access_secret,
-		bucket_region)
+		accessKey,
+		accessSecret,
+		bucketRegion)
 }
