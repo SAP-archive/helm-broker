@@ -16,6 +16,7 @@ import (
 
 	minio "github.com/minio/minio-go"
 	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/util/rand"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -51,7 +52,7 @@ func runMinioServer(t *testing.T, tmpDir string) (*minioServer, error) {
 		t:           t,
 		client:      minioClient,
 		addonSource: addonS3Source,
-		minioTmp:    fmt.Sprintf("%s/minio", strings.TrimRight(tmpDir, "/")),
+		minioTmp:    fmt.Sprintf("%s/minio-%s", strings.TrimRight(tmpDir, "/"), rand.String(4)),
 	}
 
 	// set environment for minio server such as key/secret

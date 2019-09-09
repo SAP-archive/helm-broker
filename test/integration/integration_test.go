@@ -126,7 +126,7 @@ func TestGetCatalogHappyPath(t *testing.T) {
 			addonName: addonsConfigNameHg,
 			redisID:   redisAddonIDHg,
 		},
-		"namespaced-s3": {
+		"cluster-s3": {
 			kind:      sourceS3,
 			addonName: addonsConfigNameS3,
 			redisID:   redisAddonIDS3,
