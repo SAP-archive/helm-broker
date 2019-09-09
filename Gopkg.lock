@@ -311,6 +311,14 @@
   version = "v0.0.1"
 
 [[projects]]
+  digest = "1:6f9339c912bbdda81302633ad7e99a28dfa5a639c864061f1929510a9a64aa74"
+  name = "github.com/dustin/go-humanize"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "9f541cc9db5d55bce703bd99987c9d5cb8eea45e"
+  version = "v1.0.0"
+
+[[projects]]
   digest = "1:b2754ad67d4ed5a0741d69396c6f5cbe1e426a8adc2e8e97e09a1ee5a4621653"
   name = "github.com/emicklei/go-restful"
   packages = [
@@ -845,6 +853,21 @@
   version = "v3.2.0"
 
 [[projects]]
+  digest = "1:88e7456f46448df99fd934c3b90621afbaa14d29172923e36c47f42de386be56"
+  name = "github.com/minio/minio-go"
+  packages = [
+    ".",
+    "pkg/credentials",
+    "pkg/encrypt",
+    "pkg/s3signer",
+    "pkg/s3utils",
+    "pkg/set",
+  ]
+  pruneopts = "UT"
+  revision = "c6c2912aa5522e5f5a505e6cba30e95f0d8456fa"
+  version = "v6.0.25"
+
+[[projects]]
   digest = "1:5d231480e1c64a726869bc4142d270184c419749d34f167646baa21008eb0a79"
   name = "github.com/mitchellh/go-homedir"
   packages = ["."]
@@ -1247,10 +1270,12 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:1a946ae6cb7b4515ef06738409b45f417be433633ae6075414b583915d528f49"
+  digest = "1:8c6596ab5bd7c3946a5de8e2261ab482196ba424f7834fe1cb33e6284f69bdf4"
   name = "golang.org/x/crypto"
   packages = [
+    "argon2",
     "bcrypt",
+    "blake2b",
     "blowfish",
     "pbkdf2",
     "scrypt",
@@ -1272,7 +1297,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:d33c06a0b2eea55c34afdd5a582797668e8bdb184496fa8e566316ebb336e3ff"
+  digest = "1:c4f563f14945973f9f8eca879536d64d3e2a6a12887aff21feb079efc574243a"
   name = "golang.org/x/net"
   packages = [
     "context",
@@ -1285,6 +1310,7 @@
     "http2/hpack",
     "idna",
     "internal/timeseries",
+    "publicsuffix",
     "trace",
   ]
   pruneopts = "UT"
@@ -1306,9 +1332,10 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:191cccd950a4aeadb60306062f2bdc2f924d750d0156ec6c691b17211bfd7349"
+  digest = "1:396d4228b57507f3320229d47bb2d3d0f0a0a0ae27e193c2f36cb5c152d3dcab"
   name = "golang.org/x/sys"
   packages = [
+    "cpu",
     "unix",
     "windows",
   ]
@@ -1489,6 +1516,14 @@
   pruneopts = "UT"
   revision = "d2d2541c53f18d2a059457998ce2876cc8e67cbf"
   version = "v0.9.1"
+
+[[projects]]
+  digest = "1:6c56c50b13fd3cb33b692b264727c1c89198274f5dcabaa077e3b2472037e0f9"
+  name = "gopkg.in/ini.v1"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "d4cae42d398bc0095297fc3315669590d29166ea"
+  version = "v1.46.0"
 
 [[projects]]
   branch = "v1"
@@ -1933,6 +1968,7 @@
     "github.com/mcuadros/go-defaults",
     "github.com/meatballhat/negroni-logrus",
     "github.com/mholt/archiver",
+    "github.com/minio/minio-go",
     "github.com/oklog/ulid",
     "github.com/pborman/uuid",
     "github.com/pkg/errors",

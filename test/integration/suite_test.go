@@ -46,6 +46,7 @@ import (
 
 func init() {
 	EnsureHgInstalled()
+	EnsureMinioInstalled()
 }
 
 const (
@@ -64,6 +65,10 @@ const (
 	accTestAddonIDHg   = "6308335c-1ace-48ef-a253-123-123-123"
 	addonsConfigNameHg = "hg-addons"
 
+	redisAddonIDS3     = "67515fb2-3cc0-4267-8eb6-76c55441dbca"
+	accTestAddonIDS3   = "cc2777d7-fe0c-499d-a7da-a4860c30f8d0"
+	addonsConfigNameS3 = "s3-addons"
+
 	redisRepo           = "index-redis.yaml"
 	accTestRepo         = "index-acc-testing.yaml"
 	redisAndAccTestRepo = "index.yaml"
@@ -71,6 +76,7 @@ const (
 	sourceHTTP = "http"
 	sourceGit  = "git"
 	sourceHg   = "hg"
+	sourceS3   = "s3"
 
 	basicPassword = "pAssword{"
 	basicUsername = "user001"
@@ -169,6 +175,7 @@ func newTestSuite(t *testing.T, docsEnabled, httpBasicAuth bool) *testSuite {
 		k8sClient:     k8sClientset,
 
 		stopCh:        stopCh,
+		tmpDir:        cfg.TmpDir,
 		gitRepository: gitRepository,
 	}
 }
@@ -191,11 +198,13 @@ type testSuite struct {
 	server        *httptest.Server
 	repoServer    *httptest.Server
 	gitRepository *gitRepo
+	minio         *minioServer
 
 	osbClient     osb.Client
 	dynamicClient client.Client
 	k8sClient     k8s.Interface
 
+	tmpDir string
 	stopCh chan struct{}
 }
 
@@ -204,6 +213,18 @@ func (ts *testSuite) tearDown() {
 	ts.repoServer.Close()
 	close(ts.stopCh)
 	ts.gitRepository.removeTmpDir()
+	if ts.minio != nil {
+		err := ts.minio.clearMinio()
+		require.NoError(ts.t, err)
+		ts.minio.stopMinioServer()
+	}
+}
+
+func (ts *testSuite) initMinioServer() {
+	minioServer, err := runMinioServer(ts.t, ts.tmpDir)
+	require.NoError(ts.t, err)
+
+	ts.minio = minioServer
 }
 
 func (ts *testSuite) assertNoServicesInCatalogEndpoint(prefix string) {
@@ -371,6 +392,8 @@ func (ts *testSuite) createSpecRepositories(urls []string, repoKind string, repo
 			fullURL = "git::" + ts.gitRepository.path(url)
 		case sourceHg:
 			fullURL = "hg::" + fakeHgRepoURL(url)
+		case sourceS3:
+			fullURL = "s3::" + ts.minio.minioURL(url)
 		default:
 			ts.t.Fatalf("Unsupported source kind: %s", repoKind)
 		}

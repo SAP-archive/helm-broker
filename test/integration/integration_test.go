@@ -43,6 +43,8 @@ func TestHttpBasicAuth(t *testing.T) {
 func TestGetCatalogHappyPath(t *testing.T) {
 	// given
 	suite := newTestSuite(t, true, false)
+	// run minio server only if S3 is tested, running the "minio server" each time initiate test in "TestSuite" takes too much time
+	suite.initMinioServer()
 	defer suite.tearDown()
 
 	for name, c := range map[string]struct {
@@ -68,6 +70,12 @@ func TestGetCatalogHappyPath(t *testing.T) {
 			addonName: addonsConfigNameHg,
 			redisID:   redisAddonIDHg,
 			testID:    accTestAddonIDHg,
+		},
+		"namespaced-s3": {
+			kind:      sourceS3,
+			addonName: addonsConfigNameS3,
+			redisID:   redisAddonIDS3,
+			testID:    accTestAddonIDS3,
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
@@ -117,6 +125,11 @@ func TestGetCatalogHappyPath(t *testing.T) {
 			kind:      sourceHg,
 			addonName: addonsConfigNameHg,
 			redisID:   redisAddonIDHg,
+		},
+		"cluster-s3": {
+			kind:      sourceS3,
+			addonName: addonsConfigNameS3,
+			redisID:   redisAddonIDS3,
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
@@ -284,7 +297,7 @@ func TestAddonsConflicts(t *testing.T) {
 // TestDocsTopic check Helm Broker  with conflicts on Addons.
 // It's tested only with HTTP and GIT protocols.
 // Test case with GIT protocol covers also implementation
-// for GCS, HG, and S3 because they are using the same abstraction factory.
+// for HG and S3 because they are using the same abstraction factory.
 func TestDocsTopic(t *testing.T) {
 	// given
 	suite := newTestSuite(t, true, false)
@@ -357,7 +370,7 @@ func TestDocsTopic(t *testing.T) {
 // TestDisabledDocs check Helm Broker  with conflicts on Addons.
 // It's tested only with HTTP and GIT protocols.
 // Test case with GIT protocol covers also implementation
-// for GCS, HG, and S3 because they are using the same abstraction factory.
+// for HG and S3 because they are using the same abstraction factory.
 func TestDisabledDocs(t *testing.T) {
 	suite := newTestSuite(t, false, false)
 	defer suite.tearDown()
