@@ -124,17 +124,16 @@ To set up the project, download these tools:
 
 ### Run tests
 
-Before each commit, use the `before-commit.sh` script which tests your changes and builds binaries. If you want to run the Helm Broker locally, read [this](/docs/run-local.md) document.
+Before each commit, use the `before-commit.sh` script. The script runs unit tests that check your changes and build binaries. If you want to run the Helm Broker locally, read [this](/docs/run-local.md) document.
 
-Integration tests check if all parts of the Helm Broker work together. 
-
+You can also run integration tests that check if all parts of the Helm Broker work together. 
 These are the prerequisites for integration tests:
 
 - [Kubebuilder](https://github.com/kubernetes-sigs/kubebuilder)
 - [Etcd](https://github.com/etcd-io/etcd/releases/tag/v3.4.0)
 - [Minio](https://min.io/download)
 
-Run tests using the following command:
+Run integration tests using this command:
 
 ```bash
 make integration-test
