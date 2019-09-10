@@ -11,6 +11,9 @@ import (
 	"github.com/kyma-project/helm-broker/platform/logger"
 	"github.com/sirupsen/logrus"
 
+	"fmt"
+
+	"github.com/kyma-project/helm-broker/pkg/health"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
 )
@@ -34,6 +37,9 @@ func main() {
 	lg.Info("Setting up client for manager")
 	cfg, err := config.GetConfig()
 	fatalOnError(err, "while setting up a client")
+
+	// TODO: switch to native implementation after merge: https://github.com/kubernetes-sigs/controller-runtime/pull/419
+	go health.HandleHealth(fmt.Sprintf(":%d", ctrCfg.Port))
 
 	uploadClient := assetstore.NewClient(ctrCfg.UploadServiceURL, lg)
 	mgr := controller.SetupAndStartController(cfg, ctrCfg, metricsAddr, sFact, uploadClient, lg)

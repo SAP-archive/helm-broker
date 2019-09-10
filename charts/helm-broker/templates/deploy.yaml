@@ -50,7 +50,7 @@ spec:
           - name: APP_TMP_DIR
             value: /tmp
           - name: APP_PORT
-            value: "{{ .Values.global.service.internalPort }}"
+            value: "{{ .Values.broker.internalPort }}"
           - name: APP_CONFIG_FILE_NAME
             value: /etc/config/helm-broker/config.yaml
           - name: APP_HELM_TILLER_HOST
@@ -68,14 +68,14 @@ spec:
           name: helm-certs
           readOnly: true
         ports:
-        - containerPort: {{ .Values.global.service.internalPort }}
+        - containerPort: {{ .Values.broker.internalPort }}
         # Temporary solution for readiness probe
         # Ref: https://github.com/istio/istio/issues/2628
         readinessProbe:
           exec:
             command:
               - curl
-              - localhost:{{ .Values.global.service.internalPort }}/statusz
+              - localhost:{{ .Values.broker.internalPort }}/ready
           failureThreshold: 3
           periodSeconds: 3
           successThreshold: 1
@@ -84,7 +84,7 @@ spec:
           exec:
             command:
               - curl
-              - localhost:{{ .Values.global.service.internalPort }}/statusz
+              - localhost:{{ .Values.broker.internalPort }}/live
           periodSeconds: 10
           timeoutSeconds: 2
           successThreshold: 1
@@ -95,6 +95,8 @@ spec:
         env:
           - name: APP_TMP_DIR
             value: /tmp
+          - name: APP_PORT
+            value: "{{ .Values.ctrl.statusPort }}"
           - name: APP_NAMESPACE
             value: {{ .Release.Namespace }}
           - name: APP_SERVICE_NAME
@@ -119,14 +121,14 @@ spec:
           name: ssh-cfg
           readOnly: true
         ports:
-        - containerPort: {{ .Values.global.service.ctrlInternalPort }}
+        - containerPort: {{ .Values.ctrl.internalPort }}
         # Temporary solution for readiness probe
         # Ref: https://github.com/istio/istio/issues/2628
         readinessProbe:
           exec:
             command:
               - curl
-              - localhost:{{ .Values.global.service.internalPort }}/statusz
+              - localhost:{{ .Values.ctrl.statusPort }}/ready
           failureThreshold: 3
           periodSeconds: 3
           successThreshold: 1
@@ -135,7 +137,7 @@ spec:
           exec:
             command:
               - curl
-              - localhost:{{ .Values.global.service.internalPort }}/statusz
+              - localhost:{{ .Values.ctrl.statusPort }}/live
           periodSeconds: 10
           timeoutSeconds: 2
           successThreshold: 1

@@ -15,5 +15,5 @@ spec:
   ports:
   - protocol: TCP
     name: http-hb-port
-    port: {{ .Values.global.service.externalPort }}
-    targetPort: {{ .Values.global.service.internalPort }}
+    port: {{ .Values.broker.externalPort }}
+    targetPort: {{ .Values.broker.internalPort }}
