@@ -10,7 +10,7 @@ import (
 
 	"context"
 
-	"github.com/kyma-project/helm-broker/platform/logger/spy"
+	"github.com/kyma-project/helm-broker/internal/platform/logger/spy"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	k8sigs "sigs.k8s.io/controller-runtime/pkg/client/fake"

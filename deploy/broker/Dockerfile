@@ -5,6 +5,6 @@ RUN apk add --no-cache curl
 
 COPY ./helm-broker /root/helm-broker
 
-LABEL source=git@github.com:kyma-project/kyma.git
+LABEL source=git@github.com:kyma-project/helm-broker.git
 
 ENTRYPOINT ["/root/helm-broker"]

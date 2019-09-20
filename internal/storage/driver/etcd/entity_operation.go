@@ -11,8 +11,8 @@ import (
 	"github.com/coreos/etcd/clientv3/namespace"
 	"github.com/pkg/errors"
 
-	"github.com/kyma-project/helm-broker/platform/ptr"
-	yTime "github.com/kyma-project/helm-broker/platform/time"
+	"github.com/kyma-project/helm-broker/internal/platform/ptr"
+	yTime "github.com/kyma-project/helm-broker/internal/platform/time"
 
 	"github.com/kyma-project/helm-broker/internal"
 )

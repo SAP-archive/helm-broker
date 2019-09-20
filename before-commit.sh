@@ -44,6 +44,15 @@ for binary in "${binaries[@]}"; do
 	fi
 done
 
+echo "? compile chart tests"
+${buildEnv} go test -v -c -o hb_chart_test ./test/charts/helm_broker_test.go
+goBuildResult=$?
+if [[ ${goBuildResult} != 0 ]]; then
+    echo -e "${RED}✗ go test -c ./test/charts/helm_broker_test.go ${NC}\n$goBuildResult${NC}"
+    exit 1
+else echo -e "${GREEN}√ go test -c ./test/charts/helm_broker_test.go ${NC}"
+fi
+
 ##
 # DEP STATUS
 ##
@@ -59,7 +68,7 @@ fi
 # GO TEST
 ##
 echo "? go test"
-go test ./internal/... ./platform/... ./cmd/...
+go test ./internal/... ./cmd/...
 # Check if tests passed
 if [ $? != 0 ]; then
 	echo -e "${RED}✗ go test\n${NC}"

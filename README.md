@@ -46,7 +46,7 @@ If you have installed the Helm Broker with the Service Catalog, you can add your
 
 1. Configure the Helm Broker to use the addons repository that contains the Redis addon:
 ```bash
-kubectl apply -f contrib/sample-addons.yaml
+kubectl apply -f hack/examples/sample-addons.yaml
 ```
 
 
@@ -58,7 +58,7 @@ kubectl get clusterserviceclass
 
 2. Provision the Redis instance:
 ```bash
-kubectl apply -f contrib/redis-instance.yaml
+kubectl apply -f hack/examples/redis-instance.yaml
 ```
 
 3. Check the status of the Redis instance:
@@ -68,7 +68,7 @@ kubectl get serviceinstance
 
 4. Create a binding for the Redis instance:
 ```bash
-kubectl apply -f contrib/redis-binding.yaml
+kubectl apply -f hack/examples/redis-binding.yaml
 ```
 
 5. Check the Secret that contains Redis credentials:

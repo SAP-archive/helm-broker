@@ -16,4 +16,4 @@ data:
 
         etcd:
           endpoints:
-            - http://helm-broker-etcd-stateful-client.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.global.etcdClientPort }}
+            - http://{{ .Release.Name }}-etcd-stateful-client.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.global.etcdClientPort }}
