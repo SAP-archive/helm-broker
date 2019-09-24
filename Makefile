@@ -1,6 +1,7 @@
 APP_NAME = helm-broker
 TOOLS_NAME = helm-broker-tools
 CONTROLLER_NAME=helm-controller
+TESTS_NAME=helm-broker-tests
 
 REPO = $(DOCKER_PUSH_REPOSITORY)$(DOCKER_PUSH_DIRECTORY)/
 TAG = $(DOCKER_TAG)
@@ -13,6 +14,10 @@ build:
 integration-test:
 	export KUBEBUILDER_CONTROLPLANE_START_TIMEOUT=2m
 	go test -tags=integration ./test/integration/
+
+.PHONY: charts-test
+charts-test:
+	./hack/ci/run-chart-test.sh
 
 .PHONY: pull-licenses
 pull-licenses:
@@ -37,7 +42,7 @@ crd-manifests:
 # Generate code
 .PHONY: client
 client:
-	./contrib/hack/update-codegen.sh
+	./hack/update-codegen.sh
 
 .PHONY: build-image
 build-image: pull-licenses
@@ -45,10 +50,12 @@ build-image: pull-licenses
 	cp targz deploy/tools/targz
 	cp indexbuilder deploy/tools/indexbuilder
 	cp controller deploy/controller/controller
+	cp hb_chart_test deploy/tests/hb_chart_test
 
 	docker build -t $(APP_NAME) deploy/broker
 	docker build -t $(CONTROLLER_NAME) deploy/controller
 	docker build -t $(TOOLS_NAME) deploy/tools
+	docker build -t $(TESTS_NAME) deploy/tests
 
 .PHONY: push-image
 push-image:
@@ -60,6 +67,9 @@ push-image:
 
 	docker tag $(TOOLS_NAME) $(REPO)$(TOOLS_NAME):$(TAG)
 	docker push $(REPO)$(TOOLS_NAME):$(TAG)
+
+	docker tag $(TESTS_NAME) $(REPO)$(TESTS_NAME):$(TAG)
+	docker push $(REPO)$(TESTS_NAME):$(TAG)
 
 .PHONY: ci-pr
 ci-pr: build integration-test build-image push-image

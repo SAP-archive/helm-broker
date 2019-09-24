@@ -14,7 +14,7 @@ import (
 	"github.com/kyma-project/helm-broker/internal"
 	"github.com/kyma-project/helm-broker/internal/broker"
 	"github.com/kyma-project/helm-broker/internal/broker/automock"
-	"github.com/kyma-project/helm-broker/platform/ptr"
+	"github.com/kyma-project/helm-broker/internal/platform/ptr"
 	"github.com/pkg/errors"
 	osb "github.com/pmorie/go-open-service-broker-client/v2"
 	"github.com/stretchr/testify/assert"

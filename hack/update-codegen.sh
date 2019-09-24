@@ -12,4 +12,4 @@ REB_ROOT_PKG="github.com/kyma-project/helm-broker/pkg"
 ${CURRENT_DIR}/generate-groups.sh all \
   ${REB_ROOT_PKG}/client ${REB_ROOT_PKG}/apis \
   addons:v1alpha1 \
-  --go-header-file ${CURRENT_DIR}/boilerplate.go.txt
+  --go-header-file ${CURRENT_DIR}/boilerplate/boilerplate.go.txt

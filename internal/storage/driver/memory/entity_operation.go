@@ -5,7 +5,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	yTime "github.com/kyma-project/helm-broker/platform/time"
+	yTime "github.com/kyma-project/helm-broker/internal/platform/time"
 
 	"github.com/kyma-project/helm-broker/internal"
 )

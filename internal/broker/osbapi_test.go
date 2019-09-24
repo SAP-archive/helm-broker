@@ -17,7 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 	rls "k8s.io/helm/pkg/proto/hapi/services"
 
-	"github.com/kyma-project/helm-broker/platform/ptr"
+	"github.com/kyma-project/helm-broker/internal/platform/ptr"
 
 	"github.com/kyma-project/helm-broker/internal"
 	"github.com/kyma-project/helm-broker/internal/bind"

@@ -31,7 +31,7 @@ docker run \
 ```bash
 APP_HELM_TILLER_TLS_ENABLED=false \
 APP_KUBECONFIG_PATH=/Users/$User/.kube/config \
-APP_CONFIG_FILE_NAME=contrib/local-etcd-config.yaml \
+APP_CONFIG_FILE_NAME=hack/examples/local-etcd-config.yaml \
 go run cmd/broker/main.go
 ```
 
@@ -47,7 +47,7 @@ APP_KUBECONFIG_PATH=/Users/$User/.kube/config \
 APP_DOCUMENTATION_ENABLED=false \
 APP_TMP_DIR=/tmp APP_NAMESPACE=default \
 APP_SERVICE_NAME=helm-broker \
-APP_CONFIG_FILE_NAME=contrib/local-etcd-config.yaml \
+APP_CONFIG_FILE_NAME=hack/examples/local-etcd-config.yaml \
 APP_CLUSTER_SERVICE_BROKER_NAME=helm-broker \
 APP_DEVELOP_MODE=true \
 go run cmd/controller/main.go -metrics-addr ":8081"
@@ -60,7 +60,7 @@ You can run the Controller and the Broker configured with the in-memory storage,
 ```bash
 APP_HELM_TILLER_TLS_ENABLED=false \
 APP_KUBECONFIG_PATH=/Users/$User/.kube/config \
-APP_CONFIG_FILE_NAME=contrib/minimal-config.yaml \
+APP_CONFIG_FILE_NAME=hack/examples/minimal-config.yaml \
 APP_NAMESPACE=kyma-system go run cmd/broker/main.go
 ```
 
@@ -69,7 +69,7 @@ APP_KUBECONFIG_PATH=/Users/$User/.kube/config \
 APP_DOCUMENTATION_ENABLED=false \
 APP_TMP_DIR=/tmp APP_NAMESPACE=default \
 APP_SERVICE_NAME=helm-broker \
-APP_CONFIG_FILE_NAME=contrib/minimal-config.yaml \
+APP_CONFIG_FILE_NAME=hack/examples/minimal-config.yaml \
 APP_CLUSTER_SERVICE_BROKER_NAME=helm-broker \
 APP_DEVELOP_MODE=true \
 go run cmd/controller/main.go -metrics-addr ":8081"

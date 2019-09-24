@@ -18,7 +18,7 @@ import (
 	osb "github.com/pmorie/go-open-service-broker-client/v2"
 
 	"github.com/kyma-project/helm-broker/internal"
-	"github.com/kyma-project/helm-broker/pkg/health"
+	"github.com/kyma-project/helm-broker/internal/health"
 )
 
 //go:generate mockery -name=catalogGetter -output=automock -outpkg=automock -case=underscore

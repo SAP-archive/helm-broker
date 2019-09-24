@@ -10,7 +10,7 @@ import (
 	"github.com/kyma-project/helm-broker/internal"
 	"github.com/kyma-project/helm-broker/internal/addon"
 	"github.com/kyma-project/helm-broker/internal/addon/provider"
-	"github.com/kyma-project/helm-broker/platform/logger/spy"
+	"github.com/kyma-project/helm-broker/internal/platform/logger/spy"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

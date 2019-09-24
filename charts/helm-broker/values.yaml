@@ -37,3 +37,6 @@ ctrl:
   documentationEnabled: false
   internalPort: 8080
   statusPort: 8081
+
+tests:
+  image: eu.gcr.io/kyma-project/pr/helm-broker-tests:PR-32

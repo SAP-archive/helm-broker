@@ -102,6 +102,7 @@ fabric.properties
 /targz
 /indexbuilder
 /broker
+/hb_chart_test
 /helm-broker
 /vendor
 /controller
@@ -109,3 +110,4 @@ fabric.properties
 /deploy/tools/indexbuilder
 /deploy/broker/helm-broker
 /deploy/controller/controller
+/deploy/tests/hb_chart_test
