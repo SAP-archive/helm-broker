@@ -124,7 +124,7 @@ func (srv *Server) run(ctx context.Context, addr string, listenAndServe func(srv
 func (srv *Server) CreateHandler() http.Handler {
 	var rtr = mux.NewRouter()
 
-	rtr.HandleFunc(health.HandleLive()).Methods("GET")
+	rtr.HandleFunc(health.HandleBrokerLive()).Methods("GET")
 	rtr.HandleFunc(health.HandleReady()).Methods("GET")
 
 	rtr.Handle("/metrics", promhttp.Handler())
