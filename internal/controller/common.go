@@ -319,7 +319,7 @@ func (c *common) saveAddons(repositories *repository.Collection) bool {
 	for _, ad := range repositories.ReadyAddons() {
 		if len(ad.AddonWithCharts.Addon.Docs) == 1 {
 			if err := c.docsProvider.EnsureDocsTopic(ad.AddonWithCharts.Addon); err != nil {
-				c.log.Errorf("while ensuring DocsTopic for addon %s: %v", ad.ID, err)
+				c.log.Errorf("while ensuring documentation for addon %s: %v", ad.ID, err)
 			}
 		}
 		exist, err := c.addonStorage.Upsert(c.namespace, ad.AddonWithCharts.Addon)
@@ -371,7 +371,7 @@ func (c *common) removeAddon(ad v1alpha1.Addon) (bool, error) {
 	}
 	removed = true
 	if err := c.docsProvider.EnsureDocsTopicRemoved(string(add.ID)); err != nil {
-		return removed, errors.Wrapf(err, "while ensuring DocsTopic for addon %s is removed", add.ID)
+		return removed, errors.Wrapf(err, "while deleting documentation for addon %s", add.ID)
 	}
 
 	for _, plan := range add.Plans {
