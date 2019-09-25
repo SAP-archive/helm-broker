@@ -123,12 +123,14 @@ func (s *TestSuite) waitForSampleClusterAddonsConfiguration(timeout time.Duratio
 		if err != nil {
 			return false, err
 		}
+
 		if cac.Status.Phase != v1alpha1.AddonsConfigurationReady {
-			return false, fmt.Errorf("ClusterAddonsConfiguration %q is not in %s state. Current status: %v",
+			s.t.Logf("ClusterAddonsConfiguration %q is not in %s state. Current status: %v",
 				s.sampleClusterAddonsCfgName,
 				v1alpha1.AddonsConfigurationReady,
 				cac.Status,
 			)
+			return false, nil
 		}
 
 		return true, nil

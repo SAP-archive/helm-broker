@@ -41,7 +41,7 @@ function start_docker() {
     echo "Done setting up docker in docker."
 }
 
-# Installs kind and helm dependencies locally.
+# Installs kind dependency locally.
 # Required envs:
 #  - KIND_VERSION
 #  - INSTALL_DIR
@@ -103,17 +103,11 @@ host::arch() {
     arm*)
       host_arch=arm
       ;;
-    i?86*)
-      host_arch=x86
-      ;;
-    s390x*)
-      host_arch=s390x
-      ;;
     ppc64le*)
       host_arch=ppc64le
       ;;
     *)
-      kube::log::error "Unsupported host arch. Must be x86_64, 386, arm, arm64, s390x or ppc64le."
+      kube::log::error "Unsupported host arch. Must be x86_64, arm, arm64, or ppc64le."
       exit 1
       ;;
   esac
@@ -127,7 +121,7 @@ readonly KIND_CLUSTER_NAME="kind-ci"
 
 kind::create_cluster() {
     shout "- Create k8s cluster..."
-    kind create cluster --name=${KIND_CLUSTER_NAME} --wait=5m
+    kind create cluster --name=${KIND_CLUSTER_NAME} --image=kindest/node:${KUBERNETES_VERSION} --wait=5m
     export KUBECONFIG="$(kind get kubeconfig-path --name=${KIND_CLUSTER_NAME})"
 }
 

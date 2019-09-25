@@ -101,6 +101,7 @@ main() {
     export INSTALL_DIR=${TMP_DIR} KIND_VERSION=${STABLE_KIND_VERSION} HELM_VERSION=${STABLE_HELM_VERSION}
     install::kind
 
+    export KUBERNETES_VERSION=${STABLE_KUBERNETES_VERSION}
     kind::create_cluster
     setup_kubectl_in_ct_container
     install_local-path-provisioner
