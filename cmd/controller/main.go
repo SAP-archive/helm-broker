@@ -36,11 +36,11 @@ func main() {
 	cfg, err := config.GetConfig()
 	fatalOnError(err, "while setting up a client")
 
-	// TODO: switch to native implementation after merge: https://github.com/kubernetes-sigs/controller-runtime/pull/419
-	go health.HandleHealth(fmt.Sprintf(":%d", ctrCfg.Port))
-
 	uploadClient := assetstore.NewClient(ctrCfg.UploadServiceURL, lg)
 	mgr := controller.SetupAndStartController(cfg, ctrCfg, metricsAddr, sFact, uploadClient, lg)
+
+	// TODO: switch to native implementation after merge: https://github.com/kubernetes-sigs/controller-runtime/pull/419
+	go health.HandleHealth(fmt.Sprintf(":%d", ctrCfg.Port), mgr.GetClient(), lg)
 
 	lg.Info("Starting the Controller.")
 	err = mgr.Start(signals.SetupSignalHandler())
