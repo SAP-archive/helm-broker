@@ -138,7 +138,7 @@ spec:
             command:
               - curl
               - localhost:{{ .Values.ctrl.statusPort }}/live
-          periodSeconds: 300
+          periodSeconds: 60
           timeoutSeconds: 30
           successThreshold: 1
 

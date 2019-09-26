@@ -1,7 +1,6 @@
 package health
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"time"
@@ -48,11 +47,11 @@ func healthResponse() func(w http.ResponseWriter, req *http.Request) {
 
 func runFullControllersCycle(client client.Client, lg *logrus.Entry) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
-		if err := runAddonsConfigurationControllerCycle(client, lg); err != nil {
+		if err := runAddonsConfigurationControllerCycle(req, client, lg); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		if err := runClusterAddonsConfigurationControllerCycle(client, lg); err != nil {
+		if err := runClusterAddonsConfigurationControllerCycle(req, client, lg); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -62,7 +61,7 @@ func runFullControllersCycle(client client.Client, lg *logrus.Entry) func(w http
 	}
 }
 
-func runAddonsConfigurationControllerCycle(client client.Client, lg *logrus.Entry) error {
+func runAddonsConfigurationControllerCycle(req *http.Request, client client.Client, lg *logrus.Entry) error {
 	probeName := "liveness-probe"
 	probeNamespace := "default"
 
@@ -79,22 +78,23 @@ func runAddonsConfigurationControllerCycle(client client.Client, lg *logrus.Entr
 	}
 
 	lg.Infof("[liveness-probe] Creating liveness probe addonsConfiguration in %q namespace", probeNamespace)
-	err := client.Create(context.TODO(), addonsConfiguration)
+	err := client.Create(req.Context(), addonsConfiguration)
 	if err != nil {
-		lg.Infof("[liveness-probe] Cannot create liveness probe addonsConfiguration: %s", err)
+		lg.Errorf("[liveness-probe] Cannot create liveness probe addonsConfiguration: %s", err)
 		return err
 	}
 
 	lg.Info("[liveness-probe] Waiting for liveness probe addonsConfiguration desirable status")
 	err = wait.Poll(1*time.Second, 10*time.Second, func() (done bool, err error) {
 		key := types.NamespacedName{Name: probeName, Namespace: probeNamespace}
-		err = client.Get(context.TODO(), key, addonsConfiguration)
+		err = client.Get(req.Context(), key, addonsConfiguration)
 		if apierrors.IsNotFound(err) {
 			lg.Info("[liveness-probe] Liveness probe addonsConfiguration not found")
 			return false, nil
 		}
 		if err != nil {
-			return false, err
+			lg.Errorf("[liveness-probe] Cannot get probe addonsConfiguration: %s", err)
+			return false, nil
 		}
 
 		if len(addonsConfiguration.Status.Repositories) != 1 {
@@ -115,14 +115,14 @@ func runAddonsConfigurationControllerCycle(client client.Client, lg *logrus.Entr
 		return false, nil
 	})
 	if err != nil {
-		lg.Infof("[liveness-probe] Waiting for liveness probe addonsConfiguration failed: %s", err)
+		lg.Errorf("[liveness-probe] Waiting for liveness probe addonsConfiguration failed: %s", err)
 		return err
 	}
 
 	lg.Info("[liveness-probe] Removing liveness probe addonsConfiguration")
-	err = client.Delete(context.TODO(), addonsConfiguration)
+	err = client.Delete(req.Context(), addonsConfiguration)
 	if err != nil {
-		lg.Infof("[liveness-probe] Cannot delete liveness probe addonsConfiguration: %s", err)
+		lg.Errorf("[liveness-probe] Cannot delete liveness probe addonsConfiguration: %s", err)
 		return err
 	}
 
@@ -130,7 +130,7 @@ func runAddonsConfigurationControllerCycle(client client.Client, lg *logrus.Entr
 	return nil
 }
 
-func runClusterAddonsConfigurationControllerCycle(client client.Client, lg *logrus.Entry) error {
+func runClusterAddonsConfigurationControllerCycle(req *http.Request, client client.Client, lg *logrus.Entry) error {
 	probeName := "liveness-probe"
 
 	clusterAddonsConfiguration := &v1alpha1.ClusterAddonsConfiguration{
@@ -145,22 +145,23 @@ func runClusterAddonsConfigurationControllerCycle(client client.Client, lg *logr
 	}
 
 	lg.Info("[liveness-probe] Creating liveness probe clusterAddonsConfiguration")
-	err := client.Create(context.TODO(), clusterAddonsConfiguration)
+	err := client.Create(req.Context(), clusterAddonsConfiguration)
 	if err != nil {
-		lg.Infof("[liveness-probe] Cannot create liveness probe clusterAddonsConfiguration: %s", err)
+		lg.Errorf("[liveness-probe] Cannot create liveness probe clusterAddonsConfiguration: %s", err)
 		return err
 	}
 
 	lg.Info("[liveness-probe] Waiting for liveness probe clusterAddonsConfiguration desirable status")
 	err = wait.Poll(1*time.Second, 10*time.Second, func() (done bool, err error) {
-		key := types.NamespacedName{Name: probeName, Namespace: v1.NamespaceAll}
-		err = client.Get(context.TODO(), key, clusterAddonsConfiguration)
+		key := types.NamespacedName{Name: probeName}
+		err = client.Get(req.Context(), key, clusterAddonsConfiguration)
 		if apierrors.IsNotFound(err) {
 			lg.Info("[liveness-probe] Liveness probe clusterAddonsConfiguration not found")
 			return false, nil
 		}
 		if err != nil {
-			return false, err
+			lg.Errorf("[liveness-probe] Cannot get probe clusterAddonsConfiguration: %s", err)
+			return false, nil
 		}
 
 		if len(clusterAddonsConfiguration.Status.Repositories) != 1 {
@@ -181,14 +182,14 @@ func runClusterAddonsConfigurationControllerCycle(client client.Client, lg *logr
 		return false, nil
 	})
 	if err != nil {
-		lg.Infof("[liveness-probe] Waiting for liveness probe clusterAddonsConfiguration failed: %s", err)
+		lg.Errorf("[liveness-probe] Waiting for liveness probe clusterAddonsConfiguration failed: %s", err)
 		return err
 	}
 
 	lg.Info("[liveness-probe] Removing liveness probe clusterAddonsConfiguration")
-	err = client.Delete(context.TODO(), clusterAddonsConfiguration)
+	err = client.Delete(req.Context(), clusterAddonsConfiguration)
 	if err != nil {
-		lg.Infof("[liveness-probe] Cannot delete liveness probe clusterAddonsConfiguration: %s", err)
+		lg.Errorf("[liveness-probe] Cannot delete liveness probe clusterAddonsConfiguration: %s", err)
 		return err
 	}
 
