@@ -5,6 +5,8 @@ import (
 
 	"reflect"
 
+	"time"
+
 	"github.com/kyma-project/helm-broker/internal"
 	"github.com/kyma-project/kyma/components/cms-controller-manager/pkg/apis/cms/v1alpha1"
 	"github.com/pkg/errors"
@@ -12,6 +14,8 @@ import (
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -27,7 +31,7 @@ type Provider struct {
 func NewProvider(dynamicClient client.Client, log logrus.FieldLogger) *Provider {
 	return &Provider{
 		dynamicClient: dynamicClient,
-		log:           log.WithField("docs", "provider"),
+		log:           log,
 	}
 }
 
@@ -55,20 +59,23 @@ func (d *Provider) EnsureDocsTopic(addon *internal.Addon) error {
 		},
 		Spec: v1alpha1.DocsTopicSpec{CommonDocsTopicSpec: addon.Docs[0].Template},
 	}
-
 	d.log.Infof("- ensuring DocsTopic %s/%s", addon.ID, d.namespace)
-	err := d.dynamicClient.Create(context.Background(), dt)
-	switch {
-	case err == nil:
-	case apiErrors.IsAlreadyExists(err):
-		if err := d.updateDocsTopic(addon, d.namespace); err != nil {
-			return errors.Wrapf(err, "while DocsTopic %s already exists", addon.ID)
-		}
-	default:
-		return errors.Wrapf(err, "while creating DocsTopic %s", addon.ID)
-	}
 
-	return nil
+	return wait.PollImmediate(time.Millisecond*500, time.Second*3, func() (bool, error) {
+		err := d.dynamicClient.Create(context.Background(), dt)
+		switch {
+		case err == nil:
+		case apiErrors.IsAlreadyExists(err):
+			if err := d.updateDocsTopic(addon, d.namespace); err != nil {
+				d.log.Errorf("while DocsTopic %s already exists", addon.ID)
+				return false, nil
+			}
+		default:
+			d.log.Errorf("while creating DocsTopic %s", addon.ID)
+			return false, nil
+		}
+		return true, nil
+	})
 }
 
 // EnsureDocsTopicRemoved removes DocsTopic for a given addon
@@ -80,11 +87,15 @@ func (d *Provider) EnsureDocsTopicRemoved(id string) error {
 		},
 	}
 	d.log.Infof("- removing DocsTopic %s/%s", id, d.namespace)
-	err := d.dynamicClient.Delete(context.Background(), dt)
-	if err != nil && !apiErrors.IsNotFound(err) {
-		return errors.Wrapf(err, "while deleting DocsTopic %s", id)
-	}
-	return nil
+
+	return wait.PollImmediate(time.Millisecond*500, time.Second*3, func() (bool, error) {
+		err := d.dynamicClient.Delete(context.Background(), dt)
+		if err != nil && !apiErrors.IsNotFound(err) {
+			d.log.Errorf("while deleting DocsTopic %s", id)
+			return false, nil
+		}
+		return true, nil
+	})
 }
 
 func defaultDocsSourcesURLs(addon *internal.Addon) []v1alpha1.Source {
@@ -101,17 +112,19 @@ func defaultDocsSourcesURLs(addon *internal.Addon) []v1alpha1.Source {
 
 func (d *Provider) updateDocsTopic(addon *internal.Addon, namespace string) error {
 	dt := &v1alpha1.DocsTopic{}
-	if err := d.dynamicClient.Get(context.Background(), types.NamespacedName{Name: string(addon.ID), Namespace: namespace}, dt); err != nil {
-		return errors.Wrapf(err, "while getting DocsTopic %s", addon.ID)
-	}
-	if reflect.DeepEqual(dt.Spec.CommonDocsTopicSpec, addon.Docs[0].Template) {
+
+	return retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		if err := d.dynamicClient.Get(context.Background(), types.NamespacedName{Name: string(addon.ID), Namespace: namespace}, dt); err != nil {
+			return errors.Wrapf(err, "while getting DocsTopic %s", addon.ID)
+		}
+		if reflect.DeepEqual(dt.Spec.CommonDocsTopicSpec, addon.Docs[0].Template) {
+			return nil
+		}
+		dt.Spec = v1alpha1.DocsTopicSpec{CommonDocsTopicSpec: addon.Docs[0].Template}
+
+		if err := d.dynamicClient.Update(context.Background(), dt); err != nil {
+			return err
+		}
 		return nil
-	}
-	dt.Spec = v1alpha1.DocsTopicSpec{CommonDocsTopicSpec: addon.Docs[0].Template}
-
-	if err := d.dynamicClient.Update(context.Background(), dt); err != nil {
-		return errors.Wrapf(err, "while updating DocsTopic %s", addon.ID)
-	}
-
-	return nil
+	})
 }
