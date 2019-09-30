@@ -1,6 +1,8 @@
 package etcd
 
-import "github.com/coreos/etcd/clientv3"
+import (
+	"github.com/coreos/etcd/clientv3"
+)
 
 // TODO list:
 // - Use etcd lease for garbage collection of removed elements.
@@ -21,9 +23,12 @@ const (
 
 // Config holds configuration for etcd access in storage.
 type Config struct {
-	Endpoints []string `json:"endpoints"`
-	Username  string   `json:"username"`
-	Password  string   `json:"password"`
+	Endpoints            []string `json:"endpoints"`
+	Username             string   `json:"username"`
+	Password             string   `json:"password"`
+	DialTimeout          string   `json:"dialTimeout"`
+	DialKeepAliveTime    string   `json:"dialKeepAliveTime"`
+	DialKeepAliveTimeout string   `json:"dialKeepAliveTimeout"`
 
 	ForceClient *clientv3.Client
 }
