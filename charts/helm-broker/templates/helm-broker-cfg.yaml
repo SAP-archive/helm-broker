@@ -17,6 +17,6 @@ data:
         etcd:
           endpoints:
             - http://{{ .Release.Name }}-etcd-stateful-client.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.global.etcdClientPort }}
-          dialTimeout: 15s
-          dialKeepAliveTime: 3s
-          dialKeepAliveTimeout: 10s
+          dialTimeout: 5s
+          dialKeepAliveTime: 2s
+          dialKeepAliveTimeout: 5s

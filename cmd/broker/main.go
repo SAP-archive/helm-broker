@@ -44,7 +44,7 @@ func main() {
 	fatalOnError(err)
 
 	srv := broker.New(sFact.Addon(), sFact.Chart(), sFact.InstanceOperation(), sFact.Instance(), sFact.InstanceBindData(),
-		bind.NewRenderer(), bind.NewResolver(clientset.CoreV1()), helmClient, log)
+		bind.NewRenderer(), bind.NewResolver(clientset.CoreV1()), helmClient, storageConfig.ExtractEtcdURL(), log)
 
 	startedCh := make(chan struct{})
 

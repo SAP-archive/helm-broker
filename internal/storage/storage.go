@@ -79,10 +79,22 @@ func NewConfigListAllMemory() *ConfigList {
 	return &ConfigList{{Driver: DriverMemory, Provide: ProviderConfigMap{EntityAll: ProviderConfig{}}}}
 }
 
+// ExtractEtcdURL extracts URL to the ETCD from config
+func (cl *ConfigList) ExtractEtcdURL() string {
+	etcdURL := ""
+	for _, cfg := range *cl {
+		if cfg.Driver == DriverEtcd {
+			etcdURL = cfg.Etcd.Endpoints[0]
+		}
+	}
+	return etcdURL
+}
+
 // NewFactory is a factory for entities based on given ConfigList
 // TODO: add error handling
 func NewFactory(cl *ConfigList) (Factory, error) {
 	fact := concreteFactory{}
+	var err error
 
 	for _, cfg := range *cl {
 
@@ -116,7 +128,7 @@ func NewFactory(cl *ConfigList) (Factory, error) {
 			if cfg.Etcd.ForceClient != nil {
 				cli = cfg.Etcd.ForceClient
 			} else {
-				cli, _ = etcd.NewClient(cfg.Etcd)
+				cli, err = etcd.NewClient(cfg.Etcd)
 			}
 
 			addonFact = func() (Addon, error) {
@@ -161,7 +173,7 @@ func NewFactory(cl *ConfigList) (Factory, error) {
 		}
 	}
 
-	return &fact, nil
+	return &fact, err
 }
 
 type concreteFactory struct {

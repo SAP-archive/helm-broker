@@ -26,9 +26,9 @@ type Config struct {
 	Endpoints            []string `json:"endpoints"`
 	Username             string   `json:"username"`
 	Password             string   `json:"password"`
-	DialTimeout          string   `json:"dialTimeout"`
-	DialKeepAliveTime    string   `json:"dialKeepAliveTime"`
-	DialKeepAliveTimeout string   `json:"dialKeepAliveTimeout"`
+	DialTimeout          string   `json:"dialTimeout" default:"5s"`
+	DialKeepAliveTime    string   `json:"dialKeepAliveTime" default:"2s"`
+	DialKeepAliveTimeout string   `json:"dialKeepAliveTimeout" default:"5s"`
 
 	ForceClient *clientv3.Client
 }
