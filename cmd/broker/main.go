@@ -16,6 +16,7 @@ import (
 	"github.com/kyma-project/helm-broker/internal/storage"
 	"github.com/sirupsen/logrus"
 
+	"github.com/kyma-project/helm-broker/internal/health"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -44,7 +45,9 @@ func main() {
 	fatalOnError(err)
 
 	srv := broker.New(sFact.Addon(), sFact.Chart(), sFact.InstanceOperation(), sFact.Instance(), sFact.InstanceBindData(),
-		bind.NewRenderer(), bind.NewResolver(clientset.CoreV1()), helmClient, storageConfig.ExtractEtcdURL(), log)
+		bind.NewRenderer(), bind.NewResolver(clientset.CoreV1()), helmClient, log)
+
+	go health.NewBrokerProbes(fmt.Sprintf(":%d", cfg.StatusPort), storageConfig.ExtractEtcdURL()).Handle()
 
 	startedCh := make(chan struct{})
 

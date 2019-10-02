@@ -51,6 +51,8 @@ spec:
             value: /tmp
           - name: APP_PORT
             value: "{{ .Values.broker.internalPort }}"
+          - name: APP_STATUS_PORT
+            value: "{{ .Values.broker.statusPort }}"
           - name: APP_CONFIG_FILE_NAME
             value: /etc/config/helm-broker/config.yaml
           - name: APP_HELM_TILLER_HOST
@@ -75,7 +77,7 @@ spec:
           exec:
             command:
               - curl
-              - localhost:{{ .Values.broker.internalPort }}/ready
+              - localhost:{{ .Values.broker.statusPort }}/ready
           failureThreshold: 3
           periodSeconds: 3
           successThreshold: 1
@@ -84,7 +86,7 @@ spec:
           exec:
             command:
               - curl
-              - localhost:{{ .Values.broker.internalPort }}/live
+              - localhost:{{ .Values.broker.statusPort }}/live
           periodSeconds: 10
           timeoutSeconds: 2
           successThreshold: 1
@@ -95,7 +97,7 @@ spec:
         env:
           - name: APP_TMP_DIR
             value: /tmp
-          - name: APP_PORT
+          - name: APP_STATUS_PORT
             value: "{{ .Values.ctrl.statusPort }}"
           - name: APP_NAMESPACE
             value: {{ .Release.Namespace }}

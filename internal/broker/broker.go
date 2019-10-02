@@ -140,7 +140,7 @@ type (
 
 // New creates instance of broker.
 func New(bs addonStorage, cs chartStorage, os operationStorage, is instanceStorage, ibd instanceBindDataStorage,
-	bindTmplRenderer bindTemplateRenderer, bindTmplResolver bindTemplateResolver, hc helmClient, etcdURL string, log *logrus.Entry) *Server {
+	bindTmplRenderer bindTemplateRenderer, bindTmplResolver bindTemplateResolver, hc helmClient, log *logrus.Entry) *Server {
 	idpRaw := idprovider.New()
 	idp := func() (internal.OperationID, error) {
 		idRaw, err := idpRaw()
@@ -150,11 +150,11 @@ func New(bs addonStorage, cs chartStorage, os operationStorage, is instanceStora
 		return internal.OperationID(idRaw), nil
 	}
 
-	return newWithIDProvider(bs, cs, os, is, ibd, bindTmplRenderer, bindTmplResolver, hc, etcdURL, log, idp)
+	return newWithIDProvider(bs, cs, os, is, ibd, bindTmplRenderer, bindTmplResolver, hc, log, idp)
 }
 
 func newWithIDProvider(bs addonStorage, cs chartStorage, os operationStorage, is instanceStorage, ibd instanceBindDataStorage,
-	bindTmplRenderer bindTemplateRenderer, bindTmplResolver bindTemplateResolver, hc helmClient, etcdURL string,
+	bindTmplRenderer bindTemplateRenderer, bindTmplResolver bindTemplateResolver, hc helmClient,
 	log *logrus.Entry, idp func() (internal.OperationID, error)) *Server {
 	return &Server{
 		catalogGetter: &catalogService{
@@ -198,7 +198,6 @@ func newWithIDProvider(bs addonStorage, cs chartStorage, os operationStorage, is
 		lastOpGetter: &getLastOperationService{
 			getter: os,
 		},
-		etcdURL: etcdURL,
-		logger:  log.WithField("service", "server"),
+		logger: log.WithField("service", "server"),
 	}
 }

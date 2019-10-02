@@ -18,7 +18,6 @@ import (
 	osb "github.com/pmorie/go-open-service-broker-client/v2"
 
 	"github.com/kyma-project/helm-broker/internal"
-	"github.com/kyma-project/helm-broker/internal/health"
 )
 
 //go:generate mockery -name=catalogGetter -output=automock -outpkg=automock -case=underscore
@@ -59,7 +58,6 @@ type Server struct {
 	lastOpGetter  lastOpGetter
 	logger        *logrus.Entry
 	addr          string
-	etcdURL       string
 }
 
 // Addr returns address server is listening on.
@@ -124,9 +122,6 @@ func (srv *Server) run(ctx context.Context, addr string, listenAndServe func(srv
 // CreateHandler creates an http handler
 func (srv *Server) CreateHandler() http.Handler {
 	var rtr = mux.NewRouter()
-
-	rtr.HandleFunc(health.BrokerReadyProbe(srv.etcdURL)).Methods("GET")
-	rtr.HandleFunc(health.BrokerLiveProbe()).Methods("GET")
 
 	rtr.Handle("/metrics", promhttp.Handler())
 

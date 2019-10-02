@@ -31,6 +31,7 @@ broker:
   tillerTLSEnabled: false
   externalPort: 80
   internalPort: 8070
+  statusPort: 8071
 
 ctrl:
   # enable/disable docs topics support for helm controller

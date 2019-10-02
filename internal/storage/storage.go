@@ -94,7 +94,6 @@ func (cl *ConfigList) ExtractEtcdURL() string {
 // TODO: add error handling
 func NewFactory(cl *ConfigList) (Factory, error) {
 	fact := concreteFactory{}
-	var err error
 
 	for _, cfg := range *cl {
 
@@ -124,11 +123,15 @@ func NewFactory(cl *ConfigList) (Factory, error) {
 				return memory.NewInstanceBindData(), nil
 			}
 		case DriverEtcd:
+			var err error
 			var cli etcd.Client
 			if cfg.Etcd.ForceClient != nil {
 				cli = cfg.Etcd.ForceClient
 			} else {
 				cli, err = etcd.NewClient(cfg.Etcd)
+				if err != nil {
+					return nil, errors.Wrap(err, "while creating etcd client")
+				}
 			}
 
 			addonFact = func() (Addon, error) {
@@ -173,7 +176,7 @@ func NewFactory(cl *ConfigList) (Factory, error) {
 		}
 	}
 
-	return &fact, err
+	return &fact, nil
 }
 
 type concreteFactory struct {

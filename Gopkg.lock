@@ -190,7 +190,7 @@
 
 [[projects]]
   branch = "release-3.3"
-  digest = "1:3a1b332ca4c35b3330566a549f2cd6fe64a5fb62d6fcd8615c45cd7c633f2525"
+  digest = "1:42d30fe547706d2cf5e3a5685b5aa83505025b135c7b6a8c8dbfb42ec541c04a"
   name = "github.com/coreos/etcd"
   packages = [
     "alarm",
@@ -198,7 +198,12 @@
     "auth/authpb",
     "client",
     "clientv3",
+    "clientv3/balancer",
+    "clientv3/balancer/connectivity",
+    "clientv3/balancer/picker",
+    "clientv3/balancer/resolver/endpoint",
     "clientv3/concurrency",
+    "clientv3/credentials",
     "clientv3/namespace",
     "clientv3/naming",
     "compactor",
@@ -243,12 +248,14 @@
     "pkg/idutil",
     "pkg/ioutil",
     "pkg/logutil",
+    "pkg/mock/mockserver",
     "pkg/netutil",
     "pkg/pathutil",
     "pkg/pbutil",
     "pkg/runtime",
     "pkg/schedule",
     "pkg/srv",
+    "pkg/systemd",
     "pkg/testutil",
     "pkg/tlsutil",
     "pkg/transport",
@@ -268,7 +275,7 @@
     "wal/walpb",
   ]
   pruneopts = "UT"
-  revision = "e6b2f00047e8e881dbf33085c425eba2c2e413d3"
+  revision = "943832af444a441c1f0bb84e0e8dfd35d8de0d22"
 
 [[projects]]
   digest = "1:0ef770954bca104ee99b3b6b7f9b240605ac03517d9f98cbc1893daa03f3c038"
@@ -1985,6 +1992,7 @@
     "github.com/coreos/etcd/clientv3",
     "github.com/coreos/etcd/clientv3/namespace",
     "github.com/coreos/etcd/integration",
+    "github.com/coreos/etcd/pkg/mock/mockserver",
     "github.com/coreos/pkg/capnslog",
     "github.com/emicklei/go-restful",
     "github.com/fatih/structs",
