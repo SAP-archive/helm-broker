@@ -79,6 +79,17 @@ func NewConfigListAllMemory() *ConfigList {
 	return &ConfigList{{Driver: DriverMemory, Provide: ProviderConfigMap{EntityAll: ProviderConfig{}}}}
 }
 
+// ExtractEtcdURL extracts URL to the ETCD from config
+func (cl *ConfigList) ExtractEtcdURL() string {
+	etcdURL := ""
+	for _, cfg := range *cl {
+		if cfg.Driver == DriverEtcd {
+			etcdURL = cfg.Etcd.Endpoints[0]
+		}
+	}
+	return etcdURL
+}
+
 // NewFactory is a factory for entities based on given ConfigList
 // TODO: add error handling
 func NewFactory(cl *ConfigList) (Factory, error) {
@@ -112,11 +123,15 @@ func NewFactory(cl *ConfigList) (Factory, error) {
 				return memory.NewInstanceBindData(), nil
 			}
 		case DriverEtcd:
+			var err error
 			var cli etcd.Client
 			if cfg.Etcd.ForceClient != nil {
 				cli = cfg.Etcd.ForceClient
 			} else {
-				cli, _ = etcd.NewClient(cfg.Etcd)
+				cli, err = etcd.NewClient(cfg.Etcd)
+				if err != nil {
+					return nil, errors.Wrap(err, "while creating etcd client")
+				}
 			}
 
 			addonFact = func() (Addon, error) {

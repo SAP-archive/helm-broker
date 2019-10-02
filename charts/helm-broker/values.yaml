@@ -14,10 +14,10 @@ global:
     version: v20190325-ff66a3a
   helm_broker:
     image: eu.gcr.io/kyma-project/pr/helm-broker
-    version: PR-24
+    version: PR-40
   helm_controller:
     image: eu.gcr.io/kyma-project/pr/helm-controller
-    version: PR-24
+    version: PR-40
   # helm broker service parameters
   service:
     type: NodePort
@@ -31,6 +31,7 @@ broker:
   tillerTLSEnabled: false
   externalPort: 80
   internalPort: 8070
+  statusPort: 8071
 
 ctrl:
   # enable/disable docs topics support for helm controller

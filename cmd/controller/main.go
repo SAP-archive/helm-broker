@@ -40,7 +40,7 @@ func main() {
 	mgr := controller.SetupAndStartController(cfg, ctrCfg, metricsAddr, sFact, uploadClient, lg)
 
 	// TODO: switch to native implementation after merge: https://github.com/kubernetes-sigs/controller-runtime/pull/419
-	go health.HandleHealth(fmt.Sprintf(":%d", ctrCfg.Port), mgr.GetClient(), lg)
+	go health.NewControllerProbes(fmt.Sprintf(":%d", ctrCfg.StatusPort), storageConfig.ExtractEtcdURL(), mgr.GetClient()).Handle()
 
 	lg.Info("Starting the Controller.")
 	err = mgr.Start(signals.SetupSignalHandler())
