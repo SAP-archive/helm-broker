@@ -11,45 +11,40 @@ For more information, read the [Helm Broker documentation](https://kyma-project.
 To run the project, download these tools:
 
 * [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) 1.16
-* [Helm CLI](https://github.com/kubernetes/helm#install) 2.10
-* [docker](https://docs.docker.com/install/) 19.03 (for local installation)
+* [Helm CLI](https://github.com/kubernetes/helm#install) 2.14
+* [Docker](https://docs.docker.com/install/) 19.03 (for local installation)
 * [Kind](https://github.com/kubernetes-sigs/kind#installation-and-usage) 0.5 (for local installation) 
 
-for non-local installation (without kind) use Kubernetes in version 1.15
+>**NOTE:** For non-local installation, use Kubernetes v1.15.
 
 ## Installation 
 
 To run the Helm Broker, you need a Kubernetes cluster with Tiller and Service Catalog. Follow these steps to set up the Helm Broker on Kind with all necessary dependencies:
 
-1. Create local cluster with Kind (making sure the docker is turned on):
+1. Create a local cluster on Kind:
 ```bash
 kind create cluster
 ``` 
 
 2. Install Tiller into your cluster:
 ```bash
-helm init --wait
-```
-
-3. Create ServiceAccount for Tiller with admin privileges
-```bash
 kubectl create serviceaccount --namespace kube-system tiller
 kubectl create clusterrolebinding tiller-cluster-rule --clusterrole=cluster-admin --serviceaccount=kube-system:tiller
-kubectl patch deploy --namespace kube-system tiller-deploy -p '{"spec":{"template":{"spec":{"serviceAccount":"tiller"}}}}'
+helm init --service-account tiller --upgrade --wait
 ```
 
-4. Install the Service Catalog as a Helm chart:
+3. Install Service Catalog as a Helm chart:
 ```bash
 helm repo add svc-cat https://svc-catalog-charts.storage.googleapis.com
 helm install svc-cat/catalog --name catalog --namespace catalog
 ```
 
-5. Clone Helm Broker repository
+4. Clone the Helm Broker repository:
 ```bash
 git clone git@github.com:kyma-project/helm-broker.git
 ```
 
-6. Install the Helm Broker chart from the cloned repository:
+5. Install the Helm Broker chart from the cloned repository:
 ```bash
 helm install charts/helm-broker --name helm-broker --namespace helm-broker
 ```
@@ -143,13 +138,13 @@ The repository has the following structure:
   ├── .github                     # Pull request and issue templates    
   ├── charts                      # Charts to install by Helm
   ├── cmd                         # Main applications for project                                     
-  ├── config                      # Configuration file templates or default configs
+  ├── config                      # Configuration file templates or default configurations
   ├── deploy                      # Dockerfiles to build images
   ├── docs                        # Documentation files
-  ├── hack                        # Various scripts that are used by Helm Broker developers
+  ├── hack                        # Scripts used by the Helm Broker developers
   ├── internal                    # Private application and library code
   ├── pkg                         # Library code to use by external applications
-  └── test                        # Additional external test apps and test data
+  └── test                        # Additional external test applications and test data
 ```
 
 ### Run tests
