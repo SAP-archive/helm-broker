@@ -19,7 +19,7 @@ To run the project, download these tools:
 
 ## Installation 
 
-To run the Helm Broker, you need a Kubernetes cluster with Tiller and Service Catalog. Follow these steps to set up the Helm Broker on Kind with all necessary dependencies:
+To run the Helm Broker, you need a Kubernetes cluster with Tiller and Service Catalog. Run the `./hack/run-dev-kind.sh` script, or follow these steps to set up the Helm Broker on Kind with all necessary dependencies:
 
 1. Create a local cluster on Kind:
 ```bash

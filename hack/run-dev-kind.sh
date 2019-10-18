@@ -2,7 +2,6 @@
 
 set -o errexit
 
-readonly SUPPORTED_KIND_VERSION="v0.5.1"
 readonly CURRENT_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 readonly REPO_ROOT_DIR=$( cd ${CURRENT_DIR}/../ && pwd )
 
