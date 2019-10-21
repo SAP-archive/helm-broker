@@ -19,7 +19,7 @@ func (svc *bindService) Bind(ctx context.Context, osbCtx OsbContext, req *osb.Bi
 		return nil, fmt.Errorf("helm-broker does not support configuration options for the service binding")
 	}
 
-	out, err := svc.instanceBindDataGetter.Get(internal.InstanceID(req.InstanceID))
+	out, err := svc.instanceBindDataGetter.Get(internal.InstanceID(req.InstanceID)) // [SECRETS-ISSUE] here we get credentials in exchange for instanceID - perhaps from etcd
 	if err != nil {
 		return nil, errors.Wrapf(err, "while getting bind data from storage for instance id: %q", req.InstanceID)
 	}

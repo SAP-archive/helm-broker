@@ -34,7 +34,7 @@ type InstanceBindData struct {
 }
 
 // Insert inserts object into storage.
-func (s *InstanceBindData) Insert(ibd *internal.InstanceBindData) error {
+func (s *InstanceBindData) Insert(ibd *internal.InstanceBindData) error { // [SECRETS-ISSUE] here we insert creds and instanceID into etcd
 	if ibd == nil {
 		return errors.New("entity may not be nil")
 	}
@@ -66,7 +66,7 @@ func (s *InstanceBindData) Insert(ibd *internal.InstanceBindData) error {
 }
 
 // Get returns object from storage.
-func (s *InstanceBindData) Get(iID internal.InstanceID) (*internal.InstanceBindData, error) {
+func (s *InstanceBindData) Get(iID internal.InstanceID) (*internal.InstanceBindData, error) { // [SECRETS-ISSUE] here we GET the creds from etcd
 	if iID.IsZero() {
 		return nil, errors.New("both instance and operation id must be set")
 	}

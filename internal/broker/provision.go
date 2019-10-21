@@ -47,7 +47,7 @@ func (svc *provisionService) Provision(ctx context.Context, osbCtx OsbContext, r
 	svc.mu.Lock()
 	defer svc.mu.Unlock()
 
-	iID := internal.InstanceID(req.InstanceID)
+	iID := internal.InstanceID(req.InstanceID) // [SECRETS-ISSUE] instanceID's beginning is here
 	paramHash := jsonhash.HashS(req.Parameters)
 
 	switch state, err := svc.instanceStateGetter.IsProvisioned(iID); true {
@@ -215,6 +215,7 @@ func (svc *provisionService) do(ctx context.Context, input provisioningInput) {
 		opDesc = fmt.Sprintf("provisioning failed on error: %s", err.Error())
 	}
 
+	//TODO: [SECRETS-ISSUE] here we call the unwanted method resolveAndSaveBindData - get rid of this
 	if err == nil && svc.isBindable(input.addonPlan, input.isAddonBindable) {
 		if resolveErr := svc.resolveAndSaveBindData(input.instanceID, input.namespace, input.addonPlan, resp); resolveErr != nil {
 			opState = internal.OperationStateFailed
@@ -232,6 +233,7 @@ func (*provisionService) isBindable(plan internal.AddonPlan, isAddonBindable boo
 		(plan.Bindable == nil && isAddonBindable) // if bindable field is NOT set on plan that bindable field on addon is important
 }
 
+// [SECRETS-ISSUE] this logic should be on /bind action
 func (svc *provisionService) resolveAndSaveBindData(iID internal.InstanceID, namespace internal.Namespace, addonPlan internal.AddonPlan, resp *rls.InstallReleaseResponse) error {
 	rendered, err := svc.bindTemplateRenderer.Render(addonPlan.BindTemplate, resp)
 	if err != nil {
@@ -247,7 +249,7 @@ func (svc *provisionService) resolveAndSaveBindData(iID internal.InstanceID, nam
 		InstanceID:  iID,
 		Credentials: out.Credentials,
 	}
-	if err := svc.instanceBindDataInserter.Insert(&in); err != nil {
+	if err := svc.instanceBindDataInserter.Insert(&in); err != nil { // [SECRETS-ISSUE] here we insert creds to etcd - we dont want that (here or at all??)
 		return errors.Wrap(err, "while inserting instance bind data into storage")
 	}
 
