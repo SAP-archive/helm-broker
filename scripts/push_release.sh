@@ -29,15 +29,15 @@ jq -n \
     prerelease: false
   }' > CHANGELOG.md
 
-echo "Create release GIT_TAG for repo: ${GIT_REPO}, branch: ${GIT_TAG}"
+echo "Create release ${GIT_TAG} for repo: ${GIT_REPO}, branch: ${GIT_TAG}"
 RESPONSE=$(curl -H "Authorization: token ${GITHUB_TOKEN}" --data @CHANGELOG.md "https://api.github.com/repos/${GIT_REPO}/releases")
-
-RESPONSE=$(curl -s --data "${CREATE_RELEASE_DATA}" "https://api.github.com/repos/$GIT_REPO/releases?access_token=${GITHUB_TOKEN}")
 ASSET_UPLOAD_URL=$(echo "$RESPONSE" | jq -r .upload_url | cut -d '{' -f1)
 if [ -z "$ASSET_UPLOAD_URL" ]; then
     echo ${RESPONSE}
     exit 1
 fi
+
+echo ${RESPONSE}
 
 echo "Uploading CHANGELOG to url: $ASSET_UPLOAD_URL?name=${CHANGELOG}"
 curl -s --data-binary @${CHANGELOG} -H "Content-Type: application/octet-stream" -X POST "$ASSET_UPLOAD_URL?name=$(basename ${CHANGELOG})&access_token=${GITHUB_TOKEN}"
