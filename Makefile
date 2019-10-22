@@ -70,6 +70,7 @@ latest-release: tar-chart generate-changelog
 	./scripts/latest_tag_create_step.sh $(GIT_REPO)
 	./scripts/latest_tag_remove_step.sh $(GIT_REPO)
 	./scripts/push_release.sh $(GIT_TAG) $(GIT_REPO)
+	./scripts/push_latest_changelog.sh $(GIT_TAG) $(GIT_REPO)
 
 .PHONY: tar-chart
 tar-chart:
@@ -109,7 +110,7 @@ ci-pr: build integration-test build-image push-image
 ci-master: build integration-test build-image push-image latest-release
 
 .PHONY: ci-release
-ci-release: release
+ci-release: build integration-test build-image push-image charts-test release
 
 .PHONY: clean
 clean:
