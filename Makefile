@@ -73,7 +73,7 @@ latest-release: tar-chart generate-changelog
 
 .PHONY: tar-chart
 tar-chart:
-	tar -czvf helm-broker.tar.gz -C charts/helm-broker/ . &> /dev/null
+	tar -czvf helm-broker-chart.tar.gz -C charts/helm-broker/ . &> /dev/null
 
 .PHONY: build-image
 build-image: pull-licenses

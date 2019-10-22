@@ -10,7 +10,7 @@ GIT_TAG=$1
 GIT_REPO=$2
 
 CHANGELOG=./CHANGELOG.md
-CHART=./helm-broker.tar.gz
+CHART=./helm-broker-chart.tar.gz
 
 body="$(cat CHANGELOG.md)"
 
@@ -36,8 +36,6 @@ if [ -z "$ASSET_UPLOAD_URL" ]; then
     echo ${RESPONSE}
     exit 1
 fi
-
-echo ${RESPONSE}
 
 echo "Uploading CHANGELOG to url: $ASSET_UPLOAD_URL?name=${CHANGELOG}"
 curl -s --data-binary @${CHANGELOG} -H "Content-Type: application/octet-stream" -X POST "$ASSET_UPLOAD_URL?name=$(basename ${CHANGELOG})&access_token=${GITHUB_TOKEN}"
