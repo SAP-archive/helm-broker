@@ -19,13 +19,15 @@ Follow these steps to create a new `helm-broker` release 0.6.0:
     git pull
     ```
 
-2. Create a tag with the proper release version:
+2. Create a release branch with the proper release version:
 
     ```
-    git tag 0.6.0
+    git checkout -b 0.6.0
     ```   
 
-3. Push the tag:
+3. Change images tag in the `charts/helm-broker/values.yaml` to 0.6.0.
+
+4. Push the tag:
 
     ```
     git push {remote} 0.6.0
