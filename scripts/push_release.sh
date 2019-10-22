@@ -38,8 +38,8 @@ if [ -z "$ASSET_UPLOAD_URL" ]; then
 fi
 
 echo "Uploading CHANGELOG to url: $ASSET_UPLOAD_URL?name=${CHANGELOG}"
-curl -s --data-binary @${CHANGELOG} -H "Content-Type: application/octet-stream" -X POST "$ASSET_UPLOAD_URL?name=$(basename ${CHANGELOG})&access_token=${GITHUB_TOKEN}"
+curl -s --data-binary @${CHANGELOG} -H "Content-Type: application/octet-stream" -X POST "$ASSET_UPLOAD_URL?name=$(basename ${CHANGELOG})&access_token=${GITHUB_TOKEN}" > /dev/null
 
 echo "Uploading CHART to url: $ASSET_UPLOAD_URL?name=${CHART}"
-curl -s --data-binary @${CHART} -H "Content-Type: application/octet-stream" -X POST "$ASSET_UPLOAD_URL?name=$(basename ${CHART})&access_token=${GITHUB_TOKEN}"
+curl -s --data-binary @${CHART} -H "Content-Type: application/octet-stream" -X POST "$ASSET_UPLOAD_URL?name=$(basename ${CHART})&access_token=${GITHUB_TOKEN}" > /dev/null
 

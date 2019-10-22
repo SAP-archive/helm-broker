@@ -70,7 +70,6 @@ latest-release: tar-chart generate-changelog
 	./scripts/latest_tag_create_step.sh $(GIT_REPO)
 	./scripts/latest_tag_remove_step.sh $(GIT_REPO)
 	./scripts/push_release.sh $(GIT_TAG) $(GIT_REPO)
-	./scripts/push_latest_changelog.sh $(GIT_TAG) $(GIT_REPO)
 
 .PHONY: tar-chart
 tar-chart:
@@ -78,9 +77,18 @@ tar-chart:
 
 .PHONY: tag-release-images
 tag-release-images:
-	@docker run --rm -v $(ROOT_PATH):/workdir mikefarah/yq yq w -i charts/helm-broker/values.yaml global.helm-broker.version $(GIT_TAG) ||:
-	@docker run --rm -v $(ROOT_PATH):/workdir mikefarah/yq yq w -i charts/helm-broker/values.yaml global.helm-controller.version $(GIT_TAG) ||:
+	@docker run --rm -v $(ROOT_PATH):/workdir mikefarah/yq yq w -i charts/helm-broker/values.yaml global.helm_broker.version $(GIT_TAG) ||:
+	@docker run --rm -v $(ROOT_PATH):/workdir mikefarah/yq yq w -i charts/helm-broker/values.yaml global.helm_controller.version $(GIT_TAG) ||:
 	@docker run --rm -v $(ROOT_PATH):/workdir mikefarah/yq yq w -i charts/helm-broker/values.yaml tests.tag $(GIT_TAG) ||:
+
+.PHONY: cut-release
+cut-release:
+	git checkout master
+	git pull
+	make tag-release-images
+	git checkout -b $(VERSION)
+	git add charts/helm-broker/values.yaml
+	git commit -m "Bump release images"
 
 .PHONY: build-image
 build-image: pull-licenses
