@@ -6,7 +6,7 @@ This document describes how the release flow looks like and how to create an `he
 
 Every change in the master branch which passes all checks creates the `latest` tag and triggers the release.
 
-Every tag pushed to the repository triggers a new release. If the tag name matches the `x.y.0` version pattern, in which `0` is a revision, Prow CI build creates a release tag named `release-x.y`.
+Every tag pushed to the repository triggers a new release.
 
 ### Create a release from the master branch
 
@@ -27,9 +27,11 @@ Follow these steps to create a new `helm-broker` release 0.6.0:
 
 3. Change images tag in the `charts/helm-broker/values.yaml` to 0.6.0.
 
-4. Push the tag:
+4. Add your changes and push it:
 
     ```
+    git add charts/helm-broker/values.yaml
+    git commit -m "Bump release images"
     git push {remote} 0.6.0
     ```
 
@@ -39,7 +41,7 @@ Follow these steps to create a new `helm-broker` release 0.6.0:
     >```
 
 
-4. After Prow CI job finish, go to the **releases** tab where the new release appears. The new branch is available in the **branches** tab.
+5. After Prow CI job finish, go to the **releases** tab where the new release appears. The new branch is available in the **branches** tab.
 
 
 ### Create a release from the release branch
@@ -50,23 +52,25 @@ Follow these steps to create a new addon release 0.6.1:
 
     ```
     git fetch {remote}
-    git checkout release-0.6
+    git checkout 0.6.0
     git pull
     ```
 
-2. Create a tag with the proper release version. For example:
+2. Commit your changes to the release branch `0.6.0`
+
+3. Create a tag with the proper release version. For example:
 
     ```
     git tag 0.6.1
     ```   
 
-3. Push the tag:
+4. Push the tag:
 
     ```
     git push {remote} 0.6.1
     ```
 
-4. After Prow CI job finish, go to the **releases** tab where the new `0.6.1` release appears.
+5. After Prow CI job finish, go to the **releases** tab where the new `0.6.1` release appears.
 
 
 ## Changelog functionality
