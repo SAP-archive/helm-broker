@@ -50,7 +50,12 @@ client:
 
 .PHONY: generate-changelog
 generate-changelog:
-	@docker run -it --rm -v $(ROOT_PATH):/usr/local/src/your-app ferrarimarco/github-changelog-generator -u $(REPO_OWNER) -p $(REPO_NAME) -t $(GITHUB_TOKEN) --since-tag $(shell ./scripts/last_tag.sh) ||:
+	SINCE_TAG=$(shell ./scripts/last_tag.sh)
+	ifeq ($(SINCE_TAG),)
+	@docker run -it --rm -v $(ROOT_PATH):/usr/local/src/your-app ferrarimarco/github-changelog-generator -u $(REPO_OWNER) -p $(REPO_NAME) -t $(GITHUB_TOKEN) --future-release $(GIT_TAG) ||:
+	else
+	@docker run -it --rm -v $(ROOT_PATH):/usr/local/src/your-app ferrarimarco/github-changelog-generator -u $(REPO_OWNER) -p $(REPO_NAME) -t $(GITHUB_TOKEN) --since-tag $(shell ./scripts/last_tag.sh) --future-release $(GIT_TAG) ||:
+	endif
 
 .PHONY: release
 release: tar-chart generate-changelog
@@ -64,7 +69,7 @@ latest-release: tar-chart generate-changelog
 
 .PHONY: tar-chart
 tar-chart:
-	tar -czvf helm-broker.tar.gz -C charts/helm-broker/ .
+	tar -czvf helm-broker.tar.gz -C charts/helm-broker/ . &> /dev/null
 
 .PHONY: build-image
 build-image: pull-licenses
@@ -100,7 +105,7 @@ ci-pr: build integration-test build-image push-image
 ci-master: build integration-test build-image push-image latest-release
 
 .PHONY: ci-release
-ci-release: release charts-test
+ci-release: charts-test release
 
 .PHONY: clean
 clean:
