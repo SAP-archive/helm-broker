@@ -25,7 +25,7 @@ jq -n \
     name: $name,
     tag_name: $tag_name,
     target_commitish: $target_commitish,
-    draft: false,
+    draft: true,
     prerelease: false
   }' > CHANGELOG.md
 
@@ -36,6 +36,7 @@ if [ -z "$ASSET_UPLOAD_URL" ]; then
     echo ${RESPONSE}
     exit 1
 fi
+echo ${RESPONSE}
 
 echo "Uploading CHANGELOG to url: $ASSET_UPLOAD_URL?name=${CHANGELOG}"
 curl -s --data-binary @${CHANGELOG} -H "Content-Type: application/octet-stream" -X POST "$ASSET_UPLOAD_URL?name=$(basename ${CHANGELOG})&access_token=${GITHUB_TOKEN}" > /dev/null
