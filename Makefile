@@ -77,15 +77,25 @@ tar-chart:
 
 .PHONY: tag-release-images
 tag-release-images:
-	@docker run --rm -v $(ROOT_PATH):/workdir mikefarah/yq yq w -i charts/helm-broker/values.yaml global.helm_broker.version $(GIT_TAG) ||:
-	@docker run --rm -v $(ROOT_PATH):/workdir mikefarah/yq yq w -i charts/helm-broker/values.yaml global.helm_controller.version $(GIT_TAG) ||:
-	@docker run --rm -v $(ROOT_PATH):/workdir mikefarah/yq yq w -i charts/helm-broker/values.yaml tests.tag $(GIT_TAG) ||:
+	$(eval TAG:=$(GIT_TAG))
+ifeq ($(TAG),)
+	$(eval TAG:=$(VERSION))
+endif
+	@docker run --rm -v $(ROOT_PATH):/workdir mikefarah/yq yq w -i charts/helm-broker/values.yaml global.helm_broker.version $(TAG) ||:
+	@docker run --rm -v $(ROOT_PATH):/workdir mikefarah/yq yq w -i charts/helm-broker/values.yaml global.helm_controller.version $(TAG) ||:
+	@docker run --rm -v $(ROOT_PATH):/workdir mikefarah/yq yq w -i charts/helm-broker/values.yaml tests.tag $(TAG) ||:
 
 .PHONY: cut-release
 cut-release:
 	git checkout master
 	git pull
-	make tag-release-images
+	$(MAKE) tag-release-images
+	git checkout -b $(VERSION)
+	git add charts/helm-broker/values.yaml
+	git commit -m "Bump release images"
+
+.PHONY: patch-release
+patch-release: tag-release-images
 	git checkout -b $(VERSION)
 	git add charts/helm-broker/values.yaml
 	git commit -m "Bump release images"

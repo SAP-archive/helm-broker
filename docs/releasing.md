@@ -12,26 +12,21 @@ Every tag pushed to the repository triggers a new release.
 
 Follow these steps to create a new `helm-broker` release 0.6.0:
 
-1. Checkout the master branch with the latest changes:
+1. Change images tag in the `charts/helm-broker/values.yaml` to 0.6.0:
 
     ```
-    git checkout master
-    git pull
+    make VERSION=0.6.0 cut-release
     ```
+Above command do the following things:
+  - stash your changes
+  - checkout on master
+  - pull the latest master
+  - change the images tag in the `charts/helm-broker/values.yaml` to 0.6.0
+  - creates a commit with the changes
 
-2. Create a release branch with the proper release version:
-
-    ```
-    git checkout -b 0.6.0
-    ```   
-
-3. Change images tag in the `charts/helm-broker/values.yaml` to 0.6.0.
-
-4. Add your changes and push it:
+2. Push the release:
 
     ```
-    git add charts/helm-broker/values.yaml
-    git commit -m "Bump release images"
     git push {remote} 0.6.0
     ```
 
@@ -40,8 +35,7 @@ Follow these steps to create a new `helm-broker` release 0.6.0:
     >git push upstream 0.6.0
     >```
 
-
-5. After Prow CI job finish, go to the **releases** tab where the new release appears. The new branch is available in the **branches** tab.
+3. After Prow CI job finish, go to the **releases** tab where the new release appears. The new branch is available in the **branches** tab.
 
 
 ### Create a release from the release branch
@@ -56,7 +50,7 @@ Follow these steps to create a new addon release 0.6.1:
     git pull
     ```
 
-2. Commit your changes to the release branch `0.6.0`
+2. Commit your changes to the release branch `0.6.0`.
 
 3. Create a tag with the proper release version. For example:
 
@@ -67,7 +61,7 @@ Follow these steps to create a new addon release 0.6.1:
 4. Push the tag:
 
     ```
-    git push {remote} 0.6.1
+    git push {remote} 0.6.1 --tags
     ```
 
 5. After Prow CI job finish, go to the **releases** tab where the new `0.6.1` release appears.
