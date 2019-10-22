@@ -51,9 +51,9 @@ client:
 .PHONY: generate-changelog
 generate-changelog:
 	$(eval FLAGS:=)
-ifneq ($(shell ./scripts/last_tag.sh),)
+ifneq ($(shell ./scripts/get_last_tag.sh),)
 	$(eval FLAGS+= --since-tag)
-	$(eval FLAGS+= $(shell ./scripts/last_tag.sh))
+	$(eval FLAGS+= $(shell ./scripts/get_last_tag.sh))
 endif
 ifneq ($(GIT_TAG),)
 	$(eval FLAGS+= --future-release)
@@ -62,13 +62,13 @@ endif
 	@docker run --rm -v $(ROOT_PATH):/usr/local/src/your-app ferrarimarco/github-changelog-generator -u $(REPO_OWNER) -p $(REPO_NAME) -t $(GITHUB_TOKEN) $(FLAGS) ||:
 
 .PHONY: release
-release: tag-release-images tar-chart generate-changelog
+release: tag-release-images tar-chart generate-changelog release-branch
 	./scripts/push_release.sh $(GIT_TAG) $(GIT_REPO)
 
 .PHONY: latest-release
 latest-release: tar-chart generate-changelog
-	./scripts/latest_tag_create_step.sh $(GIT_REPO)
-	./scripts/latest_tag_remove_step.sh $(GIT_REPO)
+	./scripts/create_latest_tag.sh $(GIT_REPO)
+	./scripts/remove_latest_tag.sh $(GIT_REPO)
 	./scripts/push_release.sh $(GIT_TAG) $(GIT_REPO)
 
 .PHONY: tar-chart
@@ -86,19 +86,15 @@ endif
 	@docker run --rm -v $(ROOT_PATH):/workdir mikefarah/yq yq w -i charts/helm-broker/values.yaml tests.tag $(TAG) ||:
 
 .PHONY: cut-release
-cut-release:
-	git checkout master
-	git pull
-	$(MAKE) tag-release-images
-	git checkout -b $(VERSION)
+cut-release: tag-release-images
 	git add charts/helm-broker/values.yaml
 	git commit -m "Bump release images"
+	git tag $(VERSION)
 
-.PHONY: patch-release
-patch-release: tag-release-images
-	git checkout -b $(VERSION)
-	git add charts/helm-broker/values.yaml
-	git commit -m "Bump release images"
+.PHONY: release-branch
+release-branch:
+# release branch named `release-x.y` will be created if the GIT_TAG matches the `x.y.0` version pattern.
+	./scripts/create_release_branch.sh $(GIT_TAG) $(GIT_REPO)
 
 .PHONY: build-image
 build-image: pull-licenses

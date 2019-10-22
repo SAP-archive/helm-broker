@@ -10,61 +10,71 @@ Every tag pushed to the repository triggers a new release.
 
 ### Create a release from the master branch
 
-Follow these steps to create a new `helm-broker` release 0.6.0:
+Follow these steps to create a new `helm-broker` release `v0.6.0`:
 
-1. Change images tag in the `charts/helm-broker/values.yaml` to 0.6.0:
+1. Checkout on master and pull the latest changes:
 
     ```
-    make VERSION=0.6.0 cut-release
+    git checkout master
+    git pull
+    ```
+2. Prepare the release:
+
+    ```
+    make VERSION=v0.6.0 cut-release
     ```
 Above command do the following things:
-  - stash your changes
-  - checkout on master
-  - pull the latest master
-  - change the images tag in the `charts/helm-broker/values.yaml` to 0.6.0
+  - changes the images tag in the `charts/helm-broker/values.yaml` to `v0.6.0`
   - creates a commit with the changes
+  - creates a `v0.6.0` tag
 
-2. Push the release:
+3. Push the release:
 
     ```
-    git push {remote} 0.6.0
+    git push {remote} v0.6.0
     ```
+
+It triggers the Prow CI release job for that branch.
 
     >**NOTE:** If you want to push the tag to the upstream, run the following command:
     >```
-    >git push upstream 0.6.0
+    >git push upstream v0.6.0
     >```
 
-3. After Prow CI job finish, go to the **releases** tab where the new release appears. The new branch is available in the **branches** tab.
+4. After Prow CI job finish, go to the **releases** tab where the new release appears. The new branch is available in the **branches** tab.
 
 
 ### Create a release from the release branch
 
-Follow these steps to create a new addon release 0.6.1:
+Follow these steps to create a new `helm-broker` release 0.6.1:
 
 1. Checkout the release branch with the latest changes. For example:
 
     ```
     git fetch {remote}
-    git checkout 0.6.0
+    git checkout release-0.6
     git pull
     ```
 
-2. Commit your changes to the release branch `0.6.0`.
+2. Commit your changes to the release branch `release-0.6`.
 
-3. Create a tag with the proper release version. For example:
-
-    ```
-    git tag 0.6.1
-    ```   
-
-4. Push the tag:
+3. Prepare the release:
 
     ```
-    git push {remote} 0.6.1 --tags
+    make VERSION=v0.6.1 cut-release
+    ```
+    Above command do the following things:
+      - changes the images tag in the `charts/helm-broker/values.yaml` to `v0.6.1`
+      - creates a commit with the changes
+      - creates a `v0.6.1` tag 
+
+4. Push your changes with the tag:
+
+    ```
+    git push {remote} v0.6.1
     ```
 
-5. After Prow CI job finish, go to the **releases** tab where the new `0.6.1` release appears.
+5. After Prow CI job finish, go to the **releases** tab where the new `v0.6.1` release appears.
 
 
 ## Changelog functionality
