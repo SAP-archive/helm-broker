@@ -40,4 +40,5 @@ ctrl:
   statusPort: 8081
 
 tests:
-  image: eu.gcr.io/kyma-project/pr/helm-broker-tests:PR-37
+  image: eu.gcr.io/kyma-project/pr/helm-broker-tests
+  tag: PR-37

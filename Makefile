@@ -62,7 +62,7 @@ endif
 	@docker run --rm -v $(ROOT_PATH):/usr/local/src/your-app ferrarimarco/github-changelog-generator -u $(REPO_OWNER) -p $(REPO_NAME) -t $(GITHUB_TOKEN) $(FLAGS) ||:
 
 .PHONY: release
-release: tar-chart generate-changelog
+release: tag-release-images tar-chart generate-changelog
 	./scripts/push_release.sh $(GIT_TAG) $(GIT_REPO)
 
 .PHONY: latest-release
@@ -75,6 +75,12 @@ latest-release: tar-chart generate-changelog
 .PHONY: tar-chart
 tar-chart:
 	tar -czvf helm-broker-chart.tar.gz -C charts/helm-broker/ . &> /dev/null
+
+.PHONY: tag-release-images
+tag-release-images:
+	@docker run --rm -v $(ROOT_PATH):/workdir mikefarah/yq yq w -i charts/helm-broker/values.yaml global.helm-broker.version $(GIT_TAG) ||:
+	@docker run --rm -v $(ROOT_PATH):/workdir mikefarah/yq yq w -i charts/helm-broker/values.yaml global.helm-controller.version $(GIT_TAG) ||:
+	@docker run --rm -v $(ROOT_PATH):/workdir mikefarah/yq yq w -i charts/helm-broker/values.yaml tests.tag $(GIT_TAG) ||:
 
 .PHONY: build-image
 build-image: pull-licenses
