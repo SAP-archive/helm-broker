@@ -50,12 +50,12 @@ client:
 
 .PHONY: generate-changelog
 generate-changelog:
-	SINCE_TAG=$(shell ./scripts/last_tag.sh)
-	ifeq ($(SINCE_TAG),)
+	$(eval SINCE_TAG=$(shell ./scripts/last_tag.sh))
+ifeq ($(SINCE_TAG),)
 	@docker run -it --rm -v $(ROOT_PATH):/usr/local/src/your-app ferrarimarco/github-changelog-generator -u $(REPO_OWNER) -p $(REPO_NAME) -t $(GITHUB_TOKEN) --future-release $(GIT_TAG) ||:
-	else
-	@docker run -it --rm -v $(ROOT_PATH):/usr/local/src/your-app ferrarimarco/github-changelog-generator -u $(REPO_OWNER) -p $(REPO_NAME) -t $(GITHUB_TOKEN) --since-tag $(shell ./scripts/last_tag.sh) --future-release $(GIT_TAG) ||:
-	endif
+else
+	@docker run -it --rm -v $(ROOT_PATH):/usr/local/src/your-app ferrarimarco/github-changelog-generator -u $(REPO_OWNER) -p $(REPO_NAME) -t $(GITHUB_TOKEN) --since-tag $(SINCE_TAG) --future-release $(GIT_TAG) ||:
+endif
 
 .PHONY: release
 release: tar-chart generate-changelog
@@ -105,7 +105,7 @@ ci-pr: build integration-test build-image push-image
 ci-master: build integration-test build-image push-image latest-release
 
 .PHONY: ci-release
-ci-release: charts-test release
+ci-release: release
 
 .PHONY: clean
 clean:
