@@ -76,14 +76,17 @@ tar-chart:
 	tar -czvf helm-broker-chart.tar.gz -C charts/helm-broker/ . &> /dev/null
 
 .PHONY: tag-release-images
-tag-release-images:
+tag-release-images: yaml-edit
 	$(eval TAG:=$(GIT_TAG))
 ifeq ($(TAG),)
 	$(eval TAG:=$(VERSION))
 endif
-	@docker run --rm -v $(ROOT_PATH):/workdir mikefarah/yq yq w -i charts/helm-broker/values.yaml global.helm_broker.version $(TAG) ||:
-	@docker run --rm -v $(ROOT_PATH):/workdir mikefarah/yq yq w -i charts/helm-broker/values.yaml global.helm_controller.version $(TAG) ||:
-	@docker run --rm -v $(ROOT_PATH):/workdir mikefarah/yq yq w -i charts/helm-broker/values.yaml tests.tag $(TAG) ||:
+	$(YAML_EDIT) w -i charts/helm-broker/values.yaml global.helm_broker.version $(TAG) ||:
+	$(YAML_EDIT) w -i charts/helm-broker/values.yaml global.helm_broker.dir '' ||:
+	$(YAML_EDIT) w -i charts/helm-broker/values.yaml global.helm_controller.version $(TAG) ||:
+	$(YAML_EDIT) w -i charts/helm-broker/values.yaml global.helm_controller.dir '' ||:
+	$(YAML_EDIT) w -i charts/helm-broker/values.yaml tests.tag $(TAG) ||:
+	$(YAML_EDIT) w -i charts/helm-broker/values.yaml tests.dir '' ||:
 
 .PHONY: cut-release
 cut-release: tag-release-images
@@ -123,6 +126,20 @@ push-image:
 	docker tag $(TESTS_NAME) $(REPO)$(TESTS_NAME):$(TAG)
 	docker push $(REPO)$(TESTS_NAME):$(TAG)
 
+.PHONY: push-latest-image
+push-latest-image:
+	docker tag $(APP_NAME) $(DOCKER_PUSH_REPOSITORY)/$(APP_NAME):latest
+	docker push $(DOCKER_PUSH_REPOSITORY)/$(APP_NAME):latest
+
+	docker tag $(CONTROLLER_NAME) $(DOCKER_PUSH_REPOSITORY)/$(CONTROLLER_NAME):latest
+	docker push $(DOCKER_PUSH_REPOSITORY)/$(CONTROLLER_NAME):latest
+
+	docker tag $(TOOLS_NAME) $(DOCKER_PUSH_REPOSITORY)/$(TOOLS_NAME):latest
+	docker push $(DOCKER_PUSH_REPOSITORY)/$(TOOLS_NAME):latest
+
+	docker tag $(TESTS_NAME) $(DOCKER_PUSH_REPOSITORY)/$(TESTS_NAME):latest
+	docker push $(DOCKER_PUSH_REPOSITORY)/$(TESTS_NAME):latest
+
 .PHONY: ci-pr
 ci-pr: build integration-test build-image push-image
 
@@ -130,7 +147,7 @@ ci-pr: build integration-test build-image push-image
 ci-master: build integration-test build-image push-image latest-release
 
 .PHONY: ci-release
-ci-release: build integration-test build-image push-image charts-test release
+ci-release: build integration-test build-image push-image charts-test release push-latest-image
 
 .PHONY: clean
 clean:
@@ -141,3 +158,14 @@ clean:
 .PHONY: path-to-referenced-charts
 path-to-referenced-charts:
 	@echo "resources/helm-broker"
+
+.PHONY: yaml-edit
+yaml-edit:
+ifeq (, $(shell which yq))
+	go get gopkg.in/mikefarah/yq.v2
+YAML_EDIT=$(GOBIN)/yq
+else
+YAML_EDIT=$(shell which yq)
+endif
+
+
