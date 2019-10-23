@@ -62,7 +62,7 @@ endif
 	@docker run --rm -v $(ROOT_PATH):/usr/local/src/your-app ferrarimarco/github-changelog-generator -u $(REPO_OWNER) -p $(REPO_NAME) -t $(GITHUB_TOKEN) $(FLAGS) ||:
 
 .PHONY: release
-release: tag-release-images tar-chart generate-changelog release-branch
+release: tar-chart generate-changelog release-branch
 	./scripts/push_release.sh $(GIT_TAG) $(GIT_REPO)
 
 .PHONY: latest-release

@@ -14,6 +14,15 @@ shout() {
 "
 }
 
+# Workaround for release jobs which are using the build.sh script from test-infra
+function ensure_docker() {
+    set +e
+    docker info &> /dev/null
+    if [[ $? -eq 1 ]]; then
+        start_docker
+    fi
+    set -e
+}
 
 # Copied from https://github.com/kyma-project/test-infra/blob/edde7967b87032ee494f0c00cfc60ae495d74ef4/prow/scripts/library.sh#L6
 function start_docker() {
