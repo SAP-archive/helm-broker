@@ -86,11 +86,10 @@ install_local-path-provisioner() {
 }
 
 main() {
-    docker info &> /dev/null
-    if [[ $? -eq 1 ]]; then
+    if [[ "${RUN_ON_PROW-no}" = "true" ]]; then
         # This is a workaround for our CI. More info you can find in this issue:
         # https://github.com/kyma-project/test-infra/issues/1499
-        start_docker
+        ensure_docker
     fi
 
     run_ct_container

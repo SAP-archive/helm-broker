@@ -19,7 +19,7 @@ jq -n \
   --arg body "$body" \
   --arg name "${GIT_TAG}" \
   --arg tag_name "${GIT_TAG}" \
-  --arg target_commitish "${GIT_TAG}" \
+  --arg target_commitish "master" \
   '{
     body: $body,
     name: $name,
