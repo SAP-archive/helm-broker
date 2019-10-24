@@ -50,16 +50,17 @@ client:
 
 .PHONY: generate-changelog
 generate-changelog:
-	$(eval FLAGS:=)
-ifneq ($(shell ./scripts/get_last_tag.sh),)
-	$(eval FLAGS+= --since-tag)
-	$(eval FLAGS+= $(shell ./scripts/get_last_tag.sh))
+	$(eval CHANGELOG_FLAGS:=)
+	$(eval SINCE_TAG:=$(shell git describe --tags $(git rev-list --tags --max-count=1)))
+ifneq ($(SINCE_TAG),)
+	$(eval CHANGELOG_FLAGS+= --since-tag)
+	$(eval CHANGELOG_FLAGS+= $(SINCE_TAG))
 endif
 ifneq ($(GIT_TAG),)
-	$(eval FLAGS+= --future-release)
-	$(eval FLAGS+= $(GIT_TAG))
+	$(eval CHANGELOG_FLAGS+= --future-release)
+	$(eval CHANGELOG_FLAGS+= $(GIT_TAG))
 endif
-	@docker run --rm -v $(ROOT_PATH):/usr/local/src/your-app ferrarimarco/github-changelog-generator -u $(REPO_OWNER) -p $(REPO_NAME) -t $(GITHUB_TOKEN) $(FLAGS) ||:
+	@docker run --rm -v $(ROOT_PATH):/usr/local/src/your-app ferrarimarco/github-changelog-generator -u $(REPO_OWNER) -p $(REPO_NAME) -t $(GITHUB_TOKEN) $(CHANGELOG_FLAGS) ||:
 
 .PHONY: release
 release: tar-chart generate-changelog release-branch
@@ -73,7 +74,7 @@ latest-release: tar-chart generate-changelog
 
 .PHONY: tar-chart
 tar-chart:
-	tar -czvf helm-broker-chart.tar.gz -C charts/helm-broker/ . &> /dev/null
+	tar -czvf helm-broker-chart.tar.gz -C charts/helm-broker/ . ||:
 
 .PHONY: tag-release-images
 tag-release-images: yaml-edit
@@ -81,12 +82,12 @@ tag-release-images: yaml-edit
 ifeq ($(TAG),)
 	$(eval TAG:=$(VERSION))
 endif
-	$(YAML_EDIT) w -i charts/helm-broker/values.yaml global.helm_broker.version $(TAG) ||:
-	$(YAML_EDIT) w -i charts/helm-broker/values.yaml global.helm_broker.dir '' ||:
-	$(YAML_EDIT) w -i charts/helm-broker/values.yaml global.helm_controller.version $(TAG) ||:
-	$(YAML_EDIT) w -i charts/helm-broker/values.yaml global.helm_controller.dir '' ||:
-	$(YAML_EDIT) w -i charts/helm-broker/values.yaml tests.tag $(TAG) ||:
-	$(YAML_EDIT) w -i charts/helm-broker/values.yaml tests.dir '' ||:
+	$(YAML_EDITOR) w -i charts/helm-broker/values.yaml global.helm_broker.version $(TAG) ||:
+	$(YAML_EDITOR) w -i charts/helm-broker/values.yaml global.helm_broker.dir '' ||:
+	$(YAML_EDITOR) w -i charts/helm-broker/values.yaml global.helm_controller.version $(TAG) ||:
+	$(YAML_EDITOR) w -i charts/helm-broker/values.yaml global.helm_controller.dir '' ||:
+	$(YAML_EDITOR) w -i charts/helm-broker/values.yaml tests.tag $(TAG) ||:
+	$(YAML_EDITOR) w -i charts/helm-broker/values.yaml tests.dir '' ||:
 
 .PHONY: cut-release
 cut-release: tag-release-images
@@ -164,7 +165,7 @@ path-to-referenced-charts:
 yaml-edit:
 ifeq (, $(shell which yq))
 	go get gopkg.in/mikefarah/yq.v2
-YAML_EDIT=$(GOBIN)/yq
+YAML_EDITOR=yq.v2
 else
-YAML_EDIT=$(shell which yq)
+YAML_EDITOR=$(shell which yq)
 endif
