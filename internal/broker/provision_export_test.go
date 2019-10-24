@@ -21,8 +21,6 @@ func NewProvisionService(bg addonIDGetter, cg chartGetter, is instanceStorage, i
 		helmInstaller:            hi,
 		log:                      log,
 		instanceBindDataInserter: ibd,
-		bindTemplateRenderer:     bindTmplRenderer,
-		bindTemplateResolver:     bindTmplResolver,
 	}
 }
 

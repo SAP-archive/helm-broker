@@ -8,9 +8,8 @@ import (
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/clientv3/namespace"
-	"github.com/pkg/errors"
-
 	"github.com/kyma-project/helm-broker/internal"
+	"github.com/pkg/errors"
 )
 
 // NewInstance creates new Instances storage
@@ -31,6 +30,39 @@ func NewInstance(cli clientv3.KV) (*Instance, error) {
 // Instance implements etcd based storage for Instance entities.
 type Instance struct {
 	generic
+}
+
+// Upsert persists Instance in memory.
+//
+// If instance already exists in storage then full replace is performed.
+//
+// Replace is set to true if instance already existed in storage and was replaced.
+func (s *Instance) Upsert(i *internal.Instance) (replaced bool, err error) {
+	if i == nil {
+		return false, errors.New("entity may not be nil")
+	}
+
+	if i.ID.IsZero() {
+		return false, errors.New("instance id must be set")
+	}
+
+	buf := bytes.Buffer{}
+	enc := gob.NewEncoder(&buf)
+	if err := enc.Encode(i); err != nil {
+		return false, errors.Wrap(err, "while encoding entity")
+	}
+
+
+	resp, err := s.kv.Put(context.TODO(), s.key(i.ID), buf.String(), clientv3.WithPrevKV())
+	if err != nil {
+		return false, errors.Wrap(err, "while calling database on put")
+	}
+
+	if resp.PrevKv != nil {
+		return true, nil
+	}
+
+	return false, nil
 }
 
 // Insert inserts object to storage.

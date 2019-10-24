@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"sync"
 
-	jsonhash "github.com/komkom/go-jsonhash"
+	"github.com/komkom/go-jsonhash"
 	"github.com/kyma-project/helm-broker/internal"
 	"github.com/pkg/errors"
 	osb "github.com/pmorie/go-open-service-broker-client/v2"
@@ -28,8 +28,6 @@ type provisionService struct {
 	instanceBindDataInserter instanceBindDataInserter
 	operationIDProvider      func() (internal.OperationID, error)
 	helmInstaller            helmInstaller
-	bindTemplateRenderer     bindTemplateRenderer
-	bindTemplateResolver     bindTemplateResolver
 	mu                       sync.Mutex
 
 	log *logrus.Entry
@@ -92,11 +90,11 @@ func (svc *provisionService) Provision(ctx context.Context, osbCtx OsbContext, r
 		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusBadRequest, ErrorMessage: strPtr(fmt.Sprintf("addon with name: %q (id: %s) and flag 'provisionOnlyOnce' in namespace %q will be not provisioned because his instance already exist", addon.Name, addon.ID, namespace))}
 	}
 
-	id, err := svc.operationIDProvider()
+	opID, err := svc.operationIDProvider()
 	if err != nil {
 		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusBadRequest, ErrorMessage: strPtr(fmt.Sprintf("while generating ID for operation: %v", err))}
 	}
-	opID := internal.OperationID(id)
+	//opID := internal.OperationID(id)
 
 	op := internal.InstanceOperation{
 		InstanceID:  iID,
@@ -127,11 +125,20 @@ func (svc *provisionService) Provision(ctx context.Context, osbCtx OsbContext, r
 		ServicePlanID: svcPlanID,
 		ReleaseName:   releaseName,
 		ParamsHash:    paramHash,
+		ReleaseInfo: internal.ReleaseInfo{},
 	}
 
-	if err = svc.instanceInserter.Insert(&i); err != nil {
+	exist, err := svc.instanceInserter.Upsert(&i)
+	if err != nil {
 		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusConflict, ErrorMessage: strPtr(fmt.Sprintf("while inserting instance to storage: %v", err))}
 	}
+	if exist {
+		svc.log.Infof("Instance %s already existed in storage, instance was replaced", i.ID)
+	}
+
+	//if err = svc.instanceInserter.InsertInstanceOperation(&i); err != nil {
+	//	return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusConflict, ErrorMessage: strPtr(fmt.Sprintf("while inserting instance to storage: %v", err))}
+	//}
 
 	chartOverrides := internal.ChartValues(req.Parameters)
 
@@ -145,7 +152,9 @@ func (svc *provisionService) Provision(ctx context.Context, osbCtx OsbContext, r
 		isAddonBindable:     addon.Bindable,
 		addonsRepositoryURL: addon.RepositoryURL,
 		chartOverrides:      chartOverrides,
+		instanceToUpdate: &i,
 	}
+
 	svc.doAsync(ctx, provisionInput)
 
 	opKey := osb.OperationKey(op.OperationID)
@@ -168,6 +177,7 @@ type provisioningInput struct {
 	isAddonBindable     bool
 	chartOverrides      internal.ChartValues
 	addonsRepositoryURL string
+	instanceToUpdate *internal.Instance
 }
 
 func (svc *provisionService) doAsync(ctx context.Context, input provisioningInput) {
@@ -181,6 +191,7 @@ func (svc *provisionService) doAsync(ctx context.Context, input provisioningInpu
 func (svc *provisionService) do(ctx context.Context, input provisioningInput) {
 
 	fDo := func() (*rls.InstallReleaseResponse, error) {
+
 		c, err := svc.chartGetter.Get(input.brokerNamespace, input.addonPlan.ChartRef.Name, input.addonPlan.ChartRef.Version)
 		if err != nil {
 			return nil, errors.Wrap(err, "while getting chart from storage")
@@ -203,58 +214,75 @@ func (svc *provisionService) do(ctx context.Context, input provisioningInput) {
 			return nil, errors.Wrap(err, "while installing helm release")
 		}
 
+		relInfo := internal.ReleaseInfo {
+			Time:     resp.GetRelease().GetInfo().GetLastDeployed(),
+			Revision: int(resp.GetRelease().GetVersion()),
+			Config: resp.GetRelease().GetConfig(),
+		}
+
+		updatedInstance := input.instanceToUpdate
+		updatedInstance.ReleaseInfo = relInfo
+
+		exist, err := svc.instanceInserter.Upsert(updatedInstance)
+		if err != nil {
+			return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusConflict, ErrorMessage: strPtr(fmt.Sprintf("while updating instance in storage: %v", err))}
+		}
+		if exist {
+			svc.log.Infof("Instance %s already existed in storage, instance was replaced", updatedInstance.ID)
+		}
+
 		return resp, nil
 	}
 
 	opState := internal.OperationStateSucceeded
 	opDesc := "provisioning succeeded"
 
-	resp, err := fDo()
+	_, err := fDo() //TODO: validate the response maybe?
 	if err != nil {
 		opState = internal.OperationStateFailed
 		opDesc = fmt.Sprintf("provisioning failed on error: %s", err.Error())
 	}
 
 	//TODO: [SECRETS-ISSUE] here we call the unwanted method resolveAndSaveBindData - get rid of this
-	if err == nil && svc.isBindable(input.addonPlan, input.isAddonBindable) {
-		if resolveErr := svc.resolveAndSaveBindData(input.instanceID, input.namespace, input.addonPlan, resp); resolveErr != nil {
-			opState = internal.OperationStateFailed
-			opDesc = fmt.Sprintf("resolving bind data failed with error: %s", resolveErr.Error())
-		}
-	}
+	//if err == nil && svc.isBindable(input.addonPlan, input.isAddonBindable) {
+	//	if resolveErr := svc.resolveAndSaveBindData(input.instanceID, input.namespace, input.addonPlan, resp); resolveErr != nil {
+	//		opState = internal.OperationStateFailed
+	//		opDesc = fmt.Sprintf("resolving bind data failed with error: %s", resolveErr.Error())
+	//	}
+	//}
 
 	if err := svc.operationUpdater.UpdateStateDesc(input.instanceID, input.operationID, opState, &opDesc); err != nil {
 		svc.log.Errorf("State description was not updated, got error: %v", err)
 	}
 }
 
-func (*provisionService) isBindable(plan internal.AddonPlan, isAddonBindable bool) bool {
-	return (plan.Bindable != nil && *plan.Bindable) || // if bindable field is set on plan it's override bindalbe field on addon
-		(plan.Bindable == nil && isAddonBindable) // if bindable field is NOT set on plan that bindable field on addon is important
-}
+//func (*provisionService) isBindable(plan internal.AddonPlan, isAddonBindable bool) bool {
+//	return (plan.Bindable != nil && *plan.Bindable) || // if bindable field is set on plan it's override bindalbe field on addon
+//		(plan.Bindable == nil && isAddonBindable) // if bindable field is NOT set on plan that bindable field on addon is important
+//}
 
 // [SECRETS-ISSUE] this logic should be on /bind action
-func (svc *provisionService) resolveAndSaveBindData(iID internal.InstanceID, namespace internal.Namespace, addonPlan internal.AddonPlan, resp *rls.InstallReleaseResponse) error {
-	rendered, err := svc.bindTemplateRenderer.Render(addonPlan.BindTemplate, resp)
-	if err != nil {
-		return errors.Wrap(err, "while rendering bind yaml template")
-	}
-
-	out, err := svc.bindTemplateResolver.Resolve(rendered, namespace)
-	if err != nil {
-		return errors.Wrap(err, "while resolving bind yaml values")
-	}
-
-	in := internal.InstanceBindData{
-		InstanceID:  iID,
-		Credentials: out.Credentials,
-	}
-	if err := svc.instanceBindDataInserter.Insert(&in); err != nil { // [SECRETS-ISSUE] here we insert creds to etcd - we dont want that (here or at all??)
-		return errors.Wrap(err, "while inserting instance bind data into storage")
-	}
-
-	return nil
-}
+//func (svc *provisionService) resolveAndSaveBindData(iID internal.InstanceID, namespace internal.Namespace, addonPlan internal.AddonPlan, resp *rls.InstallReleaseResponse) error {
+//	rendered, err := svc.bindTemplateRenderer.Render(addonPlan.BindTemplate, resp)
+//	if err != nil {
+//		return errors.Wrap(err, "while rendering bind yaml template")
+//	}
+//
+//	out, err := svc.bindTemplateResolver.Resolve(rendered, namespace)
+//	if err != nil {
+//		return errors.Wrap(err, "while resolving bind yaml values")
+//	}
+//
+//	in := internal.InstanceBindData{
+//		InstanceID:  iID,
+//		Credentials: out.Credentials,
+//	}
+//	if err := svc.instanceBindDataInserter.InsertInstanceOperation(&in); err != nil { // [SECRETS-ISSUE] here we insert creds to etcd - we dont want that (here or at all??)
+//		return errors.Wrap(err, "while inserting instance bind data into storage")
+//	}
+//
+//	return nil
+//}
 
 func (svc *provisionService) compareProvisioningParameters(iID internal.InstanceID, newHash string) error {
 	instance, err := svc.instanceGetter.Get(iID)

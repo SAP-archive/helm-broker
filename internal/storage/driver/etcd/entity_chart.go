@@ -37,7 +37,7 @@ type Chart struct {
 
 // Upsert persists Chart in memory.
 //
-// If chart already exists in storage than full replace is performed.
+// If chart already exists in storage then full replace is performed.
 //
 // Replace is set to true if chart already existed in storage and was replaced.
 func (s *Chart) Upsert(namespace internal.Namespace, c *chart.Chart) (replaced bool, err error) {

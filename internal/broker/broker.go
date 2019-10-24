@@ -71,6 +71,7 @@ type (
 
 	instanceInserter interface {
 		Insert(i *internal.Instance) error
+		Upsert(i *internal.Instance) (bool, error)
 	}
 	instanceGetter interface {
 		Get(id internal.InstanceID) (*internal.Instance, error)
@@ -130,7 +131,8 @@ type (
 	}
 
 	bindTemplateRenderer interface {
-		Render(bindTemplate internal.AddonPlanBindTemplate, resp *rls.InstallReleaseResponse) (bind.RenderedBindYAML, error)
+		//Render(bindTemplate internal.AddonPlanBindTemplate, resp *rls.InstallReleaseResponse) (bind.RenderedBindYAML, error)
+		RenderOnBind(bindTemplate internal.AddonPlanBindTemplate, instance *internal.Instance, chart *chart.Chart) (bind.RenderedBindYAML, error)
 	}
 
 	bindTemplateResolver interface {
@@ -174,8 +176,6 @@ func newWithIDProvider(bs addonStorage, cs chartStorage, os operationStorage, is
 			operationIDProvider:      idp,
 			helmInstaller:            hc,
 			log:                      log.WithField("service", "provisioner"),
-			bindTemplateRenderer:     bindTmplRenderer,
-			bindTemplateResolver:     bindTmplResolver,
 			instanceBindDataInserter: ibd,
 		},
 		deprovisioner: &deprovisionService{
@@ -192,7 +192,16 @@ func newWithIDProvider(bs addonStorage, cs chartStorage, os operationStorage, is
 			log:                     log.WithField("service", "deprovisioner"),
 		},
 		binder: &bindService{
+			addonIDGetter:    bs,
+			chartGetter:      cs,
 			instanceBindDataGetter: ibd,
+			instanceGetter:   is,
+			bindTemplateRenderer:     bindTmplRenderer,
+			bindTemplateResolver:     bindTmplResolver,
+			operationInserter:        os,
+			operationUpdater:         os,
+			operationIDProvider:      idp,
+			log:                      log.WithField("service", "binder"),
 		},
 		unbinder: &unbindService{},
 		lastOpGetter: &getLastOperationService{

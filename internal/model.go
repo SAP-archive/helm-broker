@@ -8,6 +8,7 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/alecthomas/jsonschema"
 	"github.com/fatih/structs"
+	google_protobuf "github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
 	cms "github.com/kyma-project/kyma/components/cms-controller-manager/pkg/apis/cms/v1alpha1"
 	"github.com/pkg/errors"
@@ -303,21 +304,49 @@ const (
 
 // Instance contains info about Service exposed via Service Catalog.
 type Instance struct {
-	ID            InstanceID
-	ServiceID     ServiceID
-	ServicePlanID ServicePlanID
-	ReleaseName   ReleaseName
-	Namespace     Namespace
-	ParamsHash    string
+	ID              InstanceID
+	ServiceID       ServiceID
+	ServicePlanID   ServicePlanID
+	ReleaseName     ReleaseName
+	Namespace       Namespace
+	ParamsHash      string
+	ReleaseInfo ReleaseInfo
 }
 
 // InstanceCredentials are created when we bind a service instance.
 type InstanceCredentials map[string]string
 
+type BindingID string
+
+type BindOperation struct {
+	InstanceID       InstanceID
+	BindingID BindingID
+	OperationID      OperationID
+	Type             OperationType
+	State            OperationState
+	StateDescription *string
+
+	// ParamsHash is an immutable hash for operation parameters
+	// used to match requests.
+	ParamsHash string
+
+	// CreatedAt points to creation time of the operation.
+	// Field should be treated as immutable and is responsibility of storage implementation.
+	// It should be set by storage InsertBindOperation method.
+	CreatedAt time.Time
+}
+
 // InstanceBindData contains data about service instance and it's credentials.
 type InstanceBindData struct {
 	InstanceID  InstanceID
 	Credentials InstanceCredentials
+}
+
+// ReleaseInfo contains additional data about release installed on instance provisioning.
+type ReleaseInfo struct {
+	Time      *google_protobuf.Timestamp
+	Revision  int
+	Config *chart.Config
 }
 
 // OperationState defines the possible states of an asynchronous request to a broker.

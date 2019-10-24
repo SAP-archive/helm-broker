@@ -151,10 +151,10 @@ func (srv *Server) handleRouter(router *mux.Router) {
 		Handler(negroni.New(osbContextMiddleware, negroni.WrapFunc(srv.catalogAction)))
 	router.Path("/v2/service_instances/{instance_id}/last_operation").Methods(http.MethodGet).
 		Handler(negroni.New(osbContextMiddleware, negroni.WrapFunc(srv.getServiceInstanceLastOperationAction)))
-	router.Path("/v2/service_instances/{instance_id}/service_bindings/{binding_id}").Methods(http.MethodPut).
-		Handler(negroni.New(osbContextMiddleware, negroni.WrapFunc(srv.bindAction)))
-	router.Path("/v2/service_instances/{instance_id}/service_bindings/{binding_id}").Methods(http.MethodDelete).
-		Handler(negroni.New(osbContextMiddleware, negroni.WrapFunc(srv.unBindAction)))
+	//router.Path("/v2/service_instances/{instance_id}/service_bindings/{binding_id}").Methods(http.MethodPut).
+	//	Handler(negroni.New(osbContextMiddleware, negroni.WrapFunc(srv.bindAction)))
+	//router.Path("/v2/service_instances/{instance_id}/service_bindings/{binding_id}").Methods(http.MethodDelete).
+	//	Handler(negroni.New(osbContextMiddleware, negroni.WrapFunc(srv.unBindAction)))
 
 	// async operations
 	router.Path("/v2/service_instances/{instance_id}").Methods(http.MethodPut).Handler(
@@ -163,6 +163,10 @@ func (srv *Server) handleRouter(router *mux.Router) {
 	router.Path("/v2/service_instances/{instance_id}").Methods(http.MethodDelete).Handler(
 		negroni.New(osbContextMiddleware, reqAsyncMiddleware, negroni.WrapFunc(srv.deprovisionAction)),
 	)
+	router.Path("/v2/service_instances/{instance_id}/service_bindings/{binding_id}").Methods(http.MethodPut).
+		Handler(negroni.New(osbContextMiddleware, reqAsyncMiddleware, negroni.WrapFunc(srv.bindAction)))
+	router.Path("/v2/service_instances/{instance_id}/service_bindings/{binding_id}").Methods(http.MethodDelete).
+		Handler(negroni.New(osbContextMiddleware, reqAsyncMiddleware, negroni.WrapFunc(srv.unBindAction)))
 }
 
 func (srv *Server) catalogAction(w http.ResponseWriter, r *http.Request) {
