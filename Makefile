@@ -144,14 +144,15 @@ push-latest-image:
 ci-pr: build integration-test build-image push-image
 
 .PHONY: ci-master
-ci-master: build integration-test build-image push-image latest-release
+ci-master: build integration-test build-image push-image push-latest-image latest-release
 
 .PHONY: ci-release
-ci-release: build integration-test build-image push-image charts-test release push-latest-image
+ci-release: build integration-test build-image push-image charts-test release
 
 .PHONY: clean
 clean:
 	rm -f broker
+	rm -f controller
 	rm -f targz
 	rm -f indexbuilder
 
@@ -167,5 +168,3 @@ YAML_EDIT=$(GOBIN)/yq
 else
 YAML_EDIT=$(shell which yq)
 endif
-
-
