@@ -12,11 +12,11 @@ global:
   helm_broker:
     image: helm-broker
     dir: ""
-    version: v1.0.1
+    version: v1.0.0
   helm_controller:
     image: helm-controller
     dir: ""
-    version: v1.0.1
+    version: v1.0.0
   service:
     type: NodePort
   etcdClientPort: 2379
@@ -34,4 +34,4 @@ ctrl:
 tests:
   image: helm-broker-tests
   dir: ""
-  tag: v1.0.1
+  tag: v1.0.0
