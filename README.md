@@ -122,6 +122,20 @@ To set up the project, download these tools:
 
 >**NOTE:** The versions of Go and Dep are compliant with the `buildpack` used by Prow. For more details, read [this](https://github.com/kyma-project/test-infra/blob/master/prow/images/buildpack-golang/README.md) document.
 
+### Update the chart's images tag
+
+Change the chart's tags version using the command:
+
+```bash
+make VERSION=v0.0.1 DIR=/pr tag-chart-images
+```
+
+Above command overrides the images tag in the `charts/helm-broker/values.yaml` file to:
+
+```
+eu.gcr.io/kyma-project/helm-broker/pr:v0.0.1
+```
+
 ### Run tests
 
 Before each commit, use the `before-commit.sh` script. The script runs unit tests that check your changes and build binaries. If you want to run the Helm Broker locally, read [this](/docs/run-local.md) document.
