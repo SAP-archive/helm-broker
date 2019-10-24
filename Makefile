@@ -134,7 +134,7 @@ ci-pr: build integration-test build-image push-image
 ci-master: build integration-test build-image push-image push-latest-image latest-release
 
 .PHONY: ci-release
-ci-release: build integration-test build-image push-image charts-test release
+ci-release: release
 
 .PHONY: clean
 clean:
