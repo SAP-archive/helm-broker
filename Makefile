@@ -48,43 +48,52 @@ crd-manifests:
 client:
 	./hack/update-codegen.sh
 
-.PHONY: generate-changelog
-generate-changelog:
-	./scripts/generate_changelog.sh $(GIT_TAG) $(REPO_NAME) $(REPO_OWNER)
-
 .PHONY: release
 release: tar-chart generate-changelog release-branch
 	./scripts/push_release.sh $(GIT_TAG) $(GIT_REPO)
 
 .PHONY: latest-release
-latest-release: tar-chart generate-changelog
+latest-release: tar-chart set-latest-tag generate-changelog
 	./scripts/create_latest_tag.sh $(GIT_REPO)
 	./scripts/remove_latest_tag.sh $(GIT_REPO)
 	./scripts/push_release.sh $(GIT_TAG) $(GIT_REPO)
 
-.PHONY: tar-chart
-tar-chart:
-	@tar -czvf helm-broker-chart.tar.gz -C charts/helm-broker/ . ||:
-
-.PHONY: tag-release-images
-tag-release-images: yaml-edit
-	$(YAML_EDITOR) w -i charts/helm-broker/values.yaml global.helm_broker.version $(VERSION) ||:
-	$(YAML_EDITOR) w -i charts/helm-broker/values.yaml global.helm_broker.dir '' ||:
-	$(YAML_EDITOR) w -i charts/helm-broker/values.yaml global.helm_controller.version $(VERSION) ||:
-	$(YAML_EDITOR) w -i charts/helm-broker/values.yaml global.helm_controller.dir '' ||:
-	$(YAML_EDITOR) w -i charts/helm-broker/values.yaml tests.tag $(VERSION) ||:
-	$(YAML_EDITOR) w -i charts/helm-broker/values.yaml tests.dir '' ||:
-
-.PHONY: cut-release
-cut-release: tag-release-images
-	git add charts/helm-broker/values.yaml
-	git commit -m "Bump release images"
-	git tag $(VERSION)
+.PHONY: generate-changelog
+generate-changelog:
+	./scripts/generate_changelog.sh $(GIT_TAG) $(REPO_NAME) $(REPO_OWNER)
 
 .PHONY: release-branch
 release-branch:
 # release branch named `release-x.y` will be created if the GIT_TAG matches the `x.y.0` version pattern.
 	./scripts/create_release_branch.sh $(GIT_TAG) $(GIT_REPO)
+
+.PHONY: set-latest-tag
+set-latest-tag:
+	$(eval GIT_TAG=latest)
+	$(eval TAG=latest)
+
+.PHONY: tar-chart
+tar-chart: create-release-dir
+	@tar -czvf toCopy/helm-broker-chart.tar.gz -C charts/helm-broker/ . ||:
+
+.PHONY: create-release-dir
+create-release-dir:
+	mkdir -p toCopy
+
+.PHONY: cut-release
+cut-release: tag-chart-images
+	git add charts/helm-broker/values.yaml
+	git commit -m "Bump chart images to version: $(VERSION)"
+	git tag $(VERSION)
+
+.PHONY: tag-chart-images
+tag-chart-images: get-yaml-editor
+	$(YAML_EDITOR) w -i charts/helm-broker/values.yaml global.helm_broker.version $(VERSION)
+	$(YAML_EDITOR) w -i charts/helm-broker/values.yaml global.helm_broker.dir '$(DIR)'
+	$(YAML_EDITOR) w -i charts/helm-broker/values.yaml global.helm_controller.version $(VERSION)
+	$(YAML_EDITOR) w -i charts/helm-broker/values.yaml global.helm_controller.dir '$(DIR)'
+	$(YAML_EDITOR) w -i charts/helm-broker/values.yaml tests.tag $(VERSION)
+	$(YAML_EDITOR) w -i charts/helm-broker/values.yaml tests.dir '$(DIR)'
 
 .PHONY: build-image
 build-image: pull-licenses
@@ -113,25 +122,11 @@ push-image:
 	docker tag $(TESTS_NAME) $(REPO)$(TESTS_NAME):$(TAG)
 	docker push $(REPO)$(TESTS_NAME):$(TAG)
 
-.PHONY: push-latest-image
-push-latest-image:
-	docker tag $(APP_NAME) $(DOCKER_PUSH_REPOSITORY)/$(APP_NAME):latest
-	docker push $(DOCKER_PUSH_REPOSITORY)/$(APP_NAME):latest
-
-	docker tag $(CONTROLLER_NAME) $(DOCKER_PUSH_REPOSITORY)/$(CONTROLLER_NAME):latest
-	docker push $(DOCKER_PUSH_REPOSITORY)/$(CONTROLLER_NAME):latest
-
-	docker tag $(TOOLS_NAME) $(DOCKER_PUSH_REPOSITORY)/$(TOOLS_NAME):latest
-	docker push $(DOCKER_PUSH_REPOSITORY)/$(TOOLS_NAME):latest
-
-	docker tag $(TESTS_NAME) $(DOCKER_PUSH_REPOSITORY)/$(TESTS_NAME):latest
-	docker push $(DOCKER_PUSH_REPOSITORY)/$(TESTS_NAME):latest
-
 .PHONY: ci-pr
 ci-pr: build integration-test build-image push-image
 
 .PHONY: ci-master
-ci-master: build integration-test build-image push-image push-latest-image latest-release
+ci-master: build integration-test build-image push-image latest-release push-image
 
 .PHONY: ci-release
 ci-release: build integration-test build-image push-image charts-test release
@@ -147,11 +142,6 @@ clean:
 path-to-referenced-charts:
 	@echo "resources/helm-broker"
 
-.PHONY: yaml-edit
-yaml-edit:
-ifeq (, $(shell which yq))
-	go get gopkg.in/mikefarah/yq.v2
-YAML_EDITOR=yq.v2
-else
-YAML_EDITOR=$(shell which yq)
-endif
+.PHONY: get-yaml-editor
+get-yaml-editor:
+	$(eval YAML_EDITOR=$(shell ./scripts/get_yq.sh))
