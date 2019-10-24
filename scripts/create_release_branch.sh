@@ -9,9 +9,12 @@ fi
 GIT_TAG=$1
 GIT_REPO=$2
 
-MAJOR=$(echo ${GIT_TAG} | cut -d. -f1)
-MINOR=$(echo ${GIT_TAG} | cut -d. -f2)
-REVISION=$(echo ${GIT_TAG} | cut -d. -f3)
+# exclude 'v' from release branch name
+TAG=$(echo ${GIT_TAG} | cut -d "v" -f 2)
+
+MAJOR=$(echo ${TAG} | cut -d. -f1)
+MINOR=$(echo ${TAG} | cut -d. -f2)
+REVISION=$(echo ${TAG} | cut -d. -f3)
 
 if [[ ${REVISION} = "0" ]]; then
   GIT_BRANCH=release-${MAJOR}.${MINOR}
