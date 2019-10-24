@@ -9,17 +9,14 @@ fi
 GIT_TAG=$1
 GIT_REPO=$2
 
-CHANGELOG=./CHANGELOG.md
-CHART=./helm-broker-chart.tar.gz
-
-body="$(cat CHANGELOG.md)"
+body="$(cat toCopy/CHANGELOG.md)"
 
 # Overwrite CHANGELOG.md with JSON data for GitHub API
 jq -n \
   --arg body "$body" \
   --arg name "${GIT_TAG}" \
   --arg tag_name "${GIT_TAG}" \
-  --arg target_commitish "master" \
+  --arg target_commitish "$(git rev-parse HEAD)" \
   '{
     body: $body,
     name: $name,
@@ -37,9 +34,7 @@ if [ -z "$ASSET_UPLOAD_URL" ]; then
     exit 1
 fi
 
-echo "Uploading CHANGELOG to url: $ASSET_UPLOAD_URL?name=${CHANGELOG}"
-curl -s --data-binary @${CHANGELOG} -H "Content-Type: application/octet-stream" -X POST "$ASSET_UPLOAD_URL?name=$(basename ${CHANGELOG})&access_token=${GITHUB_TOKEN}" > /dev/null
-
-echo "Uploading CHART to url: $ASSET_UPLOAD_URL?name=${CHART}"
-curl -s --data-binary @${CHART} -H "Content-Type: application/octet-stream" -X POST "$ASSET_UPLOAD_URL?name=$(basename ${CHART})&access_token=${GITHUB_TOKEN}" > /dev/null
-
+for FILE in toCopy/*; do
+    echo "Uploading asset: $FILE to url: $ASSET_UPLOAD_URL?name=${FILE}"
+    curl -s --data-binary @${FILE} -H "Content-Type: application/octet-stream" -X POST "$ASSET_UPLOAD_URL?name=$(basename ${FILE})&access_token=${GITHUB_TOKEN}" > /dev/null
+done
