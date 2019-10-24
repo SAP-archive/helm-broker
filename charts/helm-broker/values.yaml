@@ -1,48 +1,37 @@
 global:
   containerRegistry:
     path: eu.gcr.io/kyma-project
-  # develop mode allows use insecure (http) url for addons configuration
   isDevelopMode: false
-  # image pull policy for helm broker init container
   initImage:
     pullPolicy: IfNotPresent
-  # image pull policy for helm broker broker/controller containers
   image:
     pullPolicy: IfNotPresent
-  # paths to docker images
   alpine_kubectl:
     image: eu.gcr.io/kyma-project/test-infra/alpine-kubectl
     version: v20190325-ff66a3a
   helm_broker:
     image: helm-broker
-    dir: /pr
-    version: PR-40
+    dir: ""
+    version: v1.0.0
   helm_controller:
     image: helm-controller
-    dir: /pr
-    version: PR-40
-  # helm broker service parameters
+    dir: ""
+    version: v1.0.0
   service:
     type: NodePort
-  # etcd port uses by helm broker
   etcdClientPort: 2379
-  # temporary directory size limit uses in broker/controller containers
   tmpDirSizeLimit: 1Gi
-
 broker:
   tillerTLSInsecure: true
   tillerTLSEnabled: false
   externalPort: 80
   internalPort: 8070
   statusPort: 8071
-
 ctrl:
-  # enable/disable docs topics support for helm controller
   documentationEnabled: false
   internalPort: 8080
   statusPort: 8081
-
 tests:
   image: helm-broker-tests
-  dir: /pr
-  tag: PR-37
+  dir: ""
+  tag: v1.0.0
