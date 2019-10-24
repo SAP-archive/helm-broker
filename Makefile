@@ -50,17 +50,7 @@ client:
 
 .PHONY: generate-changelog
 generate-changelog:
-	$(eval CHANGELOG_FLAGS:=)
-	$(eval COMMIT_ID:=$(shell git rev-list --tags --max-count=1 --skip=1 --no-walk))
-ifneq ($(shell git describe --tags $(COMMIT_ID)),)
-	$(eval CHANGELOG_FLAGS+= --since-tag)
-	$(eval CHANGELOG_FLAGS+= $(shell git describe --tags $(COMMIT_ID)))
-endif
-ifneq ($(GIT_TAG),)
-	$(eval CHANGELOG_FLAGS+= --future-release)
-	$(eval CHANGELOG_FLAGS+= $(GIT_TAG))
-endif
-	@docker run --rm -v $(ROOT_PATH):/usr/local/src/your-app ferrarimarco/github-changelog-generator -u $(REPO_OWNER) -p $(REPO_NAME) -t $(GITHUB_TOKEN) $(CHANGELOG_FLAGS) ||:
+	./scripts/generate_changelog.sh $(GIT_TAG) $(REPO_NAME) $(REPO_OWNER)
 
 .PHONY: release
 release: tar-chart generate-changelog release-branch
@@ -74,19 +64,15 @@ latest-release: tar-chart generate-changelog
 
 .PHONY: tar-chart
 tar-chart:
-	tar -czvf helm-broker-chart.tar.gz -C charts/helm-broker/ . ||:
+	@tar -czvf helm-broker-chart.tar.gz -C charts/helm-broker/ . ||:
 
 .PHONY: tag-release-images
 tag-release-images: yaml-edit
-	$(eval TAG:=$(GIT_TAG))
-ifeq ($(TAG),)
-	$(eval TAG:=$(VERSION))
-endif
-	$(YAML_EDITOR) w -i charts/helm-broker/values.yaml global.helm_broker.version $(TAG) ||:
+	$(YAML_EDITOR) w -i charts/helm-broker/values.yaml global.helm_broker.version $(VERSION) ||:
 	$(YAML_EDITOR) w -i charts/helm-broker/values.yaml global.helm_broker.dir '' ||:
-	$(YAML_EDITOR) w -i charts/helm-broker/values.yaml global.helm_controller.version $(TAG) ||:
+	$(YAML_EDITOR) w -i charts/helm-broker/values.yaml global.helm_controller.version $(VERSION) ||:
 	$(YAML_EDITOR) w -i charts/helm-broker/values.yaml global.helm_controller.dir '' ||:
-	$(YAML_EDITOR) w -i charts/helm-broker/values.yaml tests.tag $(TAG) ||:
+	$(YAML_EDITOR) w -i charts/helm-broker/values.yaml tests.tag $(VERSION) ||:
 	$(YAML_EDITOR) w -i charts/helm-broker/values.yaml tests.dir '' ||:
 
 .PHONY: cut-release
