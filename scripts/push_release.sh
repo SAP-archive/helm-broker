@@ -22,7 +22,7 @@ jq -n \
     name: $name,
     tag_name: $tag_name,
     target_commitish: $target_commitish,
-    draft: false,
+    draft: true,
     prerelease: false
   }' > CHANGELOG.md
 
