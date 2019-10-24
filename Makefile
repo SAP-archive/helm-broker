@@ -51,10 +51,10 @@ client:
 .PHONY: generate-changelog
 generate-changelog:
 	$(eval CHANGELOG_FLAGS:=)
-	$(eval SINCE_TAG:=$(shell git describe --tags $(git rev-list --tags --max-count=1)))
-ifneq ($(SINCE_TAG),)
+	$(eval COMMIT_ID:=$(shell git rev-list --tags --max-count=1 --skip=1 --no-walk))
+ifneq ($(shell git describe --tags $(COMMIT_ID)),)
 	$(eval CHANGELOG_FLAGS+= --since-tag)
-	$(eval CHANGELOG_FLAGS+= $(SINCE_TAG))
+	$(eval CHANGELOG_FLAGS+= $(shell git describe --tags $(COMMIT_ID)))
 endif
 ifneq ($(GIT_TAG),)
 	$(eval CHANGELOG_FLAGS+= --future-release)
