@@ -164,6 +164,20 @@ Run integration tests using this command:
 make integration-test
 ```
 
+### Update the chart's images tag
+
+Change the chart's tags version using the command:
+
+```bash
+make VERSION=v0.0.1 DIR=/pr tag-chart-images
+```
+
+Above command overrides the images tag in the `charts/helm-broker/values.yaml` file to:
+
+```
+eu.gcr.io/kyma-project/helm-broker/pr:v0.0.1
+```
+
 ### Build Docker images
 
 If you want to build Docker images with your changes and push them to a registry, follow these steps:

@@ -2,7 +2,7 @@
 
 if [ "$#" -ne 3 ]; then
     echo "Some parameters [GIT_TAG, REPO_NAME, REPO_OWNER] were not provided"
-    exit
+    return 1
 fi
 
 GIT_TAG=$1
@@ -25,4 +25,8 @@ if [[ -n "${GIT_TAG}" ]]; then
     CHANGELOG_FLAGS="$CHANGELOG_FLAGS --future-release $GIT_TAG"
 fi
 
-docker run --rm -v $(pwd)/toCopy:/usr/local/src/your-app ferrarimarco/github-changelog-generator -u ${REPO_OWNER} -p ${REPO_NAME} -t ${GITHUB_TOKEN} ${CHANGELOG_FLAGS} > /dev/null
+set -e
+
+docker run --rm -v $(pwd):/usr/local/src/your-app ferrarimarco/github-changelog-generator -u ${REPO_OWNER} -p ${REPO_NAME} -t ${GITHUB_TOKEN} ${CHANGELOG_FLAGS} > /dev/null
+
+mv CHANGELOG.md toCopy/
