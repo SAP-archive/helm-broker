@@ -89,7 +89,7 @@ main() {
     if [[ "${RUN_ON_PROW-no}" = "true" ]]; then
         # This is a workaround for our CI. More info you can find in this issue:
         # https://github.com/kyma-project/test-infra/issues/1499
-        start_docker
+        ensure_docker
     fi
 
     run_ct_container

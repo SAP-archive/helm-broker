@@ -44,7 +44,7 @@ spec:
 
       containers:
       - name: broker
-        image: "{{ .Values.global.helm_broker.image }}:{{ .Values.global.helm_broker.version }}"
+        image: "{{ .Values.global.containerRegistry.path }}{{ .Values.global.helm_broker.dir }}/{{ .Values.global.helm_broker.image }}:{{ .Values.global.helm_broker.version }}"
         imagePullPolicy: {{ .Values.global.image.pullPolicy }}
         env:
           - name: APP_TMP_DIR
@@ -92,7 +92,7 @@ spec:
           successThreshold: 1
 
       - name: ctrl
-        image: "{{ .Values.global.helm_controller.image }}:{{ .Values.global.helm_controller.version }}"
+        image: "{{ .Values.global.containerRegistry.path }}{{ .Values.global.helm_controller.dir }}/{{ .Values.global.helm_controller.image }}:{{ .Values.global.helm_controller.version }}"
         imagePullPolicy: {{ .Values.global.image.pullPolicy }}
         env:
           - name: APP_TMP_DIR

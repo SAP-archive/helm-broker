@@ -1,9 +1,10 @@
 global:
+  containerRegistry:
+    path: eu.gcr.io/kyma-project
   # develop mode allows use insecure (http) url for addons configuration
   isDevelopMode: false
   # image pull policy for helm broker init container
   initImage:
-    # valid values are "IfNotPresent", "Never", and "Always"
     pullPolicy: IfNotPresent
   # image pull policy for helm broker broker/controller containers
   image:
@@ -13,10 +14,12 @@ global:
     image: eu.gcr.io/kyma-project/test-infra/alpine-kubectl
     version: v20190325-ff66a3a
   helm_broker:
-    image: eu.gcr.io/kyma-project/pr/helm-broker
+    image: helm-broker
+    dir: /pr
     version: PR-40
   helm_controller:
-    image: eu.gcr.io/kyma-project/pr/helm-controller
+    image: helm-controller
+    dir: /pr
     version: PR-40
   # helm broker service parameters
   service:
@@ -40,4 +43,6 @@ ctrl:
   statusPort: 8081
 
 tests:
-  image: eu.gcr.io/kyma-project/pr/helm-broker-tests:PR-37
+  image: helm-broker-tests
+  dir: /pr
+  tag: PR-37
