@@ -50,22 +50,22 @@ client:
 
 .PHONY: release
 release: tar-chart generate-changelog release-branch
-	./scripts/push_release.sh $(GIT_TAG) $(GIT_REPO)
+	./hack/release/push_release.sh $(GIT_TAG) $(GIT_REPO)
 
 .PHONY: latest-release
 latest-release: tar-chart set-latest-tag generate-changelog
-	./scripts/create_latest_tag.sh $(GIT_REPO)
-	./scripts/remove_latest_tag.sh $(GIT_REPO)
-	./scripts/push_release.sh $(GIT_TAG) $(GIT_REPO)
+	./hack/release/create_latest_tag.sh $(GIT_REPO)
+	./hack/release/remove_latest_tag.sh $(GIT_REPO)
+	./hack/release/push_release.sh $(GIT_TAG) $(GIT_REPO)
 
 .PHONY: generate-changelog
 generate-changelog:
-	./scripts/generate_changelog.sh $(GIT_TAG) $(REPO_NAME) $(REPO_OWNER)
+	./hack/release/generate_changelog.sh $(GIT_TAG) $(REPO_NAME) $(REPO_OWNER)
 
 .PHONY: release-branch
 release-branch:
 # release branch named `release-x.y` will be created if the GIT_TAG matches the `x.y.0` version pattern.
-	./scripts/create_release_branch.sh $(GIT_TAG) $(GIT_REPO)
+	./hack/release/create_release_branch.sh $(GIT_TAG) $(GIT_REPO)
 
 .PHONY: set-latest-tag
 set-latest-tag:
@@ -144,4 +144,4 @@ path-to-referenced-charts:
 
 .PHONY: get-yaml-editor
 get-yaml-editor:
-	$(eval YAML_EDITOR=$(shell ./scripts/get_yq.sh))
+	$(eval YAML_EDITOR=$(shell ./hack/release/get_yq.sh))

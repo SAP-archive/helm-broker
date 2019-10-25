@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 
 YAML_EDITOR=
-if [[ -z $(which yq.v2) ]]; then
+
+if command -v yq.v2 >/dev/null 2>&1 ; then
     YAML_EDITOR=$(which yq.v2)
 fi
 
-if [[ -z $(which yq) ]]; then
+if command -v yq >/dev/null 2>&1 ; then
     YAML_EDITOR=$(which yq)
 fi
 

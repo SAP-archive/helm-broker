@@ -36,10 +36,7 @@ Above command do the following things:
 
 It triggers the Prow CI release job for Helm Broker.
 
-    >**NOTE:** If you want to push the tag to the upstream, run the following command:
-    >```
-    >git push upstream v0.6.0
-    >```
+> **NOTE:** If you want to push the tag to the upstream, run the following command: ```git push upstream v0.6.0```
 
 4. After Prow CI job finish, go to the **releases** tab where the new release appears. The new branch is available in the **branches** tab.
 
@@ -57,7 +54,7 @@ Follow these steps to create a new `helm-broker` release 0.6.1:
     ```
 
 2. Commit your changes to the release branch `release-0.6`.
->**NOTE:** In order to have a complete changelog, create a Pull Requests to the release branch
+>**NOTE:** In order to have a complete changelog, create a Pull Requests to the release branch.
 
 3. Prepare the release:
 
