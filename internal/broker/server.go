@@ -37,6 +37,7 @@ type (
 
 	binder interface {
 		Bind(ctx context.Context, osbCtx OsbContext, req *osb.BindRequest) (*osb.BindResponse, error)
+		GetLastBindOperation(ctx context.Context, osbCtx OsbContext, req *osb.BindingLastOperationRequest) (*osb.LastOperationResponse, error)
 	}
 
 	unbinder interface {
@@ -117,6 +118,7 @@ func (srv *Server) run(ctx context.Context, addr string, listenAndServe func(srv
 		}
 	}()
 	return listenAndServe(httpSrv)
+
 }
 
 // CreateHandler creates an http handler
@@ -153,8 +155,10 @@ func (srv *Server) handleRouter(router *mux.Router) {
 		Handler(negroni.New(osbContextMiddleware, negroni.WrapFunc(srv.getServiceInstanceLastOperationAction)))
 	//router.Path("/v2/service_instances/{instance_id}/service_bindings/{binding_id}").Methods(http.MethodPut).
 	//	Handler(negroni.New(osbContextMiddleware, negroni.WrapFunc(srv.bindAction)))
-	//router.Path("/v2/service_instances/{instance_id}/service_bindings/{binding_id}").Methods(http.MethodDelete).
-	//	Handler(negroni.New(osbContextMiddleware, negroni.WrapFunc(srv.unBindAction)))
+	router.Path("/v2/service_instances/{instance_id}/service_bindings/{binding_id}").Methods(http.MethodDelete).
+		Handler(negroni.New(osbContextMiddleware, negroni.WrapFunc(srv.unBindAction)))
+	router.Path("/v2/service_instances/{instance_id}/service_bindings/{binding_id}/last_operation").Methods(http.MethodGet).
+		Handler(negroni.New(osbContextMiddleware, negroni.WrapFunc(srv.getServiceBindingLastOperationAction)))
 
 	// async operations
 	router.Path("/v2/service_instances/{instance_id}").Methods(http.MethodPut).Handler(
@@ -165,8 +169,7 @@ func (srv *Server) handleRouter(router *mux.Router) {
 	)
 	router.Path("/v2/service_instances/{instance_id}/service_bindings/{binding_id}").Methods(http.MethodPut).
 		Handler(negroni.New(osbContextMiddleware, reqAsyncMiddleware, negroni.WrapFunc(srv.bindAction)))
-	router.Path("/v2/service_instances/{instance_id}/service_bindings/{binding_id}").Methods(http.MethodDelete).
-		Handler(negroni.New(osbContextMiddleware, reqAsyncMiddleware, negroni.WrapFunc(srv.unBindAction)))
+
 }
 
 func (srv *Server) catalogAction(w http.ResponseWriter, r *http.Request) {
@@ -391,6 +394,7 @@ func (srv *Server) bindAction(w http.ResponseWriter, r *http.Request) {
 	bindIDRaw := q.Get("binding_id")
 
 	sReq := osb.BindRequest{
+		AcceptsIncomplete: true,
 		InstanceID: instanceID,
 		ServiceID:  params.ServiceID,
 		PlanID:     params.PlanID,
@@ -415,6 +419,13 @@ func (srv *Server) bindAction(w http.ResponseWriter, r *http.Request) {
 		srv.logger.WithFields(logRespFields).Info("action response")
 	}
 
+	if !sResp.Async {
+		//logResp(logRespFields)
+		srv.writeResponse(w, http.StatusOK, map[string]interface{}{})
+		return
+	}
+
+
 	egDTO := BindSuccessResponseDTO{
 		Credentials: sResp.Credentials,
 	}
@@ -424,6 +435,69 @@ func (srv *Server) bindAction(w http.ResponseWriter, r *http.Request) {
 func (srv *Server) unBindAction(w http.ResponseWriter, r *http.Request) {
 	srv.writeResponse(w, http.StatusGone, map[string]interface{}{})
 }
+
+func (srv *Server) getServiceBindingLastOperationAction(w http.ResponseWriter, r *http.Request) {
+	osbCtx, _ := osbContextFromContext(r.Context())
+
+	instanceID := mux.Vars(r)["instance_id"]
+	bindingID := mux.Vars(r)["binding_id"]
+	var operationID internal.OperationID
+
+	q := r.URL.Query()
+
+	sReq := osb.BindingLastOperationRequest{
+		InstanceID: string(instanceID),
+		BindingID: string(bindingID),
+	}
+	if svcIDRaw := q.Get("service_id"); svcIDRaw != "" {
+		svcID := svcIDRaw
+		sReq.ServiceID = &svcID
+	}
+	if planIDRaw := q.Get("plan_id"); planIDRaw != "" {
+		planID := planIDRaw
+		sReq.PlanID = &planID
+	}
+	if opIDRaw := q.Get("operation"); opIDRaw != "" {
+		operationID = internal.OperationID(opIDRaw)
+		opKey := osb.OperationKey(opIDRaw)
+		sReq.OperationKey = &opKey
+	}
+
+	sResp, err := srv.binder.GetLastBindOperation(r.Context(), osbCtx, &sReq)
+
+	switch {
+	case IsNotFoundError(err):
+		srv.writeResponse(w, http.StatusGone, map[string]interface{}{})
+		return
+	case err != nil:
+		srv.writeErrorResponse(w, http.StatusBadRequest, err.Error(), "")
+		return
+	}
+
+	logRespFields := logrus.Fields{
+		"action":               "getLastOperation",
+		"instance:id":          instanceID,
+		"binding:id":			bindingID,
+		"operation:id":         operationID,
+		"resp:operation:state": sResp.State,
+		"resp:operation:desc":  sResp.Description,
+	}
+
+	resp := LastOperationSuccessResponseDTO{
+		State: internal.OperationState(sResp.State),
+	}
+	if sResp.Description != nil {
+		desc := string(*sResp.Description)
+		logRespFields["resp:operation:desc"] = desc
+		resp.Description = &desc
+	}
+
+	if srv.logger != nil {
+		srv.logger.WithFields(logRespFields).Info("action response")
+	}
+	srv.writeResponse(w, http.StatusOK, resp)
+}
+
 
 func (srv *Server) writeResponse(w http.ResponseWriter, code int, object interface{}) {
 	writeResponse(w, code, object)

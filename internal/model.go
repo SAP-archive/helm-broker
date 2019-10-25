@@ -316,7 +316,11 @@ type Instance struct {
 // InstanceCredentials are created when we bind a service instance.
 type InstanceCredentials map[string]string
 
+// BindingID is used as Service Binding identifier
 type BindingID string
+
+// IsZero checks if BindingID equals zero
+func (id BindingID) IsZero() bool { return id == BindingID("") }
 
 type BindOperation struct {
 	InstanceID       InstanceID
