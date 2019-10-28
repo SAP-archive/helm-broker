@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/komkom/go-jsonhash"
+	jsonhash "github.com/komkom/go-jsonhash"
 	"github.com/pkg/errors"
 	osb "github.com/pmorie/go-open-service-broker-client/v2"
 	"github.com/sirupsen/logrus"
@@ -16,26 +16,24 @@ import (
 )
 
 type bindService struct {
-	addonIDGetter            addonIDGetter
-	chartGetter              chartGetter
-	instanceGetter           instanceGetter
-	bindTemplateRenderer     bindTemplateRenderer
-	bindTemplateResolver     bindTemplateResolver
-	resolvedBindData		map[internal.BindingID]*internal.InstanceBindData
-	bindOperation map[internal.InstanceID][]*internal.BindOperation
-	operationIDProvider      func() (internal.OperationID, error)
-	mu                       sync.Mutex
+	addonIDGetter        addonIDGetter
+	chartGetter          chartGetter
+	instanceGetter       instanceGetter
+	bindTemplateRenderer bindTemplateRenderer
+	bindTemplateResolver bindTemplateResolver
+	resolvedBindData     map[internal.BindingID]*internal.InstanceBindData
+	bindOperation        map[internal.InstanceID][]*internal.BindOperation
+	operationIDProvider  func() (internal.OperationID, error)
+	mu                   sync.Mutex
 
 	log *logrus.Entry
 
 	testHookAsyncCalled func(internal.OperationID)
 }
 
-func (svc *bindService) Bind(ctx context.Context, osbCtx OsbContext, req *osb.BindRequest) (*osb.BindResponse, error) {
-
-
+func (svc *bindService) Bind(ctx context.Context, osbCtx OsbContext, req *osb.BindRequest) (*osb.BindResponse, *osb.HTTPStatusCodeError) {
 	if len(req.Parameters) > 0 {
-		return nil, fmt.Errorf("helm-broker does not support configuration options for the service binding")
+		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusBadRequest, ErrorMessage: strPtr("helm-broker does not support configuration options for the service binding")}
 	}
 
 	if !req.AcceptsIncomplete {
@@ -59,10 +57,10 @@ func (svc *bindService) Bind(ctx context.Context, osbCtx OsbContext, req *osb.Bi
 		}
 		out, err := svc.getInstanceBindData(iID, bID)
 		if err != nil {
-			return nil, errors.Wrapf(err, "while getting bind data from memory for instance id: %q and service binding id: %q", iID, bID)
+			return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusConflict, ErrorMessage: strPtr(fmt.Sprintf("while getting bind data from memory for instance id: %q and service binding id: %q with error: %v", iID, bID, err))}
 		}
 		return &osb.BindResponse{
-			Async: false,
+			Async:       false,
 			Credentials: svc.dtoFromModel(out.Credentials),
 		}, nil
 	}
@@ -86,7 +84,7 @@ func (svc *bindService) Bind(ctx context.Context, osbCtx OsbContext, req *osb.Bi
 	// TODO: handle operation async
 	op := internal.BindOperation{
 		InstanceID:  iID,
-		BindingID: bID,
+		BindingID:   bID,
 		OperationID: opID,
 		Type:        internal.OperationTypeCreate,
 		State:       internal.OperationStateInProgress,
@@ -100,13 +98,13 @@ func (svc *bindService) Bind(ctx context.Context, osbCtx OsbContext, req *osb.Bi
 	// here ends operation
 	instance, err := svc.instanceGetter.Get(iID)
 	if err != nil {
-		return nil, errors.Wrapf(err, "while getting instance from storage for id: %q", req.InstanceID)
+		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusBadRequest, ErrorMessage: strPtr(fmt.Sprintf("while getting instance from storage for id: %q with error: %v", iID, err))}
 	}
 	svcID := internal.ServiceID(req.ServiceID)
 	addonID := internal.AddonID(svcID)
 	addon, err := svc.addonIDGetter.GetByID(osbCtx.BrokerNamespace, addonID)
 	if err != nil {
-		return nil, errors.Wrapf(err, "while getting addon from storage in namespace %q for id: %q", osbCtx.BrokerNamespace, addonID)
+		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusBadRequest, ErrorMessage: strPtr(fmt.Sprintf("while getting addon from storage in namespace %q for id: %q with error: %v", osbCtx.BrokerNamespace, addonID, err))}
 	}
 
 	svcPlanID := internal.ServicePlanID(req.PlanID)
@@ -117,20 +115,16 @@ func (svc *bindService) Bind(ctx context.Context, osbCtx OsbContext, req *osb.Bi
 		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusBadRequest, ErrorMessage: strPtr(fmt.Sprintf("addon does not contain requested plan (planID: %s): %v", err, addonPlanID))}
 	}
 
-
 	bindInput := bindingInput{
-		instance: instance,
-		bindingID: bID,
-		addonPlan: addonPlan,
+		instance:        instance,
+		bindingID:       bID,
+		addonPlan:       addonPlan,
 		isAddonBindable: addon.Bindable,
 	}
 	// TODO: ASYNC HERE
 	svc.doAsync(ctx, bindInput)
 
-
 	opKey := osb.OperationKey(op.OperationID)
-
-
 
 	resp := &osb.BindResponse{
 		OperationKey: &opKey,
@@ -182,7 +176,7 @@ func (svc *bindService) getBindOperation(iID internal.InstanceID, bID internal.B
 
 	out := &internal.BindOperation{}
 
-	for _,singleOperation := range svc.bindOperation[iID] {
+	for _, singleOperation := range svc.bindOperation[iID] {
 		if singleOperation.BindingID == bID && singleOperation.OperationID == opID {
 			out = singleOperation
 		}
@@ -191,7 +185,7 @@ func (svc *bindService) getBindOperation(iID internal.InstanceID, bID internal.B
 	return out, nil
 }
 
-func (svc *bindService) getAllBindOperation(iID internal.InstanceID) ([]*internal.BindOperation, error){
+func (svc *bindService) getAllBindOperation(iID internal.InstanceID) ([]*internal.BindOperation, error) {
 	if iID.IsZero() {
 		return nil, errors.New("instance id must be set")
 	}
@@ -285,24 +279,22 @@ func (svc *bindService) GetLastBindOperation(ctx context.Context, osbCtx OsbCont
 	return &resp, nil
 }
 
-
 type bindingInput struct {
-	instance *internal.Instance
-	bindingID internal.BindingID
-	operationID internal.OperationID
-	addonPlan internal.AddonPlan
+	instance        *internal.Instance
+	bindingID       internal.BindingID
+	operationID     internal.OperationID
+	addonPlan       internal.AddonPlan
 	isAddonBindable bool
 }
 
-func (svc *bindService) doAsync(ctx context.Context, input bindingInput)  {
+func (svc *bindService) doAsync(ctx context.Context, input bindingInput) {
 	if svc.testHookAsyncCalled != nil {
 		svc.testHookAsyncCalled(input.operationID)
 	}
 	go svc.do(ctx, input)
 }
 
-func (svc *bindService) do(ctx context.Context, input bindingInput)  {
-
+func (svc *bindService) do(ctx context.Context, input bindingInput) {
 
 	fDo := func() error {
 		if svc.isBindable(input.addonPlan, input.isAddonBindable) {
@@ -404,11 +396,7 @@ func (*bindService) dtoFromModel(in internal.InstanceCredentials) map[string]int
 	return dto
 }
 
-
 type notFoundError struct{}
 
 func (notFoundError) Error() string  { return "element not found" }
 func (notFoundError) NotFound() bool { return true }
-
-
-

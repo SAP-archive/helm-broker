@@ -267,7 +267,7 @@ type OperationID string
 // IsZero checks if OperationID equals zero
 func (id OperationID) IsZero() bool { return id == OperationID("") }
 
-// InstanceOperation represents single operation.
+// InstanceOperation represents single provisioning operation.
 type InstanceOperation struct {
 	InstanceID       InstanceID
 	OperationID      OperationID
@@ -304,13 +304,13 @@ const (
 
 // Instance contains info about Service exposed via Service Catalog.
 type Instance struct {
-	ID              InstanceID
-	ServiceID       ServiceID
-	ServicePlanID   ServicePlanID
-	ReleaseName     ReleaseName
-	Namespace       Namespace
-	ParamsHash      string
-	ReleaseInfo ReleaseInfo
+	ID            InstanceID
+	ServiceID     ServiceID
+	ServicePlanID ServicePlanID
+	ReleaseName   ReleaseName
+	Namespace     Namespace
+	ParamsHash    string
+	ReleaseInfo   ReleaseInfo
 }
 
 // InstanceCredentials are created when we bind a service instance.
@@ -322,9 +322,10 @@ type BindingID string
 // IsZero checks if BindingID equals zero
 func (id BindingID) IsZero() bool { return id == BindingID("") }
 
+// BindOperation represents single service binding operation.
 type BindOperation struct {
 	InstanceID       InstanceID
-	BindingID BindingID
+	BindingID        BindingID
 	OperationID      OperationID
 	Type             OperationType
 	State            OperationState
@@ -348,9 +349,9 @@ type InstanceBindData struct {
 
 // ReleaseInfo contains additional data about release installed on instance provisioning.
 type ReleaseInfo struct {
-	Time      *google_protobuf.Timestamp
-	Revision  int
-	Config *chart.Config
+	Time     *google_protobuf.Timestamp
+	Revision int
+	Config   *chart.Config
 }
 
 // OperationState defines the possible states of an asynchronous request to a broker.

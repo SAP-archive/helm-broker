@@ -52,7 +52,6 @@ func (s *Instance) Upsert(i *internal.Instance) (replaced bool, err error) {
 		return false, errors.Wrap(err, "while encoding entity")
 	}
 
-
 	resp, err := s.kv.Put(context.TODO(), s.key(i.ID), buf.String(), clientv3.WithPrevKV())
 	if err != nil {
 		return false, errors.Wrap(err, "while calling database on put")

@@ -61,6 +61,11 @@ type BindSuccessResponseDTO struct {
 	Credentials map[string]interface{} `json:"credentials,omitempty"`
 }
 
+// BindInProgressResponseDTO represents response with operation for service binding in progress
+type BindInProgressResponseDTO struct {
+	Operation *internal.OperationID `json:"operation,omitempty"`
+}
+
 // BindParametersDTO contains parameters sent by Service Catalog in the body of bind request.
 type BindParametersDTO struct {
 	ServiceID string `json:"service_id"`

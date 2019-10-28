@@ -29,7 +29,7 @@ type Chart interface {
 // Instance is an interface that describe storage layer operations for Instances
 type Instance interface {
 	Insert(*internal.Instance) error
-	Upsert (*internal.Instance) (replace bool, err error)
+	Upsert(*internal.Instance) (replace bool, err error)
 	Get(internal.InstanceID) (*internal.Instance, error)
 	GetAll() ([]*internal.Instance, error)
 	Remove(internal.InstanceID) error

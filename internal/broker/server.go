@@ -36,7 +36,7 @@ type (
 	}
 
 	binder interface {
-		Bind(ctx context.Context, osbCtx OsbContext, req *osb.BindRequest) (*osb.BindResponse, error)
+		Bind(ctx context.Context, osbCtx OsbContext, req *osb.BindRequest) (*osb.BindResponse, *osb.HTTPStatusCodeError)
 		GetLastBindOperation(ctx context.Context, osbCtx OsbContext, req *osb.BindingLastOperationRequest) (*osb.LastOperationResponse, error)
 	}
 
@@ -395,14 +395,22 @@ func (srv *Server) bindAction(w http.ResponseWriter, r *http.Request) {
 
 	sReq := osb.BindRequest{
 		AcceptsIncomplete: true,
-		InstanceID: instanceID,
-		ServiceID:  params.ServiceID,
-		PlanID:     params.PlanID,
-		BindingID:  bindIDRaw,
+		InstanceID:        instanceID,
+		ServiceID:         params.ServiceID,
+		PlanID:            params.PlanID,
+		BindingID:         bindIDRaw,
 	}
-	sResp, err := srv.binder.Bind(r.Context(), osbCtx, &sReq)
-	if err != nil {
-		srv.writeErrorResponse(w, http.StatusBadRequest, err.Error(), "")
+	sResp, sErr := srv.binder.Bind(r.Context(), osbCtx, &sReq)
+	if sErr != nil {
+		var errMsg string
+		var errDesc string
+		if sErr.ErrorMessage != nil {
+			errMsg = *sErr.ErrorMessage
+		}
+		if sErr.Description != nil {
+			errDesc = *sErr.Description
+		}
+		srv.writeErrorResponse(w, sErr.StatusCode, errMsg, errDesc)
 		return
 	}
 
@@ -421,15 +429,17 @@ func (srv *Server) bindAction(w http.ResponseWriter, r *http.Request) {
 
 	if !sResp.Async {
 		//logResp(logRespFields)
-		srv.writeResponse(w, http.StatusOK, map[string]interface{}{})
+		egDTO := BindSuccessResponseDTO{
+			Credentials: sResp.Credentials,
+		}
+		srv.writeResponse(w, http.StatusOK, egDTO)
 		return
 	}
 
+	opID := internal.OperationID(*sResp.OperationKey)
+	egDTO := BindInProgressResponseDTO{Operation: &opID}
 
-	egDTO := BindSuccessResponseDTO{
-		Credentials: sResp.Credentials,
-	}
-	srv.writeResponse(w, http.StatusCreated, egDTO)
+	srv.writeResponse(w, http.StatusAccepted, egDTO)
 }
 
 func (srv *Server) unBindAction(w http.ResponseWriter, r *http.Request) {
@@ -447,7 +457,7 @@ func (srv *Server) getServiceBindingLastOperationAction(w http.ResponseWriter, r
 
 	sReq := osb.BindingLastOperationRequest{
 		InstanceID: string(instanceID),
-		BindingID: string(bindingID),
+		BindingID:  string(bindingID),
 	}
 	if svcIDRaw := q.Get("service_id"); svcIDRaw != "" {
 		svcID := svcIDRaw
@@ -477,7 +487,7 @@ func (srv *Server) getServiceBindingLastOperationAction(w http.ResponseWriter, r
 	logRespFields := logrus.Fields{
 		"action":               "getLastOperation",
 		"instance:id":          instanceID,
-		"binding:id":			bindingID,
+		"binding:id":           bindingID,
 		"operation:id":         operationID,
 		"resp:operation:state": sResp.State,
 		"resp:operation:desc":  sResp.Description,
@@ -497,7 +507,6 @@ func (srv *Server) getServiceBindingLastOperationAction(w http.ResponseWriter, r
 	}
 	srv.writeResponse(w, http.StatusOK, resp)
 }
-
 
 func (srv *Server) writeResponse(w http.ResponseWriter, code int, object interface{}) {
 	writeResponse(w, code, object)

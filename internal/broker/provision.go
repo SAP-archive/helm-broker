@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/komkom/go-jsonhash"
+	jsonhash "github.com/komkom/go-jsonhash"
 	"github.com/kyma-project/helm-broker/internal"
 	"github.com/pkg/errors"
 	osb "github.com/pmorie/go-open-service-broker-client/v2"
@@ -125,7 +125,7 @@ func (svc *provisionService) Provision(ctx context.Context, osbCtx OsbContext, r
 		ServicePlanID: svcPlanID,
 		ReleaseName:   releaseName,
 		ParamsHash:    paramHash,
-		ReleaseInfo: internal.ReleaseInfo{},
+		ReleaseInfo:   internal.ReleaseInfo{},
 	}
 
 	exist, err := svc.instanceInserter.Upsert(&i)
@@ -152,7 +152,7 @@ func (svc *provisionService) Provision(ctx context.Context, osbCtx OsbContext, r
 		isAddonBindable:     addon.Bindable,
 		addonsRepositoryURL: addon.RepositoryURL,
 		chartOverrides:      chartOverrides,
-		instanceToUpdate: &i,
+		instanceToUpdate:    &i,
 	}
 
 	svc.doAsync(ctx, provisionInput)
@@ -177,7 +177,7 @@ type provisioningInput struct {
 	isAddonBindable     bool
 	chartOverrides      internal.ChartValues
 	addonsRepositoryURL string
-	instanceToUpdate *internal.Instance
+	instanceToUpdate    *internal.Instance
 }
 
 func (svc *provisionService) doAsync(ctx context.Context, input provisioningInput) {
@@ -214,10 +214,10 @@ func (svc *provisionService) do(ctx context.Context, input provisioningInput) {
 			return nil, errors.Wrap(err, "while installing helm release")
 		}
 
-		relInfo := internal.ReleaseInfo {
+		relInfo := internal.ReleaseInfo{
 			Time:     resp.GetRelease().GetInfo().GetLastDeployed(),
 			Revision: int(resp.GetRelease().GetVersion()),
-			Config: resp.GetRelease().GetConfig(),
+			Config:   resp.GetRelease().GetConfig(),
 		}
 
 		updatedInstance := input.instanceToUpdate

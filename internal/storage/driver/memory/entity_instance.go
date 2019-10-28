@@ -45,7 +45,6 @@ func (s *Instance) Upsert(i *internal.Instance) (replaced bool, err error) {
 	return false, nil
 }
 
-
 // Insert inserts object to storage.
 func (s *Instance) Insert(i *internal.Instance) error {
 	defer unlock(s.lockW())
