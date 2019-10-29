@@ -12,12 +12,10 @@ Provide the latest Add Ons for the Helm Broker, by creating the `ClusterAddonsCo
 apiVersion: addons.kyma-project.io/v1alpha1
 kind: ClusterAddonsConfiguration
 metadata:
-  labels:
-    addons.kyma-project.io/managed: "true"
   name: my-addons
 spec:
   repositories:
   - url: "https://github.com/kyma-project/addons/releases/download/latest/index.yaml"
 ```
 
-Learn more how to use the Helm Broker, by reading the [documentation](https://github.com/kyma-project/helm-broker/blob/__RELEASE_VERSION__/README.md#Documentation).
+Learn more how to use the Helm Broker, by reading the [documentation](https://github.com/kyma-project/helm-broker/blob/__RELEASE_VERSION__/README.md#table-of-contents).
