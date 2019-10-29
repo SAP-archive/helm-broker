@@ -1,7 +1,12 @@
+ROOT_PATH := $(shell pwd)
+GIT_TAG=$(PULL_BASE_REF)
+GIT_REPO=$(REPO_OWNER)/$(REPO_NAME)
+export GITHUB_TOKEN=$(BOT_GITHUB_TOKEN)
+
 APP_NAME = helm-broker
 TOOLS_NAME = helm-broker-tools
-CONTROLLER_NAME=helm-controller
-TESTS_NAME=helm-broker-tests
+TESTS_NAME = helm-broker-tests
+CONTROLLER_NAME = helm-controller
 
 REPO = $(DOCKER_PUSH_REPOSITORY)$(DOCKER_PUSH_DIRECTORY)/
 TAG = $(DOCKER_TAG)
@@ -39,10 +44,56 @@ generates: crd-manifests client
 crd-manifests:
 	go run vendor/sigs.k8s.io/controller-tools/cmd/controller-gen/main.go crd --domain kyma-project.io
 
-# Generate code
 .PHONY: client
 client:
 	./hack/update-codegen.sh
+
+.PHONY: release
+release: tar-chart generate-changelog release-branch
+	./hack/release/push_release.sh $(GIT_TAG) $(GIT_REPO)
+
+.PHONY: latest-release
+latest-release: tar-chart set-latest-tag generate-changelog
+	./hack/release/create_latest_tag.sh $(GIT_REPO)
+	./hack/release/remove_latest_tag.sh $(GIT_REPO)
+	./hack/release/push_release.sh $(GIT_TAG) $(GIT_REPO)
+
+.PHONY: generate-changelog
+generate-changelog:
+	./hack/release/generate_changelog.sh $(GIT_TAG) $(REPO_NAME) $(REPO_OWNER)
+
+.PHONY: release-branch
+release-branch:
+# release branch named `release-x.y` will be created if the GIT_TAG matches the `x.y.0` version pattern.
+	./hack/release/create_release_branch.sh $(GIT_TAG) $(GIT_REPO)
+
+.PHONY: set-latest-tag
+set-latest-tag:
+	$(eval GIT_TAG=latest)
+	$(eval TAG=latest)
+
+.PHONY: tar-chart
+tar-chart: create-release-dir
+	@tar -czvf toCopy/helm-broker-chart.tar.gz -C charts/helm-broker/ . ||:
+
+.PHONY: create-release-dir
+create-release-dir:
+	mkdir -p toCopy
+
+.PHONY: cut-release
+cut-release: tag-chart-images
+	git add charts/helm-broker/values.yaml
+	git commit -m "Bump chart images to version: $(VERSION)"
+	git tag $(VERSION)
+
+.PHONY: tag-chart-images
+tag-chart-images: get-yaml-editor
+	$(YAML_EDITOR) w -i charts/helm-broker/values.yaml global.helm_broker.version $(VERSION)
+	$(YAML_EDITOR) w -i charts/helm-broker/values.yaml global.helm_broker.dir '$(DIR)'
+	$(YAML_EDITOR) w -i charts/helm-broker/values.yaml global.helm_controller.version $(VERSION)
+	$(YAML_EDITOR) w -i charts/helm-broker/values.yaml global.helm_controller.dir '$(DIR)'
+	$(YAML_EDITOR) w -i charts/helm-broker/values.yaml tests.tag $(VERSION)
+	$(YAML_EDITOR) w -i charts/helm-broker/values.yaml tests.dir '$(DIR)'
 
 .PHONY: build-image
 build-image: pull-licenses
@@ -75,17 +126,22 @@ push-image:
 ci-pr: build integration-test build-image push-image
 
 .PHONY: ci-master
-ci-master: build integration-test build-image push-image
+ci-master: build integration-test build-image push-image latest-release push-image
 
 .PHONY: ci-release
-ci-release: build integration-test build-image push-image
+ci-release: build integration-test build-image push-image charts-test release
 
 .PHONY: clean
 clean:
 	rm -f broker
+	rm -f controller
 	rm -f targz
 	rm -f indexbuilder
 
 .PHONY: path-to-referenced-charts
 path-to-referenced-charts:
 	@echo "resources/helm-broker"
+
+.PHONY: get-yaml-editor
+get-yaml-editor:
+	$(eval YAML_EDITOR=$(shell ./hack/release/get_yq.sh))
