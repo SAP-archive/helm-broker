@@ -53,7 +53,7 @@ func (svc *bindService) Bind(ctx context.Context, osbCtx OsbContext, req *osb.Bi
 		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusBadRequest, ErrorMessage: strPtr(fmt.Sprintf("while checking if service binding for service instance already exists: %v", err))}
 	case state:
 		if err := svc.compareBindingParameters(iID, bID, paramHash); err != nil { // TODO: verify if comparision is needed
-			return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusConflict, ErrorMessage: strPtr(fmt.Sprintf("while comparing provisioning parameters %v: %v", req.Parameters, err))}
+			return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusConflict, ErrorMessage: strPtr(fmt.Sprintf("while comparing binding parameters %v: %v", req.Parameters, err))}
 		}
 		out, err := svc.getInstanceBindData(iID, bID)
 		if err != nil {
@@ -116,8 +116,10 @@ func (svc *bindService) Bind(ctx context.Context, osbCtx OsbContext, req *osb.Bi
 	}
 
 	bindInput := bindingInput{
+		brokerNamespace: osbCtx.BrokerNamespace,
 		instance:        instance,
 		bindingID:       bID,
+		operationID:     op.OperationID,
 		addonPlan:       addonPlan,
 		isAddonBindable: addon.Bindable,
 	}
@@ -171,7 +173,7 @@ func (svc *bindService) updateBindOperationStateDesc(iID internal.InstanceID, bI
 
 func (svc *bindService) getBindOperation(iID internal.InstanceID, bID internal.BindingID, opID internal.OperationID) (*internal.BindOperation, error) {
 	if iID.IsZero() || bID.IsZero() || opID.IsZero() {
-		return nil, errors.New("all parameters: instance, binding and operation id must be set")
+		return nil, errors.Errorf("all parameters: instance, binding and operation id must be set. InstanceID: %q | BindingID: %q | OperationID: %q", iID, bID, opID)
 	}
 
 	out := &internal.BindOperation{}
@@ -179,10 +181,12 @@ func (svc *bindService) getBindOperation(iID internal.InstanceID, bID internal.B
 	for _, singleOperation := range svc.bindOperation[iID] {
 		if singleOperation.BindingID == bID && singleOperation.OperationID == opID {
 			out = singleOperation
+			return out, nil
 		}
-		return nil, notFoundError{}
+
 	}
-	return out, nil
+	return nil, notFoundError{}
+
 }
 
 func (svc *bindService) getAllBindOperation(iID internal.InstanceID) ([]*internal.BindOperation, error) {
@@ -279,7 +283,28 @@ func (svc *bindService) GetLastBindOperation(ctx context.Context, osbCtx OsbCont
 	return &resp, nil
 }
 
+func (svc *bindService) GetServiceBinding(ctx context.Context, osbCtx OsbContext, req *osb.GetBindingRequest) (*osb.GetBindingResponse, error) {
+	iID := internal.InstanceID(req.InstanceID)
+	bID := internal.BindingID(req.BindingID)
+
+	switch opIDInProgress, inProgress, err := svc.isBindingInProgress(iID, bID); true {
+	case err != nil:
+		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusBadRequest, ErrorMessage: strPtr(fmt.Sprintf("while checking if service binding is being created: %v", err))}
+	case inProgress:
+		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusNotFound, ErrorMessage: strPtr(fmt.Sprintf("service binding id: %q is in progress", opIDInProgress))}
+	}
+
+	out, err := svc.getInstanceBindData(iID, bID)
+	if err != nil {
+		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusNotFound, ErrorMessage: strPtr(fmt.Sprintf("while getting bind data from memory for instance id: %q and service binding id: %q with error: %v", iID, bID, err))}
+	}
+	return &osb.GetBindingResponse{
+		Credentials: svc.dtoFromModel(out.Credentials),
+	}, nil
+}
+
 type bindingInput struct {
+	brokerNamespace internal.Namespace
 	instance        *internal.Instance
 	bindingID       internal.BindingID
 	operationID     internal.OperationID
@@ -298,7 +323,7 @@ func (svc *bindService) do(ctx context.Context, input bindingInput) {
 
 	fDo := func() error {
 		if svc.isBindable(input.addonPlan, input.isAddonBindable) {
-			c, err := svc.chartGetter.Get(input.instance.Namespace, input.addonPlan.ChartRef.Name, input.addonPlan.ChartRef.Version)
+			c, err := svc.chartGetter.Get(input.brokerNamespace, input.addonPlan.ChartRef.Name, input.addonPlan.ChartRef.Version)
 			if err != nil {
 				return errors.Wrap(err, "while getting chart from storage")
 			}

@@ -197,6 +197,8 @@ func newWithIDProvider(bs addonStorage, cs chartStorage, os operationStorage, is
 			instanceGetter:       is,
 			bindTemplateRenderer: bindTmplRenderer,
 			bindTemplateResolver: bindTmplResolver,
+			resolvedBindData:     make(map[internal.BindingID]*internal.InstanceBindData),
+			bindOperation:        make(map[internal.InstanceID][]*internal.BindOperation),
 			operationIDProvider:  idp,
 			log:                  log.WithField("service", "binder"),
 		},

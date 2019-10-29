@@ -44,7 +44,9 @@ type Config struct {
 //    KUBECONFIG=/Users/$USER/.kube/config \
 //    CLUSTER_ADDONS_CONFIGURATION_URL="github.com/kyma-project/addons//addons/index-acc-testing.yaml?ref=2d671e3a9d840b877dd8cd5fd9e6e0147ad4caf0" \
 //    EXPECTED_ADDON_ID="a54abe18-0a84-22e9-ab34-d663bbce3d88" \
-//    go test test/charts/helm_broker_test.go -v
+//    go test test/charts/helm_broker
+//
+//    _test.go -v
 func TestHelmBrokerChartHappyPath(t *testing.T) {
 	// given
 	suite := NewTestSuite(t)
