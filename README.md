@@ -6,12 +6,7 @@ The Helm Broker is a [Service Broker](https://kyma-project.io/docs/master/compon
 
 If you want to use the Helm Broker with all dependencies, try out [Kyma](https://kyma-project.io/).
 
-### Table of contents
-
-- [Installation](https://github.com/kyma-project/helm-broker/blob/master/docs/installation.md)
-- [Usage](https://github.com/kyma-project/helm-broker/blob/master/docs/usage.md)
-- [Development](https://github.com/kyma-project/helm-broker/blob/master/docs/development.md)
-- [Releasing](https://github.com/kyma-project/helm-broker/blob/master/docs/releasing.md)
+Learn more from the [documentation](https://github.com/kyma-project/helm-broker/blob/master/docs/README.md)
 
 ### Project structure
 
