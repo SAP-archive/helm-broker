@@ -1,19 +1,18 @@
-## Installation 
+# Installation 
 
-Learn how to install Helm Broker in this document.
+This document provides two instructions on the Helm Broker local installation. Read [this](#install-helm-broker-from-chart) section to learn how to install the Helm Broker from the chart together with the Service Catalog, and [this](##install-helm-broker-manually) section to learn how to install the Helm Broker manually as a standalone component.
 
-### Prerequisites
+## Prerequisites
 
-To run the project, download these tools:
 
 * [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) 1.16
 * [Helm CLI](https://github.com/kubernetes/helm#install) 2.14
-* [Docker](https://docs.docker.com/install/) 19.03 (for local installation)
-* [Kind](https://github.com/kubernetes-sigs/kind#installation-and-usage) 0.5 (for local installation) 
+* [Docker](https://docs.docker.com/install/) 19.03 
+* [Kind](https://github.com/kubernetes-sigs/kind#installation-and-usage) 0.5
 
 >**NOTE:** For non-local installation, use Kubernetes v1.15.
 
-### Run on kind
+## Install Helm Broker from chart
 
 To run the Helm Broker, you need a Kubernetes cluster with Tiller and Service Catalog. Run the `./hack/run-dev-kind.sh` script, or follow these steps to set up the Helm Broker on Kind with all necessary dependencies:
 
@@ -45,7 +44,7 @@ git clone git@github.com:kyma-project/helm-broker.git
 helm install charts/helm-broker --name helm-broker --namespace helm-broker
 ```
 
-### Run the Helm Broker locally
+## Install Helm Broker manually
 
 To run the Helm Broker without building a binary file, follow these steps:
 

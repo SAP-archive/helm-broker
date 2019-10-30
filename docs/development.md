@@ -1,10 +1,9 @@
-## Development
+# Development
 
-Learn more about Helm Broker development from this document.
+Read this document to learn how to develop the project.
 
-### Dependencies
+## Prerequisites
 
-To set up the project, download these tools:
 
 * [Go](https://golang.org/dl/) 1.12
 * [Dep](https://github.com/golang/dep) 0.5
@@ -12,9 +11,9 @@ To set up the project, download these tools:
 
 >**NOTE:** The versions of Go and Dep are compliant with the `buildpack` used by Prow. For more details, read [this](https://github.com/kyma-project/test-infra/blob/master/prow/images/buildpack-golang/README.md) document.
 
-### Run tests
+## Run tests
 
-Before each commit, use the `before-commit.sh` script. The script runs unit tests that check your changes and build binaries. If you want to run the Helm Broker locally, read [this](/docs/run-local.md) document.
+Before each commit, use the `before-commit.sh` script. The script runs unit tests that check your changes and build binaries. If you want to run the Helm Broker locally, read [this](/docs/installation.md) document.
 
 You can also run integration tests that check if all parts of the Helm Broker work together. 
 These are the prerequisites for integration tests:
@@ -29,7 +28,7 @@ Run integration tests using this command:
 make integration-test
 ```
 
-### Update chart's images tag
+## Update chart's images tag
 
 To change the chart's tags version, run this command:
 
@@ -43,7 +42,7 @@ This command overrides the images tag in the `charts/helm-broker/values.yaml` fi
 eu.gcr.io/kyma-project/helm-broker/pr:v0.0.1
 ```
 
-### Build Docker images
+## Build Docker images
 
 If you want to build Docker images with your changes and push them to a registry, follow these steps:
 1. Run tests and build binaries:
