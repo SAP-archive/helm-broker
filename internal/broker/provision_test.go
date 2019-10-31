@@ -91,7 +91,7 @@ func TestProvisionServiceProvisionSuccessAsyncInstall(t *testing.T) {
 	params := jsonhash.HashS(ts.FixProvisionRequest().Parameters)
 	expInstance.ParamsHash = params
 	expInstanceCollection := ts.FixInstanceCollection()
-	iiMock.On("Upsert", &expInstance).Return(true,nil)
+	iiMock.On("Upsert", &expInstance).Return(true, nil)
 	iiMock.On("GetAll").Return(expInstanceCollection, nil)
 
 	ioMock := &automock.OperationStorage{}

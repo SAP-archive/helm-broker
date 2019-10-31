@@ -16,20 +16,21 @@ import (
 )
 
 const (
-	goTplEngine = "gotpl"
+	goTplEngine             = "gotpl"
 	addonsRepositoryURLName = "addonsRepositoryURL"
 )
+
 type provisionService struct {
-	addonIDGetter            addonIDGetter
-	chartGetter              chartGetter
-	instanceInserter         instanceInserter
-	instanceGetter           instanceGetter
-	instanceStateGetter      instanceStateProvisionGetter
-	operationInserter        operationInserter
-	operationUpdater         operationUpdater
-	operationIDProvider      func() (internal.OperationID, error)
-	helmInstaller            helmInstaller
-	mu                       sync.Mutex
+	addonIDGetter       addonIDGetter
+	chartGetter         chartGetter
+	instanceInserter    instanceInserter
+	instanceGetter      instanceGetter
+	instanceStateGetter instanceStateProvisionGetter
+	operationInserter   operationInserter
+	operationUpdater    operationUpdater
+	operationIDProvider func() (internal.OperationID, error)
+	helmInstaller       helmInstaller
+	mu                  sync.Mutex
 
 	log *logrus.Entry
 
@@ -243,12 +244,10 @@ func (svc *provisionService) do(ctx context.Context, input provisioningInput) {
 
 	err := fDo()
 
-
 	if err != nil {
 		opState = internal.OperationStateFailed
 		opDesc = fmt.Sprintf("provisioning failed on error: %s", err.Error())
 	}
-
 
 	if err := svc.operationUpdater.UpdateStateDesc(input.instanceID, input.operationID, opState, &opDesc); err != nil {
 		svc.log.Errorf("State description was not updated, got error: %v", err)

@@ -105,18 +105,18 @@ import (
 
 func newBindTC() *bindServiceTestCase {
 	return &bindServiceTestCase{
-		addonStorageMock:  &automock.AddonStorage{},
-		chartGetterMock: &automock.ChartGetter{},
-		instanceGetterMock: &automock.InstanceStorage{},
+		addonStorageMock:         &automock.AddonStorage{},
+		chartGetterMock:          &automock.ChartGetter{},
+		instanceGetterMock:       &automock.InstanceStorage{},
 		bindTemplateRendererMock: &automock.BindTemplateRenderer{},
 		bindTemplateResolverMock: &automock.BindTemplateResolver{},
 	}
 }
 
 type bindServiceTestCase struct {
-	addonStorageMock                   *automock.AddonStorage
-	chartGetterMock *automock.ChartGetter
-	instanceGetterMock *automock.InstanceStorage
+	addonStorageMock         *automock.AddonStorage
+	chartGetterMock          *automock.ChartGetter
+	instanceGetterMock       *automock.InstanceStorage
 	bindTemplateRendererMock *automock.BindTemplateRenderer
 	bindTemplateResolverMock *automock.BindTemplateResolver
 }

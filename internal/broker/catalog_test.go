@@ -163,12 +163,12 @@ func (tc catalogTestCase) fixAddon() *internal.Addon {
 
 func (tc catalogTestCase) fixAddonWithSchemas(schemas map[internal.PlanSchemaType]internal.PlanSchema) *internal.Addon {
 	return &internal.Addon{
-		Name:        "addonName",
-		ID:          "addonID",
-		Description: "addonDescription",
-		Bindable:    true,
+		Name:                "addonName",
+		ID:                  "addonID",
+		Description:         "addonDescription",
+		Bindable:            true,
 		BindingsRetrievable: true,
-		Version:     *semver.MustParse("1.2.3"),
+		Version:             *semver.MustParse("1.2.3"),
 		Metadata: internal.AddonMetadata{
 			DisplayName:         "DisplayName",
 			ProviderDisplayName: "ProviderDisplayName",

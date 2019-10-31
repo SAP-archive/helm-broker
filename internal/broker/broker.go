@@ -170,11 +170,11 @@ func newWithIDProvider(bs addonStorage, cs chartStorage, os operationStorage, is
 			instanceStateGetter: &instanceStateService{
 				operationCollectionGetter: os,
 			},
-			operationInserter:        os,
-			operationUpdater:         os,
-			operationIDProvider:      idp,
-			helmInstaller:            hc,
-			log:                      log.WithField("service", "provisioner"),
+			operationInserter:   os,
+			operationUpdater:    os,
+			operationIDProvider: idp,
+			helmInstaller:       hc,
+			log:                 log.WithField("service", "provisioner"),
 		},
 		deprovisioner: &deprovisionService{
 			instanceGetter:    is,

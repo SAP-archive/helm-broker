@@ -39,7 +39,6 @@ func TestRenderSuccess(t *testing.T) {
 	// when
 	out, err := renderer.Render(tplToRender, &fixedInstance, &fixedChart)
 
-
 	// then
 	require.NoError(t, err)
 	assert.EqualValues(t, "rendered-content", out)
@@ -164,13 +163,13 @@ func fixInstance() internal.Instance {
 		ReleaseName:   "test-release",
 		Namespace:     "test-ns",
 		ParamsHash:    "test-hash",
-		ReleaseInfo:   internal.ReleaseInfo{
-			Time:     &google_protobuf.Timestamp{
+		ReleaseInfo: internal.ReleaseInfo{
+			Time: &google_protobuf.Timestamp{
 				Seconds: 123123123,
 				Nanos:   1,
 			},
 			Revision: 123,
-			Config:  &chart.Config{
+			Config: &chart.Config{
 				Raw: "raw-config",
 			},
 		},

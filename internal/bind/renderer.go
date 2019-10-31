@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	bindFile    = "bindTmpl"
+	bindFile = "bindTmpl"
 )
 
 //go:generate mockery -name=chartGoTemplateRenderer -output=automock -outpkg=automock -case=underscore

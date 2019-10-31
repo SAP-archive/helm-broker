@@ -592,10 +592,10 @@ func TestOSBAPIBindFailureWithDisallowedParametersFieldInReq(t *testing.T) {
 	// WHEN
 	req := &osb.BindRequest{
 		AcceptsIncomplete: true,
-		BindingID:  "bind-id",
-		InstanceID: "instance-id",
-		ServiceID:  "svc-id",
-		PlanID:     "bind-id",
+		BindingID:         "bind-id",
+		InstanceID:        "instance-id",
+		ServiceID:         "svc-id",
+		PlanID:            "bind-id",
 		Parameters: map[string]interface{}{
 			"params": "set-but-not-allowed",
 		},
@@ -1035,10 +1035,10 @@ func TestOSBAPIBindFailureWithDisallowedParametersFieldInReqNS(t *testing.T) {
 	// WHEN
 	req := &osb.BindRequest{
 		AcceptsIncomplete: true,
-		BindingID:  "bind-id",
-		InstanceID: "instance-id",
-		ServiceID:  "svc-id",
-		PlanID:     "bind-id",
+		BindingID:         "bind-id",
+		InstanceID:        "instance-id",
+		ServiceID:         "svc-id",
+		PlanID:            "bind-id",
 		Parameters: map[string]interface{}{
 			"params": "set-but-not-allowed",
 		},
@@ -1055,7 +1055,7 @@ func TestOSBAPIBindFailureWithDisallowedParametersFieldInReqNS(t *testing.T) {
 
 type fakeBindTmplRenderer struct{}
 
-func (fakeBindTmplRenderer) Render(bindTemplate internal.AddonPlanBindTemplate, instance *internal.Instance, chart *chart.Chart)  (bind.RenderedBindYAML, error) {
+func (fakeBindTmplRenderer) Render(bindTemplate internal.AddonPlanBindTemplate, instance *internal.Instance, chart *chart.Chart) (bind.RenderedBindYAML, error) {
 	return []byte(`fake`), nil
 }
 
