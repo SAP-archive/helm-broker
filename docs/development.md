@@ -4,7 +4,6 @@ Read this document to learn how to develop the project.
 
 ## Prerequisites
 
-
 * [Go](https://golang.org/dl/) 1.12
 * [Dep](https://github.com/golang/dep) 0.5
 * [Docker](https://www.docker.com/)

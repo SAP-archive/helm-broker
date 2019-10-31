@@ -1,6 +1,4 @@
-## Configuration
-
-
+# Configuration
 
 Use the following environment variables to configure the `Broker` container of the Helm Broker:
 
