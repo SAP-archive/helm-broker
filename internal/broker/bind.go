@@ -356,7 +356,7 @@ func (svc *bindService) isBindable(plan internal.AddonPlan, isAddonBindable bool
 }
 
 func (svc *bindService) renderAndResolveBindData(addonPlan internal.AddonPlan, instance *internal.Instance, bID internal.BindingID, ch *chart.Chart) error {
-	rendered, err := svc.bindTemplateRenderer.RenderOnBind(addonPlan.BindTemplate, instance, ch)
+	rendered, err := svc.bindTemplateRenderer.Render(addonPlan.BindTemplate, instance, ch)
 	if err != nil {
 		return errors.Wrap(err, "while rendering bind yaml template")
 	}

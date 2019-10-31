@@ -6,6 +6,7 @@
     "awesome-tag"
   ],
   "bindable": true,
+  "bindings_retrievable": true,
   "plans": [
     {
       "id": "planID",

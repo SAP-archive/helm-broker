@@ -156,8 +156,6 @@ func (srv *Server) handleRouter(router *mux.Router) {
 		Handler(negroni.New(osbContextMiddleware, negroni.WrapFunc(srv.getServiceInstanceLastOperationAction)))
 	router.Path("/v2/service_instances/{instance_id}/service_bindings/{binding_id}").Methods(http.MethodGet).
 		Handler(negroni.New(osbContextMiddleware, negroni.WrapFunc(srv.getServiceBinding)))
-	//router.Path("/v2/service_instances/{instance_id}/service_bindings/{binding_id}").Methods(http.MethodPut).
-	//	Handler(negroni.New(osbContextMiddleware, negroni.WrapFunc(srv.bindAction)))
 	router.Path("/v2/service_instances/{instance_id}/service_bindings/{binding_id}").Methods(http.MethodDelete).
 		Handler(negroni.New(osbContextMiddleware, negroni.WrapFunc(srv.unBindAction)))
 	router.Path("/v2/service_instances/{instance_id}/service_bindings/{binding_id}/last_operation").Methods(http.MethodGet).
@@ -165,13 +163,13 @@ func (srv *Server) handleRouter(router *mux.Router) {
 
 	// async operations
 	router.Path("/v2/service_instances/{instance_id}").Methods(http.MethodPut).Handler(
-		negroni.New(osbContextMiddleware, reqAsyncMiddleware, negroni.WrapFunc(srv.provisionAction)),
-	)
+		negroni.New(osbContextMiddleware, reqAsyncMiddleware, negroni.WrapFunc(srv.provisionAction)), )
 	router.Path("/v2/service_instances/{instance_id}").Methods(http.MethodDelete).Handler(
 		negroni.New(osbContextMiddleware, reqAsyncMiddleware, negroni.WrapFunc(srv.deprovisionAction)),
-	)
+		)
 	router.Path("/v2/service_instances/{instance_id}/service_bindings/{binding_id}").Methods(http.MethodPut).
-		Handler(negroni.New(osbContextMiddleware, reqAsyncMiddleware, negroni.WrapFunc(srv.bindAction)))
+		Handler(negroni.New(osbContextMiddleware, reqAsyncMiddleware, negroni.WrapFunc(srv.bindAction)),
+			)
 
 }
 

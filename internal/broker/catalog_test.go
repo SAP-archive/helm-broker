@@ -167,6 +167,7 @@ func (tc catalogTestCase) fixAddonWithSchemas(schemas map[internal.PlanSchemaTyp
 		ID:          "addonID",
 		Description: "addonDescription",
 		Bindable:    true,
+		BindingsRetrievable: true,
 		Version:     *semver.MustParse("1.2.3"),
 		Metadata: internal.AddonMetadata{
 			DisplayName:         "DisplayName",

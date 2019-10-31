@@ -131,8 +131,7 @@ type (
 	}
 
 	bindTemplateRenderer interface {
-		//Render(bindTemplate internal.AddonPlanBindTemplate, resp *rls.InstallReleaseResponse) (bind.RenderedBindYAML, error)
-		RenderOnBind(bindTemplate internal.AddonPlanBindTemplate, instance *internal.Instance, chart *chart.Chart) (bind.RenderedBindYAML, error)
+		Render(bindTemplate internal.AddonPlanBindTemplate, instance *internal.Instance, chart *chart.Chart) (bind.RenderedBindYAML, error)
 	}
 
 	bindTemplateResolver interface {
@@ -176,7 +175,6 @@ func newWithIDProvider(bs addonStorage, cs chartStorage, os operationStorage, is
 			operationIDProvider:      idp,
 			helmInstaller:            hc,
 			log:                      log.WithField("service", "provisioner"),
-			instanceBindDataInserter: ibd,
 		},
 		deprovisioner: &deprovisionService{
 			instanceGetter:    is,

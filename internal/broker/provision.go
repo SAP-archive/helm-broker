@@ -15,8 +15,10 @@ import (
 	rls "k8s.io/helm/pkg/proto/hapi/services"
 )
 
-const addonsRepositoryURLName = "addonsRepositoryURL"
-
+const (
+	goTplEngine = "gotpl"
+	addonsRepositoryURLName = "addonsRepositoryURL"
+)
 type provisionService struct {
 	addonIDGetter            addonIDGetter
 	chartGetter              chartGetter
@@ -25,7 +27,6 @@ type provisionService struct {
 	instanceStateGetter      instanceStateProvisionGetter
 	operationInserter        operationInserter
 	operationUpdater         operationUpdater
-	instanceBindDataInserter instanceBindDataInserter
 	operationIDProvider      func() (internal.OperationID, error)
 	helmInstaller            helmInstaller
 	mu                       sync.Mutex
@@ -45,7 +46,7 @@ func (svc *provisionService) Provision(ctx context.Context, osbCtx OsbContext, r
 	svc.mu.Lock()
 	defer svc.mu.Unlock()
 
-	iID := internal.InstanceID(req.InstanceID) // [SECRETS-ISSUE] instanceID's beginning is here
+	iID := internal.InstanceID(req.InstanceID)
 	paramHash := jsonhash.HashS(req.Parameters)
 
 	switch state, err := svc.instanceStateGetter.IsProvisioned(iID); true {
@@ -94,7 +95,6 @@ func (svc *provisionService) Provision(ctx context.Context, osbCtx OsbContext, r
 	if err != nil {
 		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusBadRequest, ErrorMessage: strPtr(fmt.Sprintf("while generating ID for operation: %v", err))}
 	}
-	//opID := internal.OperationID(id)
 
 	op := internal.InstanceOperation{
 		InstanceID:  iID,
@@ -190,16 +190,16 @@ func (svc *provisionService) doAsync(ctx context.Context, input provisioningInpu
 // do is called asynchronously
 func (svc *provisionService) do(ctx context.Context, input provisioningInput) {
 
-	fDo := func() (*rls.InstallReleaseResponse, error) {
+	fDo := func() error {
 
 		c, err := svc.chartGetter.Get(input.brokerNamespace, input.addonPlan.ChartRef.Name, input.addonPlan.ChartRef.Version)
 		if err != nil {
-			return nil, errors.Wrap(err, "while getting chart from storage")
+			return errors.Wrap(err, "while getting chart from storage")
 		}
 
 		out, err := deepCopy(input.addonPlan.ChartValues)
 		if err != nil {
-			return nil, errors.Wrap(err, "while coping plan values")
+			return errors.Wrap(err, "while coping plan values")
 		}
 
 		out = mergeValues(out, input.chartOverrides)
@@ -211,7 +211,7 @@ func (svc *provisionService) do(ctx context.Context, input provisioningInput) {
 
 		resp, err := svc.helmInstaller.Install(c, internal.ChartValues(out), input.releaseName, input.namespace)
 		if err != nil {
-			return nil, errors.Wrap(err, "while installing helm release")
+			return errors.Wrap(err, "while installing helm release")
 		}
 
 		relInfo := internal.ReleaseInfo{
@@ -225,64 +225,35 @@ func (svc *provisionService) do(ctx context.Context, input provisioningInput) {
 
 		exist, err := svc.instanceInserter.Upsert(updatedInstance)
 		if err != nil {
-			return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusConflict, ErrorMessage: strPtr(fmt.Sprintf("while updating instance in storage: %v", err))}
+			return &osb.HTTPStatusCodeError{StatusCode: http.StatusConflict, ErrorMessage: strPtr(fmt.Sprintf("while updating instance in storage: %v", err))}
 		}
 		if exist {
 			svc.log.Infof("Instance %s already existed in storage, instance was replaced", updatedInstance.ID)
 		}
+		isRespValid := validateInstallReleaseResponse(resp)
+		if isRespValid != nil {
+			return errors.Wrap(err, "while validating input")
+		}
 
-		return resp, nil
+		return nil
 	}
 
 	opState := internal.OperationStateSucceeded
 	opDesc := "provisioning succeeded"
 
-	_, err := fDo() //TODO: validate the response maybe?
+	err := fDo()
+
+
 	if err != nil {
 		opState = internal.OperationStateFailed
 		opDesc = fmt.Sprintf("provisioning failed on error: %s", err.Error())
 	}
 
-	//TODO: [SECRETS-ISSUE] here we call the unwanted method resolveAndSaveBindData - get rid of this
-	//if err == nil && svc.isBindable(input.addonPlan, input.isAddonBindable) {
-	//	if resolveErr := svc.resolveAndSaveBindData(input.instanceID, input.namespace, input.addonPlan, resp); resolveErr != nil {
-	//		opState = internal.OperationStateFailed
-	//		opDesc = fmt.Sprintf("resolving bind data failed with error: %s", resolveErr.Error())
-	//	}
-	//}
 
 	if err := svc.operationUpdater.UpdateStateDesc(input.instanceID, input.operationID, opState, &opDesc); err != nil {
 		svc.log.Errorf("State description was not updated, got error: %v", err)
 	}
 }
-
-//func (*provisionService) isBindable(plan internal.AddonPlan, isAddonBindable bool) bool {
-//	return (plan.Bindable != nil && *plan.Bindable) || // if bindable field is set on plan it's override bindalbe field on addon
-//		(plan.Bindable == nil && isAddonBindable) // if bindable field is NOT set on plan that bindable field on addon is important
-//}
-
-// [SECRETS-ISSUE] this logic should be on /bind action
-//func (svc *provisionService) resolveAndSaveBindData(iID internal.InstanceID, namespace internal.Namespace, addonPlan internal.AddonPlan, resp *rls.InstallReleaseResponse) error {
-//	rendered, err := svc.bindTemplateRenderer.Render(addonPlan.BindTemplate, resp)
-//	if err != nil {
-//		return errors.Wrap(err, "while rendering bind yaml template")
-//	}
-//
-//	out, err := svc.bindTemplateResolver.Resolve(rendered, namespace)
-//	if err != nil {
-//		return errors.Wrap(err, "while resolving bind yaml values")
-//	}
-//
-//	in := internal.InstanceBindData{
-//		InstanceID:  iID,
-//		Credentials: out.Credentials,
-//	}
-//	if err := svc.instanceBindDataInserter.InsertInstanceOperation(&in); err != nil { // [SECRETS-ISSUE] here we insert creds to etcd - we dont want that (here or at all??)
-//		return errors.Wrap(err, "while inserting instance bind data into storage")
-//	}
-//
-//	return nil
-//}
 
 func (svc *provisionService) compareProvisioningParameters(iID internal.InstanceID, newHash string) error {
 	instance, err := svc.instanceGetter.Get(iID)
@@ -345,6 +316,27 @@ func mergeValues(dest map[string]interface{}, src map[string]interface{}) map[st
 		dest[k] = mergeValues(destMap, nextMap)
 	}
 	return dest
+}
+
+func validateInstallReleaseResponse(resp *rls.InstallReleaseResponse) error {
+	if resp == nil {
+		return fmt.Errorf("input parameter 'InstallReleaseResponse' cannot be nil")
+	}
+
+	if resp.Release == nil {
+		return fmt.Errorf("'Release' filed from 'InstallReleaseResponse' is missing")
+	}
+
+	if resp.Release.Info == nil {
+		return fmt.Errorf("'Info' filed from 'InstallReleaseResponse' is missing")
+	}
+
+	ch := resp.Release.Chart
+	if ch.Metadata.Engine != "" && ch.Metadata.Engine != goTplEngine {
+		return fmt.Errorf("chart %q requested non-existent template engine %q", ch.Metadata.Name, ch.Metadata.Engine)
+	}
+
+	return nil
 }
 
 func deepCopy(in map[string]interface{}) (map[string]interface{}, error) {

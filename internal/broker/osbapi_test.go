@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"k8s.io/helm/pkg/proto/hapi/chart"
 	rls "k8s.io/helm/pkg/proto/hapi/services"
 
 	"github.com/kyma-project/helm-broker/internal/platform/ptr"
@@ -588,6 +589,7 @@ func TestOSBAPIBindFailureWithDisallowedParametersFieldInReq(t *testing.T) {
 
 	// WHEN
 	req := &osb.BindRequest{
+		AcceptsIncomplete: true,
 		BindingID:  "bind-id",
 		InstanceID: "instance-id",
 		ServiceID:  "svc-id",
@@ -1030,6 +1032,7 @@ func TestOSBAPIBindFailureWithDisallowedParametersFieldInReqNS(t *testing.T) {
 
 	// WHEN
 	req := &osb.BindRequest{
+		AcceptsIncomplete: true,
 		BindingID:  "bind-id",
 		InstanceID: "instance-id",
 		ServiceID:  "svc-id",
@@ -1050,7 +1053,7 @@ func TestOSBAPIBindFailureWithDisallowedParametersFieldInReqNS(t *testing.T) {
 
 type fakeBindTmplRenderer struct{}
 
-func (fakeBindTmplRenderer) Render(bindTemplate internal.AddonPlanBindTemplate, resp *rls.InstallReleaseResponse) (bind.RenderedBindYAML, error) {
+func (fakeBindTmplRenderer) Render(bindTemplate internal.AddonPlanBindTemplate, instance *internal.Instance, chart *chart.Chart)  (bind.RenderedBindYAML, error) {
 	return []byte(`fake`), nil
 }
 
