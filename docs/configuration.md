@@ -1,8 +1,6 @@
 ## Configuration
 
-Learn more about Helm Broker configuration in this document.
 
-### Use environment variables
 
 Use the following environment variables to configure the `Broker` container of the Helm Broker:
 

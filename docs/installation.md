@@ -1,6 +1,6 @@
 # Installation 
 
-This document provides two instructions on the Helm Broker local installation. Read [this](#install-helm-broker-from-chart) section to learn how to install the Helm Broker from the chart together with the Service Catalog, and [this](##install-helm-broker-manually) section to learn how to install the Helm Broker manually as a standalone component.
+This document provides two instructions on the Helm Broker local installation. Read [this](#install-helm-broker-from-chart) section to learn how to install the Helm Broker from the chart together with the Service Catalog, and [this](#install-helm-broker-manually) section to learn how to install the Helm Broker manually as a standalone component.
 
 ## Prerequisites
 
