@@ -107,6 +107,7 @@ func (ts *osbapiTestSuite) OSBClient() osb.Client {
 		config := osb.DefaultClientConfiguration()
 		config.URL = fmt.Sprintf("http://%s/cluster", ts.ServerAddr)
 		config.APIVersion = osb.Version2_13()
+		config.EnableAlphaFeatures = true
 
 		osbClient, err := osb.NewClient(config)
 		require.NoError(ts.t, err)
@@ -123,6 +124,7 @@ func (ts *osbapiTestSuite) OSBClientNS() osb.Client {
 		config := osb.DefaultClientConfiguration()
 		config.URL = fmt.Sprintf("http://%s/ns/%s", ts.ServerAddr, testNs)
 		config.APIVersion = osb.Version2_13()
+		config.EnableAlphaFeatures = true
 
 		osbClient, err := osb.NewClient(config)
 		require.NoError(ts.t, err)
