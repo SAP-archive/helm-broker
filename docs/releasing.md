@@ -25,6 +25,7 @@ Follow these steps to create a new `helm-broker` release `v0.6.0`:
     ```
 This command does the following:
   - Changes the images tag in the `charts/helm-broker/values.yaml` to `v0.6.0`
+  - Changes the tags in the documentation links to `v0.6.0`
   - Creates a commit with the changes
   - Creates the `v0.6.0` tag
 
@@ -63,8 +64,9 @@ Follow these steps to create a new `helm-broker` release 0.6.1:
     ```
     This command does the following:
       - Changes the images tag in the `charts/helm-broker/values.yaml` to `v0.6.1`
+      - Changes the tags in the documentation links to `v0.6.1`
       - Creates a commit with the changes
-      - Creates the `v0.6.1` tag 
+      - Creates the `v0.6.1` tag
 
 4. Push your changes with the tag:
 
