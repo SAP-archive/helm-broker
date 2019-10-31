@@ -1,4 +1,4 @@
-## Usage
+## Configuration
 
 Learn more about Helm Broker usage in this document.
 
