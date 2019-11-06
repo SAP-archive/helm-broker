@@ -17,9 +17,12 @@ import (
 //go:generate mockery -name=chartGetter -output=automock -outpkg=automock -case=underscore
 //go:generate mockery -name=chartStorage -output=automock -outpkg=automock -case=underscore
 //go:generate mockery -name=operationStorage -output=automock -outpkg=automock -case=underscore
+//go:generate mockery -name=bindOperationStorage -output=automock -outpkg=automock -case=underscore
 //go:generate mockery -name=instanceStorage -output=automock -outpkg=automock -case=underscore
+//go:generate mockery -name=instanceBindDataStorage -output=automock -outpkg=automock -case=underscore
 //go:generate mockery -name=helmClient -output=automock -outpkg=automock -case=underscore
 //go:generate mockery -name=instanceStateGetter -output=automock -outpkg=automock -case=underscore
+//go:generate mockery -name=bindStateGetter -output=automock -outpkg=automock -case=underscore
 //go:generate mockery -name=instanceBindDataGetter -output=automock -outpkg=automock -case=underscore
 //go:generate mockery -name=instanceBindDataRemover -output=automock -outpkg=automock -case=underscore
 //go:generate mockery -name=instanceBindDataInserter -output=automock -outpkg=automock -case=underscore
@@ -67,6 +70,39 @@ type (
 		operationCollectionGetter
 		operationUpdater
 		operationRemover
+	}
+
+	bindOperationInserter interface {
+		Insert(bo *internal.BindOperation) error
+	}
+	bindOperationGetter interface {
+		Get(iID internal.InstanceID, bID internal.BindingID, opID internal.OperationID) (*internal.BindOperation, error)
+	}
+	bindOperationCollectionGetter interface {
+		GetAll(iID internal.InstanceID) ([]*internal.BindOperation, error)
+	}
+	bindOperationUpdater interface {
+		UpdateState(iID internal.InstanceID, bID internal.BindingID, opID internal.OperationID, state internal.OperationState) error
+		UpdateStateDesc(iID internal.InstanceID, bID internal.BindingID, opID internal.OperationID, state internal.OperationState, desc *string) error
+	}
+	bindOperationRemover interface {
+		Remove(iID internal.InstanceID, bID internal.BindingID, opID internal.OperationID) error
+	}
+	bindOperationStorage interface {
+		bindOperationInserter
+		bindOperationGetter
+		bindOperationCollectionGetter
+		bindOperationUpdater
+		bindOperationRemover
+	}
+
+	bindStateBindingGetter interface {
+		IsBinded(internal.InstanceID, internal.BindingID) (bool, error)
+		IsBindingInProgress(internal.InstanceID, internal.BindingID) (internal.OperationID, bool, error)
+	}
+
+	bindStateGetter interface {
+		bindStateBindingGetter
 	}
 
 	instanceInserter interface {
@@ -140,7 +176,7 @@ type (
 )
 
 // New creates instance of broker.
-func New(bs addonStorage, cs chartStorage, os operationStorage, is instanceStorage, ibd instanceBindDataStorage,
+func New(bs addonStorage, cs chartStorage, os operationStorage, bos bindOperationStorage, is instanceStorage, ibd instanceBindDataStorage,
 	bindTmplRenderer bindTemplateRenderer, bindTmplResolver bindTemplateResolver, hc helmClient, log *logrus.Entry) *Server {
 	idpRaw := idprovider.New()
 	idp := func() (internal.OperationID, error) {
@@ -151,10 +187,10 @@ func New(bs addonStorage, cs chartStorage, os operationStorage, is instanceStora
 		return internal.OperationID(idRaw), nil
 	}
 
-	return newWithIDProvider(bs, cs, os, is, ibd, bindTmplRenderer, bindTmplResolver, hc, log, idp)
+	return newWithIDProvider(bs, cs, os, bos, is, ibd, bindTmplRenderer, bindTmplResolver, hc, log, idp)
 }
 
-func newWithIDProvider(bs addonStorage, cs chartStorage, os operationStorage, is instanceStorage, ibd instanceBindDataStorage,
+func newWithIDProvider(bs addonStorage, cs chartStorage, os operationStorage, bos bindOperationStorage, is instanceStorage, ibd instanceBindDataStorage,
 	bindTmplRenderer bindTemplateRenderer, bindTmplResolver bindTemplateResolver, hc helmClient,
 	log *logrus.Entry, idp func() (internal.OperationID, error)) *Server {
 	return &Server{
@@ -190,15 +226,22 @@ func newWithIDProvider(bs addonStorage, cs chartStorage, os operationStorage, is
 			log:                     log.WithField("service", "deprovisioner"),
 		},
 		binder: &bindService{
-			addonIDGetter:        bs,
-			chartGetter:          cs,
-			instanceGetter:       is,
-			bindTemplateRenderer: bindTmplRenderer,
-			bindTemplateResolver: bindTmplResolver,
-			resolvedBindData:     make(map[internal.BindingID]*internal.InstanceBindData),
-			bindOperation:        make(map[internal.InstanceID][]*internal.BindOperation),
-			operationIDProvider:  idp,
-			log:                  log.WithField("service", "binder"),
+			addonIDGetter:            bs,
+			chartGetter:              cs,
+			instanceGetter:           is,
+			bindTemplateRenderer:     bindTmplRenderer,
+			bindTemplateResolver:     bindTmplResolver,
+			instanceBindDataInserter: ibd,
+			instanceBindDataGetter:   ibd,
+			bindStateGetter: &bindStateService{
+				bindOperationCollectionGetter: bos,
+			},
+			bindOperationGetter:           bos,
+			bindOperationCollectionGetter: bos,
+			bindOperationInserter:         bos,
+			bindOperationUpdater:          bos,
+			operationIDProvider:           idp,
+			log:                           log.WithField("service", "binder"),
 		},
 		unbinder: &unbindService{},
 		lastOpGetter: &getLastOperationService{

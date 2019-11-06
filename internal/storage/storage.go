@@ -16,6 +16,7 @@ type Factory interface {
 	Instance() Instance
 	InstanceOperation() InstanceOperation
 	InstanceBindData() InstanceBindData
+	BindOperation() BindOperation
 }
 
 // DriverType defines type of data storage
@@ -44,6 +45,8 @@ const (
 	EntityInstanceOperation EntityName = "instanceOperation"
 	// EntityInstanceBindData represents name of bind data entities
 	EntityInstanceBindData EntityName = "entityInstanceBindData"
+	// EntityBindOperation represents name of bind operations entities
+	EntityBindOperation EntityName = "bindOperation"
 )
 
 // ProviderConfig provides configuration to the database provider
@@ -103,6 +106,7 @@ func NewFactory(cl *ConfigList) (Factory, error) {
 			instanceFact          func() (Instance, error)
 			instanceOperationFact func() (InstanceOperation, error)
 			instanceBindDataFact  func() (InstanceBindData, error)
+			bindOperationFact     func() (BindOperation, error)
 		)
 
 		switch cfg.Driver {
@@ -121,6 +125,9 @@ func NewFactory(cl *ConfigList) (Factory, error) {
 			}
 			instanceBindDataFact = func() (InstanceBindData, error) {
 				return memory.NewInstanceBindData(), nil
+			}
+			bindOperationFact = func() (BindOperation, error) {
+				return memory.NewBindOperation(), nil
 			}
 		case DriverEtcd:
 			var err error
@@ -147,7 +154,10 @@ func NewFactory(cl *ConfigList) (Factory, error) {
 				return etcd.NewInstanceOperation(cli)
 			}
 			instanceBindDataFact = func() (InstanceBindData, error) {
-				return etcd.NewInstanceBindData(cli)
+				return memory.NewInstanceBindData(), errors.New("warning: instance bind data storage was set to memory for security reasons")
+			}
+			bindOperationFact = func() (BindOperation, error) {
+				return etcd.NewBindOperation(cli)
 			}
 		default:
 			return nil, errors.New("unknown driver type")
@@ -165,12 +175,15 @@ func NewFactory(cl *ConfigList) (Factory, error) {
 				fact.instanceOperation, _ = instanceOperationFact()
 			case EntityInstanceBindData:
 				fact.instanceBindData, _ = instanceBindDataFact()
+			case EntityBindOperation:
+				fact.bindOperation, _ = bindOperationFact()
 			case EntityAll:
 				fact.chart, _ = chartFact()
 				fact.addon, _ = addonFact()
 				fact.instance, _ = instanceFact()
 				fact.instanceOperation, _ = instanceOperationFact()
 				fact.instanceBindData, _ = instanceBindDataFact()
+				fact.bindOperation, _ = bindOperationFact()
 			default:
 			}
 		}
@@ -185,6 +198,7 @@ type concreteFactory struct {
 	instance          Instance
 	instanceOperation InstanceOperation
 	instanceBindData  InstanceBindData
+	bindOperation     BindOperation
 }
 
 func (f *concreteFactory) Addon() Addon {
@@ -201,4 +215,7 @@ func (f *concreteFactory) InstanceOperation() InstanceOperation {
 }
 func (f *concreteFactory) InstanceBindData() InstanceBindData {
 	return f.instanceBindData
+}
+func (f *concreteFactory) BindOperation() BindOperation {
+	return f.bindOperation
 }

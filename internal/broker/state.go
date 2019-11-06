@@ -109,6 +109,58 @@ OpsLoop:
 	return resultOpID, resultInProgress, nil
 }
 
+type bindStateService struct {
+	bindOperationCollectionGetter bindOperationCollectionGetter
+}
+
+func (svc *bindStateService) IsBinded(iID internal.InstanceID, bID internal.BindingID) (bool, error) {
+	result := false
+	ops, err := svc.bindOperationCollectionGetter.GetAll(iID)
+	switch {
+	case err == nil:
+	case IsNotFoundError(err):
+		return false, nil
+	default:
+		return false, errors.Wrap(err, "while getting operations from storage")
+	}
+
+	for _, op := range ops {
+		if op.Type == internal.OperationTypeCreate && op.State == internal.OperationStateSucceeded && op.BindingID == bID {
+			result = true
+		}
+		if op.Type == internal.OperationTypeRemove && op.State == internal.OperationStateSucceeded && op.BindingID == bID {
+			result = false
+			break
+		}
+	}
+
+	return result, nil
+}
+
+func (svc *bindStateService) IsBindingInProgress(iID internal.InstanceID, bID internal.BindingID) (internal.OperationID, bool, error) {
+	result := false
+	var resultOpID internal.OperationID
+
+	ops, err := svc.bindOperationCollectionGetter.GetAll(iID)
+	switch {
+	case err == nil:
+	case IsNotFoundError(err):
+		return resultOpID, false, nil
+	default:
+		return resultOpID, false, errors.Wrap(err, "while getting operations from storage")
+	}
+
+	for _, op := range ops {
+		if op.Type == internal.OperationTypeCreate && op.State == internal.OperationStateInProgress && op.BindingID == bID {
+			result = true
+			resultOpID = op.OperationID
+			break
+		}
+	}
+
+	return resultOpID, result, nil
+}
+
 // IsNotFoundError check if error is NotFound one.
 func IsNotFoundError(err error) bool {
 	nfe, ok := err.(interface {

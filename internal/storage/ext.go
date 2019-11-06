@@ -47,6 +47,16 @@ type InstanceOperation interface {
 	Remove(internal.InstanceID, internal.OperationID) error
 }
 
+// BindOperation is an interface that describe storage layer operations for BindOperations
+type BindOperation interface {
+	Insert(*internal.BindOperation) error
+	Get(internal.InstanceID, internal.BindingID, internal.OperationID) (*internal.BindOperation, error)
+	GetAll(internal.InstanceID) ([]*internal.BindOperation, error)
+	UpdateState(internal.InstanceID, internal.BindingID, internal.OperationID, internal.OperationState) error
+	UpdateStateDesc(internal.InstanceID, internal.BindingID, internal.OperationID, internal.OperationState, *string) error
+	Remove(internal.InstanceID, internal.BindingID, internal.OperationID) error
+}
+
 // InstanceBindData is an interface that describe storage layer operations for InstanceBindData entities
 type InstanceBindData interface {
 	Insert(*internal.InstanceBindData) error

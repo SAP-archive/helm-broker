@@ -5,7 +5,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// DTOs for Open Service Broker v2.12 API
+// DTOs for Open Service Broker v2.13 API
 
 type contextDTO struct {
 	Platform  string             `json:"platform"`
@@ -68,14 +68,19 @@ type BindInProgressResponseDTO struct {
 
 // BindParametersDTO contains parameters sent by Service Catalog in the body of bind request.
 type BindParametersDTO struct {
-	ServiceID string `json:"service_id"`
-	PlanID    string `json:"plan_id"`
+	ServiceID  internal.ServiceID     `json:"service_id"`
+	PlanID     internal.ServicePlanID `json:"plan_id"`
+	Parameters map[string]interface{} `json:"parameters,omitempty"`
+	Context    contextDTO             `json:"context,omitempty"`
 }
 
 // Validate checks if bind parameters aren't empty
 func (params *BindParametersDTO) Validate() error {
-	if params.PlanID == "" || params.ServiceID == "" {
-		return errors.New("bind parameters cannot be empty")
+	if params.PlanID == "" {
+		return errors.New("PlanID must be non-empty string")
+	}
+	if params.ServiceID == "" {
+		return errors.New("ServiceID must be non-empty string")
 	}
 	return nil
 }

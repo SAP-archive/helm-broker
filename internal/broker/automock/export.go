@@ -12,6 +12,9 @@ type (
 	InstanceBindDataInserter = instanceBindDataInserter
 	InstanceBindDataRemover = instanceBindDataRemover
 	InstanceStateGetter = instanceStateGetter
+	BindStateGetter = bindStateGetter
 	InstanceStorage = instanceStorage
+	InstanceBindDataStorage = instanceBindDataStorage
 	OperationStorage = operationStorage
+	BindOperationStorage = bindOperationStorage
 	)

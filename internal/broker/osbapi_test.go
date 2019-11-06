@@ -52,6 +52,7 @@ func newOSBAPITestSuite(t *testing.T) *osbapiTestSuite {
 		sFact.Addon(),
 		sFact.Chart(),
 		sFact.InstanceOperation(),
+		sFact.BindOperation(),
 		sFact.Instance(),
 		sFact.InstanceBindData(),
 		&fakeBindTmplRenderer{},

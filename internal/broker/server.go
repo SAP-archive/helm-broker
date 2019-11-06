@@ -394,10 +394,14 @@ func (srv *Server) bindAction(w http.ResponseWriter, r *http.Request) {
 
 	sReq := osb.BindRequest{
 		AcceptsIncomplete: true,
-		InstanceID:        instanceID,
-		ServiceID:         params.ServiceID,
-		PlanID:            params.PlanID,
+		InstanceID:        string(instanceID),
+		ServiceID:         string(params.ServiceID),
+		PlanID:            string(params.PlanID),
 		BindingID:         bindIDRaw,
+		Parameters:        params.Parameters,
+		Context: map[string]interface{}{
+			"namespace": string(params.Context.Namespace),
+		},
 	}
 	sResp, sErr := srv.binder.Bind(r.Context(), osbCtx, &sReq)
 	if sErr != nil {

@@ -4,13 +4,14 @@ import (
 	"fmt"
 
 	"github.com/Masterminds/semver"
-
+	google_protobuf "github.com/golang/protobuf/ptypes/timestamp"
 	"k8s.io/helm/pkg/proto/hapi/chart"
 
 	"github.com/kyma-project/helm-broker/internal"
 )
 
 type expAll struct {
+	BindingID   internal.BindingID
 	InstanceID  internal.InstanceID
 	OperationID internal.OperationID
 	Addon       struct {
@@ -39,9 +40,15 @@ type expAll struct {
 	Namespace   internal.Namespace
 	ReleaseName internal.ReleaseName
 	ParamsHash  string
+	ReleaseInfo struct {
+		Time     *google_protobuf.Timestamp
+		Revision int
+		Config   *chart.Config
+	}
 }
 
 func (exp *expAll) Populate() {
+	exp.BindingID = internal.BindingID("fix-unique-bind-ID")
 	exp.InstanceID = internal.InstanceID("fix-I-ID")
 	exp.OperationID = internal.OperationID("fix-OP-ID")
 
@@ -65,6 +72,14 @@ func (exp *expAll) Populate() {
 	exp.Namespace = internal.Namespace("fix-namespace")
 	exp.ReleaseName = internal.ReleaseName(fmt.Sprintf("hb-%s-%s-%s", exp.Addon.Name, exp.AddonPlan.Name, exp.InstanceID))
 	exp.ParamsHash = "TODO"
+	exp.ReleaseInfo.Time = &google_protobuf.Timestamp{
+		Seconds: 123123123,
+		Nanos:   1,
+	}
+	exp.ReleaseInfo.Revision = 123
+	exp.ReleaseInfo.Config = &chart.Config{
+		Raw: "raw-config",
+	}
 }
 
 func (exp *expAll) NewInstanceCollection() []*internal.Instance {
@@ -128,6 +143,40 @@ func (exp *expAll) NewInstance() *internal.Instance {
 	}
 }
 
+func (exp *expAll) NewReleaseInfo() internal.ReleaseInfo {
+	return internal.ReleaseInfo{
+		Time:     exp.ReleaseInfo.Time,
+		Revision: exp.ReleaseInfo.Revision,
+		Config:   exp.ReleaseInfo.Config,
+	}
+}
+
+func (exp *expAll) NewInstanceWithInfo() *internal.Instance {
+	r := exp.NewReleaseInfo()
+	return &internal.Instance{
+		ID:            exp.InstanceID,
+		ServiceID:     exp.Service.ID,
+		ServicePlanID: exp.ServicePlan.ID,
+		ReleaseName:   exp.ReleaseName,
+		Namespace:     exp.Namespace,
+		ParamsHash:    exp.ParamsHash,
+		ReleaseInfo:   r,
+	}
+}
+
+func (exp *expAll) NewInstanceBindData(cr internal.InstanceCredentials) *internal.InstanceBindData {
+	return &internal.InstanceBindData{
+		InstanceID:  exp.InstanceID,
+		Credentials: cr,
+	}
+}
+
+func (exp *expAll) NewInstanceCredentials() *internal.InstanceCredentials {
+	return &internal.InstanceCredentials{
+		"password": "secret",
+	}
+}
+
 func (exp *expAll) NewInstanceOperation(tpe internal.OperationType, state internal.OperationState) *internal.InstanceOperation {
 	return &internal.InstanceOperation{
 		InstanceID:  exp.InstanceID,
@@ -135,5 +184,45 @@ func (exp *expAll) NewInstanceOperation(tpe internal.OperationType, state intern
 		Type:        tpe,
 		State:       state,
 		ParamsHash:  exp.ParamsHash,
+	}
+}
+
+func (exp *expAll) NewBindOperation(tpe internal.OperationType, state internal.OperationState) *internal.BindOperation {
+	return &internal.BindOperation{
+		InstanceID:  exp.InstanceID,
+		BindingID:   exp.BindingID,
+		OperationID: exp.OperationID,
+		Type:        tpe,
+		State:       state,
+		ParamsHash:  exp.ParamsHash,
+	}
+}
+
+func (exp *expAll) NewBindOperationCollection() []*internal.BindOperation {
+	return []*internal.BindOperation{
+		&internal.BindOperation{
+			InstanceID:  exp.InstanceID,
+			BindingID:   exp.BindingID,
+			OperationID: exp.OperationID,
+			Type:        internal.OperationTypeCreate,
+			State:       internal.OperationStateSucceeded,
+			ParamsHash:  exp.ParamsHash,
+		},
+		&internal.BindOperation{
+			InstanceID:  "new-id-not-exist-1",
+			BindingID:   "new-bid-not-exists-1",
+			OperationID: "new-opid-not-exists-1",
+			Type:        internal.OperationTypeCreate,
+			State:       internal.OperationStateSucceeded,
+			ParamsHash:  exp.ParamsHash,
+		},
+		&internal.BindOperation{
+			InstanceID:  "new-id-not-exist-1",
+			BindingID:   "new-bid-not-exists-1",
+			OperationID: "new-opid-not-exists-1",
+			Type:        internal.OperationTypeCreate,
+			State:       internal.OperationStateSucceeded,
+			ParamsHash:  exp.ParamsHash,
+		},
 	}
 }

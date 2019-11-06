@@ -44,7 +44,7 @@ func main() {
 	sFact, err := storage.NewFactory(&storageConfig)
 	fatalOnError(err)
 
-	srv := broker.New(sFact.Addon(), sFact.Chart(), sFact.InstanceOperation(), sFact.Instance(), sFact.InstanceBindData(),
+	srv := broker.New(sFact.Addon(), sFact.Chart(), sFact.InstanceOperation(), sFact.BindOperation(), sFact.Instance(), sFact.InstanceBindData(),
 		bind.NewRenderer(), bind.NewResolver(clientset.CoreV1()), helmClient, log)
 
 	go health.NewBrokerProbes(fmt.Sprintf(":%d", cfg.StatusPort), storageConfig.ExtractEtcdURL()).Handle()
