@@ -38,7 +38,7 @@ type (
 	binder interface {
 		Bind(ctx context.Context, osbCtx OsbContext, req *osb.BindRequest) (*osb.BindResponse, *osb.HTTPStatusCodeError)
 		GetLastBindOperation(ctx context.Context, osbCtx OsbContext, req *osb.BindingLastOperationRequest) (*osb.LastOperationResponse, error)
-		GetServiceBinding(ctx context.Context, osbCtx OsbContext, req *osb.GetBindingRequest) (*osb.GetBindingResponse, error)
+		GetServiceBinding(ctx context.Context, osbCtx OsbContext, req *osb.GetBindingRequest) (*osb.GetBindingResponse, *osb.HTTPStatusCodeError)
 	}
 
 	unbinder interface {
@@ -424,7 +424,7 @@ func (srv *Server) bindAction(w http.ResponseWriter, r *http.Request) {
 		}
 		logRespFields := logrus.Fields{
 			"action":                "bind",
-			"resp:async":            false,
+			"resp:async":            sResp.Async,
 			"resp:credentials:keys": keys,
 		}
 		srv.logger.WithFields(logRespFields).Info("action response")

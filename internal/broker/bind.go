@@ -62,7 +62,7 @@ func (svc *bindService) Bind(ctx context.Context, osbCtx OsbContext, req *osb.Bi
 		}
 		out, err := svc.getInstanceBindData(iID, bID)
 		if err != nil {
-			return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusConflict, ErrorMessage: strPtr(fmt.Sprintf("while getting bind data from memory for instance id: %q and service binding id: %q with error: %v", iID, bID, err))}
+			return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusBadRequest, ErrorMessage: strPtr(fmt.Sprintf("while getting bind data from memory for instance id: %q and service binding id: %q with error: %v", iID, bID, err))}
 		}
 		return &osb.BindResponse{
 			Async:       false,
@@ -86,7 +86,6 @@ func (svc *bindService) Bind(ctx context.Context, osbCtx OsbContext, req *osb.Bi
 		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusBadRequest, ErrorMessage: strPtr(fmt.Sprintf("while generating ID for operation: %v", err))}
 	}
 
-	// TODO: handle operation async
 	op := internal.BindOperation{
 		InstanceID:  iID,
 		BindingID:   bID,
@@ -100,7 +99,6 @@ func (svc *bindService) Bind(ctx context.Context, osbCtx OsbContext, req *osb.Bi
 		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusBadRequest, ErrorMessage: strPtr(fmt.Sprintf("while inserting instance operation to storage: %v", err))}
 	}
 
-	// here ends operation
 	instance, err := svc.instanceGetter.Get(iID)
 	if err != nil {
 		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusBadRequest, ErrorMessage: strPtr(fmt.Sprintf("while getting instance from storage for id: %q with error: %v", iID, err))}
@@ -128,7 +126,6 @@ func (svc *bindService) Bind(ctx context.Context, osbCtx OsbContext, req *osb.Bi
 		addonPlan:       addonPlan,
 		isAddonBindable: addon.Bindable,
 	}
-	// TODO: ASYNC HERE
 	svc.doAsync(ctx, bindInput)
 
 	opKey := osb.OperationKey(op.OperationID)
@@ -138,126 +135,8 @@ func (svc *bindService) Bind(ctx context.Context, osbCtx OsbContext, req *osb.Bi
 		Async:        true,
 	}
 
-	//out, err := svc.instanceBindDataGetter.Get(internal.InstanceID(req.InstanceID)) // [SECRETS-ISSUE] here we get credentials in exchange for instanceID - perhaps from etcd
-	//if err != nil {
-	//	return nil, errors.Wrapf(err, "while getting bind data from storage for instance id: %q", req.InstanceID)
-	//}
-
-	//return &osb.BindResponse{
-	//	Credentials: svc.dtoFromModel(out.Credentials),
-	//}, nil
-
 	return resp, nil
 }
-
-//func (svc *bindService) insertBindOperation(bo *internal.BindOperation) error {
-//	if bo == nil {
-//		return errors.New("entity may not be nil")
-//	}
-//
-//	if bo.InstanceID.IsZero() || bo.BindingID.IsZero() || bo.OperationID.IsZero() {
-//		return errors.New("all parameters: instance, binding and operation id must be set")
-//	}
-//
-//	svc.bindOperation[bo.InstanceID] = append(svc.bindOperation[bo.InstanceID], bo)
-//
-//	return nil
-//}
-
-//func (svc *bindService) updateBindOperationStateDesc(iID internal.InstanceID, bID internal.BindingID, opID internal.OperationID, state internal.OperationState, desc *string) error {
-//	op, err := svc.getBindOperation(iID, bID, opID)
-//	if err != nil {
-//		return errors.Wrap(err, "while getting bind operation")
-//	}
-//
-//	op.State = state
-//	op.StateDescription = desc
-//
-//	return nil
-//}
-//
-//func (svc *bindService) getBindOperation(iID internal.InstanceID, bID internal.BindingID, opID internal.OperationID) (*internal.BindOperation, error) {
-//	if iID.IsZero() || bID.IsZero() || opID.IsZero() {
-//		return nil, errors.Errorf("all parameters: instance, binding and operation id must be set. InstanceID: %q | BindingID: %q | OperationID: %q", iID, bID, opID)
-//	}
-//
-//	out := &internal.BindOperation{}
-//
-//	for _, singleOperation := range svc.bindOperation[iID] {
-//		if singleOperation.BindingID == bID && singleOperation.OperationID == opID {
-//			out = singleOperation
-//			return out, nil
-//		}
-//
-//	}
-//	return nil, notFoundError{}
-//
-//}
-//
-//func (svc *bindService) getAllBindOperation(iID internal.InstanceID) ([]*internal.BindOperation, error) {
-//	if iID.IsZero() {
-//		return nil, errors.New("instance id must be set")
-//	}
-//
-//	out := svc.bindOperation[iID]
-//
-//	if len(out) == 0 {
-//		return nil, notFoundError{}
-//	}
-//
-//	return out, nil
-//}
-
-//func (svc *bindService) isBinded(iID internal.InstanceID, bID internal.BindingID) (bool, error) {
-//	result := false
-//
-//	ops, err :=
-//
-//	ops, err := svc.getAllBindOperation(iID)
-//	switch {
-//	case err == nil:
-//	case IsNotFoundError(err):
-//		return false, nil
-//	default:
-//		return false, errors.Wrap(err, "while getting operations from memory")
-//	}
-//
-//	for _, op := range ops {
-//		if op.Type == internal.OperationTypeCreate && op.State == internal.OperationStateSucceeded && op.BindingID == bID {
-//			result = true
-//		}
-//		if op.Type == internal.OperationTypeRemove && op.State == internal.OperationStateSucceeded && op.BindingID == bID {
-//			result = false
-//			break
-//		}
-//	}
-//
-//	return result, nil
-//}
-//
-//func (svc *bindService) isBindingInProgress(iID internal.InstanceID, bID internal.BindingID) (internal.OperationID, bool, error) {
-//	result := false
-//	var resultOpID internal.OperationID
-//
-//	ops, err := svc.getAllBindOperation(iID)
-//	switch {
-//	case err == nil:
-//	case IsNotFoundError(err):
-//		return resultOpID, false, nil
-//	default:
-//		return resultOpID, false, errors.Wrap(err, "while getting operations from memory")
-//	}
-//
-//	for _, op := range ops {
-//		if op.Type == internal.OperationTypeCreate && op.State == internal.OperationStateInProgress && op.BindingID == bID {
-//			result = true
-//			resultOpID = op.OperationID
-//			break
-//		}
-//	}
-//
-//	return resultOpID, result, nil
-//}
 
 func (svc *bindService) GetLastBindOperation(ctx context.Context, osbCtx OsbContext, req *osb.BindingLastOperationRequest) (*osb.LastOperationResponse, error) {
 	iID := internal.InstanceID(req.InstanceID)
@@ -290,7 +169,7 @@ func (svc *bindService) GetLastBindOperation(ctx context.Context, osbCtx OsbCont
 	return &resp, nil
 }
 
-func (svc *bindService) GetServiceBinding(ctx context.Context, osbCtx OsbContext, req *osb.GetBindingRequest) (*osb.GetBindingResponse, error) {
+func (svc *bindService) GetServiceBinding(ctx context.Context, osbCtx OsbContext, req *osb.GetBindingRequest) (*osb.GetBindingResponse, *osb.HTTPStatusCodeError) {
 	iID := internal.InstanceID(req.InstanceID)
 	bID := internal.BindingID(req.BindingID)
 
@@ -301,7 +180,7 @@ func (svc *bindService) GetServiceBinding(ctx context.Context, osbCtx OsbContext
 		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusNotFound, ErrorMessage: strPtr(fmt.Sprintf("service binding id: %q is in progress", opIDInProgress))}
 	}
 
-	out, err := svc.getInstanceBindData(iID, bID)
+	out, err := svc.instanceBindDataGetter.Get(iID)
 	if err != nil {
 		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusNotFound, ErrorMessage: strPtr(fmt.Sprintf("while getting bind data from memory for instance id: %q and service binding id: %q with error: %v", iID, bID, err))}
 	}

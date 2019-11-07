@@ -38,7 +38,7 @@ helm init --service-account tiller --upgrade --wait
 3. Install Service Catalog as a Helm chart:
 ```bash
 helm repo add svc-cat https://svc-catalog-charts.storage.googleapis.com
-helm install svc-cat/catalog --name catalog --namespace catalog
+helm install svc-cat/catalog --name catalog --namespace catalog --set asyncBindingOperationsEnabled=true
 ```
 
 4. Clone the Helm Broker repository:
