@@ -1,7 +1,4 @@
-FROM alpine:3.10
-
-RUN apk --no-cache add ca-certificates
-RUN apk add --no-cache curl
+FROM scratch
 
 COPY ./targz /usr/local/bin/targz
 COPY ./indexbuilder /usr/local/bin/indexbuilder
