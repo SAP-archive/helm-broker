@@ -1,5 +1,8 @@
 # Helm Broker
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/kyma-project/helm-broker)](https://goreportcard.com/report/github.com/kyma-project/helm-broker)
+[![Sourcegraph](https://sourcegraph.com/github.com/kyma-project/helm-broker/-/badge.svg)](https://sourcegraph.com/github.com/kyma-project/helm-broker?badge)
+
 ## Overview
 
 The Helm Broker is a [Service Broker](https://kyma-project.io/docs/master/components/service-catalog/#service-brokers-overview) which exposes Helm charts as Service Classes in the [Service Catalog](https://kyma-project.io/docs/master/components/service-catalog/#overview-overview). To do so, the Helm Broker uses the concept of [addons](https://github.com/kyma-project/addons). An addon is an abstraction layer over a Helm chart which provides all information required to convert the chart into a Service Class. To learn more about the Helm Broker, read the [documentation](https://github.com/kyma-project/helm-broker/blob/master/docs/README.md).
