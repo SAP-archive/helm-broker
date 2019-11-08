@@ -49,11 +49,11 @@ client:
 	./hack/update-codegen.sh
 
 .PHONY: release
-release: tar-chart generate-changelog release-branch
+release: tar-chart append-changelog release-branch
 	./hack/release/push_release.sh $(GIT_TAG) $(GIT_REPO)
 
 .PHONY: latest-release
-latest-release: tar-chart set-latest-tag generate-changelog
+latest-release: set-latest-tag tag-chart-images tar-chart append-changelog update-release-docs
 	./hack/release/create_latest_tag.sh $(GIT_REPO)
 	./hack/release/remove_latest_tag.sh $(GIT_REPO)
 	./hack/release/push_release.sh $(GIT_TAG) $(GIT_REPO)
@@ -61,6 +61,10 @@ latest-release: tar-chart set-latest-tag generate-changelog
 .PHONY: generate-changelog
 generate-changelog:
 	./hack/release/generate_changelog.sh $(GIT_TAG) $(REPO_NAME) $(REPO_OWNER)
+
+.PHONY: append-changelog
+append-changelog: generate-changelog
+	./hack/release/append_changelog.sh
 
 .PHONY: release-branch
 release-branch:
@@ -71,6 +75,7 @@ release-branch:
 set-latest-tag:
 	$(eval GIT_TAG=latest)
 	$(eval TAG=latest)
+	$(eval VERSION=latest)
 
 .PHONY: tar-chart
 tar-chart: create-release-dir
@@ -81,10 +86,14 @@ create-release-dir:
 	mkdir -p toCopy
 
 .PHONY: cut-release
-cut-release: tag-chart-images
-	git add charts/helm-broker/values.yaml
-	git commit -m "Bump chart images to version: $(VERSION)"
+cut-release: tag-chart-images update-release-docs
+	git add .
+	git commit -m "Bump version to: $(VERSION)"
 	git tag $(VERSION)
+
+.PHONY: update-release-docs
+update-release-docs:
+	./hack/release/update_release_docs.sh $(VERSION)
 
 .PHONY: tag-chart-images
 tag-chart-images: get-yaml-editor
