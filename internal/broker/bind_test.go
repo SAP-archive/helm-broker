@@ -19,24 +19,6 @@ import (
 	"github.com/kyma-project/helm-broker/internal/broker/automock"
 )
 
-//type bindServiceTestCase struct {
-//	addonStorageMock         *automock.AddonStorage
-//	chartGetterMock          *automock.ChartGetter
-//	instanceGetterMock       *automock.InstanceStorage
-//	bindTemplateRendererMock *automock.BindTemplateRenderer
-//	bindTemplateResolverMock *automock.BindTemplateResolver
-//}
-//
-//func newBindTC() *bindServiceTestCase {
-//	return &bindServiceTestCase{
-//		addonStorageMock:         &automock.AddonStorage{},
-//		chartGetterMock:          &automock.ChartGetter{},
-//		instanceGetterMock:       &automock.InstanceStorage{},
-//		bindTemplateRendererMock: &automock.BindTemplateRenderer{},
-//		bindTemplateResolverMock: &automock.BindTemplateResolver{},
-//	}
-//}
-
 func newBindServiceTestSuite(t *testing.T) *bindServiceTestSuite {
 	return &bindServiceTestSuite{t: t}
 }
@@ -80,7 +62,6 @@ func (ts *bindServiceTestSuite) FixBindRequest() osb.BindRequest {
 		InstanceID: string(ts.Exp.InstanceID),
 		ServiceID:  string(ts.Exp.Service.ID),
 		PlanID:     string(ts.Exp.ServicePlan.ID),
-		Parameters: make(internal.ChartValues),
 		Context: map[string]interface{}{
 			"namespace": string(ts.Exp.Namespace),
 		},
@@ -423,12 +404,8 @@ func TestBindServiceBindSuccessAsyncWhenBinded(t *testing.T) {
 
 	bosMock := &automock.BindOperationStorage{}
 	defer bosMock.AssertExpectations(t)
-	expBindOpCollection := ts.FixBindOpCollection()
 
 	req := ts.FixBindRequest()
-
-	expBindOpCollection[0].ParamsHash = jsonhash.HashS(req.Parameters)
-	bosMock.On("GetAll", ts.Exp.InstanceID).Return(expBindOpCollection, nil).Once()
 
 	rendererMock := &automock.BindTemplateRenderer{}
 	resolverMock := &automock.BindTemplateResolver{}
@@ -464,55 +441,6 @@ func TestBindServiceBindSuccessAsyncWhenBinded(t *testing.T) {
 	}, resp.Credentials)
 }
 
-func TestBindServiceBindFailureWhenBindedOnCompareBindParams(t *testing.T) {
-	//given
-	ts := newBindServiceTestSuite(t)
-	ts.SetUp()
-
-	asMock := &automock.AddonStorage{}
-	cgMock := &automock.ChartGetter{}
-	isMock := &automock.InstanceStorage{}
-
-	ibdsMock := &automock.InstanceBindDataStorage{}
-
-	bosMock := &automock.BindOperationStorage{}
-	defer bosMock.AssertExpectations(t)
-	expBindOpCollection := ts.FixBindOpCollection()
-
-	bosMock.On("GetAll", ts.Exp.InstanceID).Return(expBindOpCollection, nil).Once()
-
-	rendererMock := &automock.BindTemplateRenderer{}
-	resolverMock := &automock.BindTemplateResolver{}
-
-	bsgMock := &automock.BindStateGetter{}
-	defer bsgMock.AssertExpectations(t)
-	bsgMock.On("IsBinded", ts.Exp.InstanceID, ts.Exp.BindingID).Return(true, nil).Once()
-
-	oipFake := func() (internal.OperationID, error) {
-		return ts.Exp.OperationID, nil
-	}
-
-	testHookCalled := make(chan struct{})
-
-	svc := broker.NewBindService(asMock, cgMock, isMock, ibdsMock, ibdsMock,
-		rendererMock, resolverMock, bsgMock, bosMock, bosMock, bosMock, bosMock, oipFake).
-		WithTestHookOnAsyncCalled(func(opID internal.OperationID) {
-			assert.Equal(t, ts.Exp.OperationID, opID)
-			close(testHookCalled)
-		})
-
-	ctx := context.Background()
-	osbCtx := *broker.NewOSBContext("", "v1")
-	req := ts.FixBindRequest()
-
-	//when
-	resp, err := svc.Bind(ctx, osbCtx, &req)
-
-	//then
-	assert.NotNil(t, err)
-	assert.Nil(t, resp)
-}
-
 func TestBindServiceBindFailureWhenBindedOnGetIbd(t *testing.T) {
 	//given
 	ts := newBindServiceTestSuite(t)
@@ -529,13 +457,8 @@ func TestBindServiceBindFailureWhenBindedOnGetIbd(t *testing.T) {
 
 	bosMock := &automock.BindOperationStorage{}
 	defer bosMock.AssertExpectations(t)
-	expBindOpCollection := ts.FixBindOpCollection()
 
 	req := ts.FixBindRequest()
-
-	expBindOpCollection[0].ParamsHash = jsonhash.HashS(req.Parameters)
-
-	bosMock.On("GetAll", ts.Exp.InstanceID).Return(expBindOpCollection, nil).Once()
 
 	rendererMock := &automock.BindTemplateRenderer{}
 	resolverMock := &automock.BindTemplateResolver{}
@@ -581,12 +504,8 @@ func TestBindServiceBindSuccessAsyncWhenBindingInProgress(t *testing.T) {
 
 	bosMock := &automock.BindOperationStorage{}
 	defer bosMock.AssertExpectations(t)
-	expBindOpCollection := ts.FixBindOpCollection()
 
 	req := ts.FixBindRequest()
-
-	expBindOpCollection[0].ParamsHash = jsonhash.HashS(req.Parameters)
-	bosMock.On("GetAll", ts.Exp.InstanceID).Return(expBindOpCollection, nil).Once()
 
 	rendererMock := &automock.BindTemplateRenderer{}
 	resolverMock := &automock.BindTemplateResolver{}
@@ -621,7 +540,7 @@ func TestBindServiceBindSuccessAsyncWhenBindingInProgress(t *testing.T) {
 	assert.EqualValues(t, ts.Exp.OperationID, *resp.OperationKey)
 }
 
-func TestBindServiceBindFailureWhenBindingInProgressOnCheckingIsBindingInProgress(t *testing.T) {
+func TestBindServiceBindFailureWhenBindingInProgressOnIsBindingInProgress(t *testing.T) {
 	//given
 	ts := newBindServiceTestSuite(t)
 	ts.SetUp()
@@ -639,54 +558,6 @@ func TestBindServiceBindFailureWhenBindingInProgressOnCheckingIsBindingInProgres
 	bsgMock.On("IsBinded", ts.Exp.InstanceID, ts.Exp.BindingID).Return(false, nil).Once()
 	expIsBindInProgError := errors.New("fake-is-binding-in-progress-error")
 	bsgMock.On("IsBindingInProgress", ts.Exp.InstanceID, ts.Exp.BindingID).Return(internal.OperationID(""), false, expIsBindInProgError).Once()
-
-	oipFake := func() (internal.OperationID, error) {
-		return ts.Exp.OperationID, nil
-	}
-
-	testHookCalled := make(chan struct{})
-
-	svc := broker.NewBindService(asMock, cgMock, isMock, ibdsMock, ibdsMock,
-		rendererMock, resolverMock, bsgMock, bosMock, bosMock, bosMock, bosMock, oipFake).
-		WithTestHookOnAsyncCalled(func(opID internal.OperationID) {
-			assert.Equal(t, ts.Exp.OperationID, opID)
-			close(testHookCalled)
-		})
-
-	ctx := context.Background()
-	osbCtx := *broker.NewOSBContext("", "v1")
-	req := ts.FixBindRequest()
-
-	//when
-	resp, err := svc.Bind(ctx, osbCtx, &req)
-
-	//then
-	assert.NotNil(t, err)
-	assert.Nil(t, resp)
-}
-
-func TestBindServiceBindFailureWhenBindingInProgressOnCompareBindParams(t *testing.T) {
-	//given
-	ts := newBindServiceTestSuite(t)
-	ts.SetUp()
-
-	asMock := &automock.AddonStorage{}
-	cgMock := &automock.ChartGetter{}
-	isMock := &automock.InstanceStorage{}
-	ibdsMock := &automock.InstanceBindDataStorage{}
-
-	bosMock := &automock.BindOperationStorage{}
-	defer bosMock.AssertExpectations(t)
-	expBindOpCollection := ts.FixBindOpCollection()
-	bosMock.On("GetAll", ts.Exp.InstanceID).Return(expBindOpCollection, nil).Once()
-
-	rendererMock := &automock.BindTemplateRenderer{}
-	resolverMock := &automock.BindTemplateResolver{}
-
-	bsgMock := &automock.BindStateGetter{}
-	defer bsgMock.AssertExpectations(t)
-	bsgMock.On("IsBinded", ts.Exp.InstanceID, ts.Exp.BindingID).Return(false, nil).Once()
-	bsgMock.On("IsBindingInProgress", ts.Exp.InstanceID, ts.Exp.BindingID).Return(ts.Exp.OperationID, true, nil).Once()
 
 	oipFake := func() (internal.OperationID, error) {
 		return ts.Exp.OperationID, nil
@@ -1050,7 +921,7 @@ func TestBindServiceGetServiceBindingFailureWhenBindingInProgress(t *testing.T) 
 	assert.Nil(t, resp)
 }
 
-func TestBindServiceGetServiceBindingFailureOnIsBindingInProgressCheck(t *testing.T) {
+func TestBindServiceGetServiceBindingFailureOnIsBindingInProgress(t *testing.T) {
 	ts := newBindServiceTestSuite(t)
 	ts.SetUp()
 

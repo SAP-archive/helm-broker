@@ -57,9 +57,6 @@ func (svc *bindService) Bind(ctx context.Context, osbCtx OsbContext, req *osb.Bi
 	case err != nil:
 		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusBadRequest, ErrorMessage: strPtr(fmt.Sprintf("while checking if service binding for service instance already exists: %v", err))}
 	case state:
-		if err := svc.compareBindingParameters(iID, bID, paramHash); err != nil { // TODO: verify if comparision is needed
-			return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusConflict, ErrorMessage: strPtr(fmt.Sprintf("while comparing binding parameters %v: %v", req.Parameters, err))}
-		}
 		out, err := svc.getInstanceBindData(iID, bID)
 		if err != nil {
 			return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusBadRequest, ErrorMessage: strPtr(fmt.Sprintf("while getting bind data from memory for instance id: %q and service binding id: %q with error: %v", iID, bID, err))}
@@ -74,9 +71,6 @@ func (svc *bindService) Bind(ctx context.Context, osbCtx OsbContext, req *osb.Bi
 	case err != nil:
 		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusBadRequest, ErrorMessage: strPtr(fmt.Sprintf("while checking if service binding is being created: %v", err))}
 	case inProgress:
-		if err := svc.compareBindingParameters(iID, bID, paramHash); err != nil {
-			return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusConflict, ErrorMessage: strPtr(fmt.Sprintf("while comparing binding parameters %v: %v", req.Parameters, err))}
-		}
 		opKeyInProgress := osb.OperationKey(opIDInProgress)
 		return &osb.BindResponse{Async: true, OperationKey: &opKeyInProgress}, nil
 	}
@@ -260,7 +254,7 @@ func (svc *bindService) renderAndResolveBindData(addonPlan internal.AddonPlan, i
 
 	err = svc.instanceBindDataInserter.Insert(&in)
 	if err != nil {
-		return errors.Wrap(err, "while getting instance bind data from memory")
+		return errors.Wrap(err, "while inserting instance bind data from memory")
 	}
 
 	return nil
@@ -277,31 +271,6 @@ func (svc *bindService) getInstanceBindData(iID internal.InstanceID, bID interna
 	}
 
 	return ibd, nil
-}
-
-func (svc *bindService) compareBindingParameters(iID internal.InstanceID, bID internal.BindingID, newHash string) error {
-	ops, err := svc.bindOperationCollectionGetter.GetAll(iID)
-	switch {
-	case err == nil:
-	case IsNotFoundError(err):
-		return nil
-	default:
-		return errors.Wrapf(err, "while getting bind operation for instance id: %q from memory", iID)
-	}
-
-	outOp := &internal.BindOperation{}
-	for _, singleOperation := range ops {
-		if singleOperation.InstanceID == iID && singleOperation.BindingID == bID {
-			outOp = singleOperation
-			break
-		}
-	}
-
-	if outOp.ParamsHash != newHash {
-		return errors.Errorf("binding parameters hash differs - new %s, old %s, for instance %s", newHash, outOp.ParamsHash, iID)
-	}
-
-	return nil
 }
 
 func (*bindService) dtoFromModel(in internal.InstanceCredentials) map[string]interface{} {
