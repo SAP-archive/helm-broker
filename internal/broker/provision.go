@@ -137,10 +137,6 @@ func (svc *provisionService) Provision(ctx context.Context, osbCtx OsbContext, r
 		svc.log.Infof("Instance %s already existed in storage, instance was replaced", i.ID)
 	}
 
-	//if err = svc.instanceInserter.InsertInstanceOperation(&i); err != nil {
-	//	return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusConflict, ErrorMessage: strPtr(fmt.Sprintf("while inserting instance to storage: %v", err))}
-	//}
-
 	chartOverrides := internal.ChartValues(req.Parameters)
 
 	provisionInput := provisioningInput{
@@ -229,7 +225,7 @@ func (svc *provisionService) do(ctx context.Context, input provisioningInput) {
 			return &osb.HTTPStatusCodeError{StatusCode: http.StatusConflict, ErrorMessage: strPtr(fmt.Sprintf("while updating instance in storage: %v", err))}
 		}
 		if exist {
-			svc.log.Infof("Instance %s already existed in storage, instance was replaced", updatedInstance.ID)
+			svc.log.Infof("Instance %s already existed in storage, instance was replaced on update", updatedInstance.ID)
 		}
 		isRespValid := validateInstallReleaseResponse(resp)
 		if isRespValid != nil {

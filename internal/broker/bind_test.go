@@ -116,6 +116,7 @@ func TestBindServiceBindSuccessAsyncWhenNotBinded(t *testing.T) {
 	ibdsMock := &automock.InstanceBindDataStorage{}
 	defer ibdsMock.AssertExpectations(t)
 	expIbd := ts.FixInstanceBindData(expCreds)
+	ibdsMock.On("Get", ts.Exp.InstanceID).Return(nil, notFoundError{}).Once()
 	ibdsMock.On("Insert", &expIbd).Return(nil).Once()
 
 	bosMock := &automock.BindOperationStorage{}
@@ -326,6 +327,7 @@ func TestBindServiceBindFailureWhenNotBindedAsyncOnRenderAndResolve(t *testing.T
 	isMock.On("Get", ts.Exp.InstanceID).Return(&expInstance, nil).Once()
 
 	ibdsMock := &automock.InstanceBindDataStorage{}
+	ibdsMock.On("Get", ts.Exp.InstanceID).Return(nil, notFoundError{}).Once()
 
 	bosMock := &automock.BindOperationStorage{}
 	defer bosMock.AssertExpectations(t)

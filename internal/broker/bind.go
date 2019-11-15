@@ -237,24 +237,28 @@ func (svc *bindService) isBindable(plan internal.AddonPlan, isAddonBindable bool
 }
 
 func (svc *bindService) renderAndResolveBindData(addonPlan internal.AddonPlan, instance *internal.Instance, bID internal.BindingID, ch *chart.Chart) error {
-	rendered, err := svc.bindTemplateRenderer.Render(addonPlan.BindTemplate, instance, ch)
-	if err != nil {
-		return errors.Wrap(err, "while rendering bind yaml template")
-	}
 
-	out, err := svc.bindTemplateResolver.Resolve(rendered, instance.Namespace)
-	if err != nil {
-		return errors.Wrap(err, "while resolving bind yaml values")
-	}
+	_, err := svc.instanceBindDataGetter.Get(instance.ID)
+	if IsNotFoundError(err) {
+		rendered, err := svc.bindTemplateRenderer.Render(addonPlan.BindTemplate, instance, ch)
+		if err != nil {
+			return errors.Wrap(err, "while rendering bind yaml template")
+		}
 
-	in := internal.InstanceBindData{
-		InstanceID:  instance.ID,
-		Credentials: out.Credentials,
-	}
+		out, err := svc.bindTemplateResolver.Resolve(rendered, instance.Namespace)
+		if err != nil {
+			return errors.Wrap(err, "while resolving bind yaml values")
+		}
 
-	err = svc.instanceBindDataInserter.Insert(&in)
-	if err != nil {
-		return errors.Wrap(err, "while inserting instance bind data from memory")
+		in := internal.InstanceBindData{
+			InstanceID:  instance.ID,
+			Credentials: out.Credentials,
+		}
+
+		err = svc.instanceBindDataInserter.Insert(&in)
+		if err != nil {
+			return errors.Wrap(err, "while inserting instance bind data to memory")
+		}
 	}
 
 	return nil
