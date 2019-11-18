@@ -113,28 +113,31 @@ type bindStateService struct {
 	bindOperationCollectionGetter bindOperationCollectionGetter
 }
 
-func (svc *bindStateService) IsBinded(iID internal.InstanceID, bID internal.BindingID) (bool, error) {
+func (svc *bindStateService) IsBound(iID internal.InstanceID, bID internal.BindingID) (internal.BindOperation, bool, error) {
 	result := false
 	ops, err := svc.bindOperationCollectionGetter.GetAll(iID)
 	switch {
 	case err == nil:
 	case IsNotFoundError(err):
-		return false, nil
+		return internal.BindOperation{}, false, nil
 	default:
-		return false, errors.Wrap(err, "while getting operations from storage")
+		return internal.BindOperation{}, false, errors.Wrap(err, "while getting operations from storage")
 	}
 
+	boundOp := &internal.BindOperation{}
 	for _, op := range ops {
 		if op.Type == internal.OperationTypeCreate && op.State == internal.OperationStateSucceeded && op.BindingID == bID {
 			result = true
+			boundOp = op
 		}
 		if op.Type == internal.OperationTypeRemove && op.State == internal.OperationStateSucceeded && op.BindingID == bID {
 			result = false
+			boundOp = &internal.BindOperation{}
 			break
 		}
 	}
 
-	return result, nil
+	return *boundOp, result, nil
 }
 
 func (svc *bindStateService) IsBindingInProgress(iID internal.InstanceID, bID internal.BindingID) (internal.OperationID, bool, error) {

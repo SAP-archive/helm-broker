@@ -681,7 +681,13 @@ func TestOSBAPIBindRepeatedOnAlreadyExistingBinding(t *testing.T) {
 
 	fixInstance := ts.Exp.NewInstance()
 	fixInstance.ParamsHash = jsonhash.HashS(map[string]interface{}{})
-	ts.StorageFactory.Instance().Insert(fixInstance)
+	ts.StorageFactory.Instance().Upsert(fixInstance)
+
+	fixAddon := ts.Exp.NewAddon()
+	ts.StorageFactory.Addon().Upsert(internal.ClusterWide, fixAddon)
+
+	fixChart := ts.Exp.NewChart()
+	ts.StorageFactory.Chart().Upsert(internal.ClusterWide, fixChart)
 
 	fixOperation := ts.Exp.NewBindOperation(internal.OperationTypeCreate, internal.OperationStateSucceeded)
 	ts.StorageFactory.BindOperation().Insert(fixOperation)
@@ -1291,6 +1297,12 @@ func TestOSBAPIBindRepeatedOnAlreadyExistingBindingNS(t *testing.T) {
 	fixInstance := ts.Exp.NewInstance()
 	fixInstance.ParamsHash = jsonhash.HashS(map[string]interface{}{})
 	ts.StorageFactory.Instance().Insert(fixInstance)
+
+	fixAddon := ts.Exp.NewAddon()
+	ts.StorageFactory.Addon().Upsert(testNs, fixAddon)
+
+	fixChart := ts.Exp.NewChart()
+	ts.StorageFactory.Chart().Upsert(testNs, fixChart)
 
 	fixOperation := ts.Exp.NewBindOperation(internal.OperationTypeCreate, internal.OperationStateSucceeded)
 	ts.StorageFactory.BindOperation().Insert(fixOperation)

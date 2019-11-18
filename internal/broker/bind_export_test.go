@@ -5,7 +5,7 @@ import (
 )
 
 func NewBindService(ag addonIDGetter, cg chartGetter,  ig instanceGetter,
-	ibdg instanceBindDataGetter, ibdi instanceBindDataInserter,
+	ibdg instanceBindDataGetter, ibdi instanceBindDataInserter, ibdr instanceBindDataRemover,
 	btplrndr bindTemplateRenderer, btplres bindTemplateResolver, bsg bindStateGetter,
 	boi bindOperationInserter, bog bindOperationGetter, bocg bindOperationCollectionGetter,
 	bou bindOperationUpdater, idp func() (internal.OperationID, error)) *bindService {
@@ -17,6 +17,7 @@ func NewBindService(ag addonIDGetter, cg chartGetter,  ig instanceGetter,
 		bindTemplateResolver: btplres,
 		instanceBindDataGetter: ibdg,
 		instanceBindDataInserter: ibdi,
+		instanceBindDataRemover: ibdr,
 		bindStateGetter:       bsg,
 		bindOperationGetter:           bog,
 		bindOperationCollectionGetter: bocg,

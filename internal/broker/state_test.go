@@ -418,7 +418,7 @@ func (ts *bindStateServiceTestSuite) SetUp() {
 	ts.Exp.Populate()
 }
 
-func TestBindStateServiceIsBinded(t *testing.T) {
+func TestBindStateServiceIsBound(t *testing.T) {
 	for sym, tc := range map[string]struct {
 		genOps func(ts *bindStateServiceTestSuite) []*internal.BindOperation
 		exp    bool
@@ -464,7 +464,7 @@ func TestBindStateServiceIsBinded(t *testing.T) {
 			svc := broker.NewBindStateService(bocgMock)
 
 			// WHEN
-			got, err := svc.IsBinded(ts.Exp.InstanceID, ts.Exp.BindingID)
+			_, got, err := svc.IsBound(ts.Exp.InstanceID, ts.Exp.BindingID)
 
 			// THEN
 			assert.NoError(t, err)
@@ -484,7 +484,7 @@ func TestBindStateServiceIsBinded(t *testing.T) {
 		svc := broker.NewBindStateService(bocgMock)
 
 		// WHEN
-		got, err := svc.IsBinded(ts.Exp.InstanceID, ts.Exp.BindingID)
+		_, got, err := svc.IsBound(ts.Exp.InstanceID, ts.Exp.BindingID)
 
 		// THEN
 		assert.NoError(t, err)
@@ -504,7 +504,7 @@ func TestBindStateServiceIsBinded(t *testing.T) {
 		svc := broker.NewBindStateService(bocgMock)
 
 		// WHEN
-		got, err := svc.IsBinded(ts.Exp.InstanceID, ts.Exp.BindingID)
+		_, got, err := svc.IsBound(ts.Exp.InstanceID, ts.Exp.BindingID)
 
 		// THEN
 		assert.EqualError(t, err, fmt.Sprintf("while getting operations from storage: %s", fixErr.Error()))

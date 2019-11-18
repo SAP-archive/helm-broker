@@ -97,7 +97,7 @@ type (
 	}
 
 	bindStateBindingGetter interface {
-		IsBinded(internal.InstanceID, internal.BindingID) (bool, error)
+		IsBound(internal.InstanceID, internal.BindingID) (internal.BindOperation, bool, error)
 		IsBindingInProgress(internal.InstanceID, internal.BindingID) (internal.OperationID, bool, error)
 	}
 
@@ -233,6 +233,7 @@ func newWithIDProvider(bs addonStorage, cs chartStorage, os operationStorage, bo
 			bindTemplateResolver:     bindTmplResolver,
 			instanceBindDataInserter: ibd,
 			instanceBindDataGetter:   ibd,
+			instanceBindDataRemover:  ibd,
 			bindStateGetter: &bindStateService{
 				bindOperationCollectionGetter: bos,
 			},

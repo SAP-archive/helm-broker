@@ -89,7 +89,7 @@ func (ts *bindServiceTestSuite) FixBindOpCollection() []*internal.BindOperation 
 	return ts.Exp.NewBindOperationCollection()
 }
 
-func TestBindServiceBindSuccessAsyncWhenNotBinded(t *testing.T) {
+func TestBindServiceBindSuccessAsyncWhenNotBound(t *testing.T) {
 	//given
 	ts := newBindServiceTestSuite(t)
 	ts.SetUp()
@@ -116,7 +116,6 @@ func TestBindServiceBindSuccessAsyncWhenNotBinded(t *testing.T) {
 	ibdsMock := &automock.InstanceBindDataStorage{}
 	defer ibdsMock.AssertExpectations(t)
 	expIbd := ts.FixInstanceBindData(expCreds)
-	ibdsMock.On("Get", ts.Exp.InstanceID).Return(nil, notFoundError{}).Once()
 	ibdsMock.On("Insert", &expIbd).Return(nil).Once()
 
 	bosMock := &automock.BindOperationStorage{}
@@ -140,7 +139,7 @@ func TestBindServiceBindSuccessAsyncWhenNotBinded(t *testing.T) {
 
 	bsgMock := &automock.BindStateGetter{}
 	defer bsgMock.AssertExpectations(t)
-	bsgMock.On("IsBinded", ts.Exp.InstanceID, ts.Exp.BindingID).Return(false, nil).Once()
+	bsgMock.On("IsBound", ts.Exp.InstanceID, ts.Exp.BindingID).Return(internal.BindOperation{}, false, nil).Once()
 	bsgMock.On("IsBindingInProgress", ts.Exp.InstanceID, ts.Exp.BindingID).Return(internal.OperationID(""), false, nil).Once()
 
 	oipFake := func() (internal.OperationID, error) {
@@ -149,7 +148,7 @@ func TestBindServiceBindSuccessAsyncWhenNotBinded(t *testing.T) {
 
 	testHookCalled := make(chan struct{})
 
-	svc := broker.NewBindService(asMock, cgMock, isMock, ibdsMock, ibdsMock, rendererMock, resolverMock,
+	svc := broker.NewBindService(asMock, cgMock, isMock, ibdsMock, ibdsMock, ibdsMock, rendererMock, resolverMock,
 		bsgMock, bosMock, bosMock, bosMock, bosMock, oipFake).
 		WithTestHookOnAsyncCalled(func(opID internal.OperationID) {
 			assert.Equal(t, ts.Exp.OperationID, opID)
@@ -181,23 +180,28 @@ func TestBindServiceBindSuccessAsyncWhenNotBinded(t *testing.T) {
 	}
 }
 
-func TestBindServiceBindFailureWhenNotBindedOnIsBinded(t *testing.T) {
+func TestBindServiceBindFailureWhenNotBoundOnIsBound(t *testing.T) {
 	//given
 	ts := newBindServiceTestSuite(t)
 	ts.SetUp()
 
 	asMock := &automock.AddonStorage{}
+	asMock.On("Get")
+
 	cgMock := &automock.ChartGetter{}
 	isMock := &automock.InstanceStorage{}
 	ibdsMock := &automock.InstanceBindDataStorage{}
+
 	bosMock := &automock.BindOperationStorage{}
+
 	rendererMock := &automock.BindTemplateRenderer{}
 	resolverMock := &automock.BindTemplateResolver{}
 
 	bsgMock := &automock.BindStateGetter{}
 	defer bsgMock.AssertExpectations(t)
-	expIsBindedError := errors.New("fake-is-binded-error")
-	bsgMock.On("IsBinded", ts.Exp.InstanceID, ts.Exp.BindingID).Return(false, expIsBindedError).Once()
+	expIsBoundError := errors.New("fake-is-bound-error")
+	bsgMock.On("IsBound", ts.Exp.InstanceID, ts.Exp.BindingID).Return(internal.BindOperation{}, false, expIsBoundError).Once()
+	bsgMock.On("IsBindingInProgress", ts.Exp.InstanceID, ts.Exp.BindingID).Return(internal.OperationID(""), false, nil).Once()
 
 	oipFake := func() (internal.OperationID, error) {
 		return ts.Exp.OperationID, nil
@@ -205,7 +209,7 @@ func TestBindServiceBindFailureWhenNotBindedOnIsBinded(t *testing.T) {
 
 	testHookCalled := make(chan struct{})
 
-	svc := broker.NewBindService(asMock, cgMock, isMock, ibdsMock, ibdsMock, rendererMock, resolverMock,
+	svc := broker.NewBindService(asMock, cgMock, isMock, ibdsMock, ibdsMock, ibdsMock, rendererMock, resolverMock,
 		bsgMock, bosMock, bosMock, bosMock, bosMock, oipFake).
 		WithTestHookOnAsyncCalled(func(opID internal.OperationID) {
 			assert.Equal(t, ts.Exp.OperationID, opID)
@@ -225,7 +229,7 @@ func TestBindServiceBindFailureWhenNotBindedOnIsBinded(t *testing.T) {
 
 }
 
-func TestBindServiceBindFailureAsyncWhenNotBindedOnChartGet(t *testing.T) {
+func TestBindServiceBindFailureAsyncWhenNotBoundOnChartGet(t *testing.T) {
 	//given
 	ts := newBindServiceTestSuite(t)
 	ts.SetUp()
@@ -263,7 +267,7 @@ func TestBindServiceBindFailureAsyncWhenNotBindedOnChartGet(t *testing.T) {
 
 	bsgMock := &automock.BindStateGetter{}
 	defer bsgMock.AssertExpectations(t)
-	bsgMock.On("IsBinded", ts.Exp.InstanceID, ts.Exp.BindingID).Return(false, nil).Once()
+	bsgMock.On("IsBound", ts.Exp.InstanceID, ts.Exp.BindingID).Return(internal.BindOperation{}, false, nil).Once()
 	bsgMock.On("IsBindingInProgress", ts.Exp.InstanceID, ts.Exp.BindingID).Return(internal.OperationID(""), false, nil).Once()
 
 	oipFake := func() (internal.OperationID, error) {
@@ -272,7 +276,7 @@ func TestBindServiceBindFailureAsyncWhenNotBindedOnChartGet(t *testing.T) {
 
 	testHookCalled := make(chan struct{})
 
-	svc := broker.NewBindService(asMock, cgMock, isMock, ibdsMock, ibdsMock, rendererMock, resolverMock,
+	svc := broker.NewBindService(asMock, cgMock, isMock, ibdsMock, ibdsMock, ibdsMock, rendererMock, resolverMock,
 		bsgMock, bosMock, bosMock, bosMock, bosMock, oipFake).
 		WithTestHookOnAsyncCalled(func(opID internal.OperationID) {
 			assert.Equal(t, ts.Exp.OperationID, opID)
@@ -304,7 +308,7 @@ func TestBindServiceBindFailureAsyncWhenNotBindedOnChartGet(t *testing.T) {
 	}
 }
 
-func TestBindServiceBindFailureWhenNotBindedAsyncOnRenderAndResolve(t *testing.T) {
+func TestBindServiceBindFailureWhenNotBoundAsyncOnRenderAndResolve(t *testing.T) {
 	//given
 	ts := newBindServiceTestSuite(t)
 	ts.SetUp()
@@ -347,7 +351,7 @@ func TestBindServiceBindFailureWhenNotBindedAsyncOnRenderAndResolve(t *testing.T
 
 	bsgMock := &automock.BindStateGetter{}
 	defer bsgMock.AssertExpectations(t)
-	bsgMock.On("IsBinded", ts.Exp.InstanceID, ts.Exp.BindingID).Return(false, nil).Once()
+	bsgMock.On("IsBound", ts.Exp.InstanceID, ts.Exp.BindingID).Return(internal.BindOperation{}, false, nil).Once()
 	bsgMock.On("IsBindingInProgress", ts.Exp.InstanceID, ts.Exp.BindingID).Return(internal.OperationID(""), false, nil).Once()
 
 	oipFake := func() (internal.OperationID, error) {
@@ -356,7 +360,7 @@ func TestBindServiceBindFailureWhenNotBindedAsyncOnRenderAndResolve(t *testing.T
 
 	testHookCalled := make(chan struct{})
 
-	svc := broker.NewBindService(asMock, cgMock, isMock, ibdsMock, ibdsMock, rendererMock, resolverMock,
+	svc := broker.NewBindService(asMock, cgMock, isMock, ibdsMock, ibdsMock, ibdsMock, rendererMock, resolverMock,
 		bsgMock, bosMock, bosMock, bosMock, bosMock, oipFake).
 		WithTestHookOnAsyncCalled(func(opID internal.OperationID) {
 			assert.Equal(t, ts.Exp.OperationID, opID)
@@ -388,7 +392,7 @@ func TestBindServiceBindFailureWhenNotBindedAsyncOnRenderAndResolve(t *testing.T
 	}
 }
 
-func TestBindServiceBindSuccessAsyncWhenBinded(t *testing.T) {
+func TestBindServiceBindSuccessAsyncWhenBound(t *testing.T) {
 	//given
 	ts := newBindServiceTestSuite(t)
 	ts.SetUp()
@@ -396,25 +400,52 @@ func TestBindServiceBindSuccessAsyncWhenBinded(t *testing.T) {
 	expCreds := ts.FixInstanceCredentials()
 
 	asMock := &automock.AddonStorage{}
+	defer asMock.AssertExpectations(t)
+	expAddon := ts.FixAddon()
+	asMock.On("GetByID", internal.ClusterWide, ts.Exp.Addon.ID).Return(&expAddon, nil).Once()
+
 	cgMock := &automock.ChartGetter{}
+	defer cgMock.AssertExpectations(t)
+	expChart := ts.FixChart()
+	cgMock.On("Get", internal.ClusterWide, ts.Exp.Chart.Name, ts.Exp.Chart.Version).Return(&expChart, nil).Once()
+
 	isMock := &automock.InstanceStorage{}
+	defer isMock.AssertExpectations(t)
+	expInstance := ts.FixInstanceWithInfo()
+	isMock.On("Get", ts.Exp.InstanceID).Return(&expInstance, nil).Once()
 
 	ibdsMock := &automock.InstanceBindDataStorage{}
 	defer ibdsMock.AssertExpectations(t)
 	expIbd := ts.FixInstanceBindData(expCreds)
+	ibdsMock.On("Insert", &expIbd).Return(nil).Once()
 	ibdsMock.On("Get", ts.Exp.InstanceID).Return(&expIbd, nil).Once()
+	ibdsMock.On("Remove", ts.Exp.InstanceID).Return(nil).Once()
 
 	bosMock := &automock.BindOperationStorage{}
 	defer bosMock.AssertExpectations(t)
+	expBindOp := ts.FixBindOperation(internal.OperationTypeCreate, internal.OperationStateSucceeded)
+	params := jsonhash.HashS(ts.FixBindRequest().Parameters)
+	expBindOp.ParamsHash = params
+	operationSucceeded := make(chan struct{})
+	bosMock.On("UpdateStateDesc", ts.Exp.InstanceID, ts.Exp.BindingID, ts.Exp.OperationID, internal.OperationStateSucceeded, mock.Anything).Return(nil).Once().
+		Run(func(mock.Arguments) { close(operationSucceeded) })
 
 	req := ts.FixBindRequest()
 
 	rendererMock := &automock.BindTemplateRenderer{}
+	defer rendererMock.AssertExpectations(t)
+	expRendered := bind.RenderedBindYAML{}
+	rendererMock.On("Render", ts.Exp.AddonPlan.BindTemplate, &expInstance, &expChart).Return(expRendered, nil)
+
 	resolverMock := &automock.BindTemplateResolver{}
+	defer resolverMock.AssertExpectations(t)
+	expResolved := bind.ResolveOutput{Credentials: expCreds}
+	resolverMock.On("Resolve", expRendered, ts.Exp.Namespace).Return(&expResolved, nil).Once()
 
 	bsgMock := &automock.BindStateGetter{}
 	defer bsgMock.AssertExpectations(t)
-	bsgMock.On("IsBinded", ts.Exp.InstanceID, ts.Exp.BindingID).Return(true, nil).Once()
+	bsgMock.On("IsBound", ts.Exp.InstanceID, ts.Exp.BindingID).Return(expBindOp, true, nil).Once()
+	bsgMock.On("IsBindingInProgress", ts.Exp.InstanceID, ts.Exp.BindingID).Return(internal.OperationID(""), false, nil).Once()
 
 	oipFake := func() (internal.OperationID, error) {
 		return ts.Exp.OperationID, nil
@@ -422,7 +453,7 @@ func TestBindServiceBindSuccessAsyncWhenBinded(t *testing.T) {
 
 	testHookCalled := make(chan struct{})
 
-	svc := broker.NewBindService(asMock, cgMock, isMock, ibdsMock, ibdsMock,
+	svc := broker.NewBindService(asMock, cgMock, isMock, ibdsMock, ibdsMock, ibdsMock,
 		rendererMock, resolverMock, bsgMock, bosMock, bosMock, bosMock, bosMock, oipFake).
 		WithTestHookOnAsyncCalled(func(opID internal.OperationID) {
 			assert.Equal(t, ts.Exp.OperationID, opID)
@@ -441,33 +472,74 @@ func TestBindServiceBindSuccessAsyncWhenBinded(t *testing.T) {
 	assert.EqualValues(t, map[string]interface{}{
 		"password": "secret",
 	}, resp.Credentials)
+
+	select {
+	case <-operationSucceeded:
+	case <-time.After(time.Millisecond * 100):
+		t.Fatal("timeout on operation succeeded")
+	}
+
+	select {
+	case <-testHookCalled:
+	default:
+		t.Fatal("async test hook not called")
+	}
 }
 
-func TestBindServiceBindFailureWhenBindedOnGetIbd(t *testing.T) {
+func TestBindServiceBindFailureAsyncWhenBoundOnGetIbd(t *testing.T) {
 	//given
 	ts := newBindServiceTestSuite(t)
 	ts.SetUp()
 
 	asMock := &automock.AddonStorage{}
+	defer asMock.AssertExpectations(t)
+	expAddon := ts.FixAddon()
+	asMock.On("GetByID", internal.ClusterWide, ts.Exp.Addon.ID).Return(&expAddon, nil).Once()
+
 	cgMock := &automock.ChartGetter{}
+	defer cgMock.AssertExpectations(t)
+	expChart := ts.FixChart()
+	cgMock.On("Get", internal.ClusterWide, ts.Exp.Chart.Name, ts.Exp.Chart.Version).Return(&expChart, nil).Once()
+
 	isMock := &automock.InstanceStorage{}
+	defer isMock.AssertExpectations(t)
+	expInstance := ts.FixInstanceWithInfo()
+	isMock.On("Get", ts.Exp.InstanceID).Return(&expInstance, nil).Once()
 
 	ibdsMock := &automock.InstanceBindDataStorage{}
 	ibdsMock.AssertExpectations(t)
+	expIbd := ts.FixInstanceBindData(ts.FixInstanceCredentials())
+	ibdsMock.On("Insert", &expIbd).Return(nil).Once()
 	expIbdGetError := errors.New("fake-ibd-get-error")
 	ibdsMock.On("Get", ts.Exp.InstanceID).Return(nil, expIbdGetError).Once()
 
 	bosMock := &automock.BindOperationStorage{}
 	defer bosMock.AssertExpectations(t)
+	expBindOp := ts.FixBindOperation(internal.OperationTypeCreate, internal.OperationStateInProgress)
+	params := jsonhash.HashS(ts.FixBindRequest().Parameters)
+	expBindOp.ParamsHash = params
+	operationSucceeded := make(chan struct{})
+	bosMock.On("UpdateStateDesc", ts.Exp.InstanceID, ts.Exp.BindingID, ts.Exp.OperationID, internal.OperationStateSucceeded, mock.Anything).Return(nil).Once().
+		Run(func(mock.Arguments) { close(operationSucceeded) })
 
 	req := ts.FixBindRequest()
 
 	rendererMock := &automock.BindTemplateRenderer{}
+	defer rendererMock.AssertExpectations(t)
+	expRendered := bind.RenderedBindYAML{}
+	rendererMock.On("Render", ts.Exp.AddonPlan.BindTemplate, &expInstance, &expChart).Return(expRendered, nil)
+
 	resolverMock := &automock.BindTemplateResolver{}
+	defer resolverMock.AssertExpectations(t)
+	expCreds := ts.FixInstanceCredentials()
+	expResolved := bind.ResolveOutput{Credentials: expCreds}
+	resolverMock.On("Resolve", expRendered, ts.Exp.Namespace).Return(&expResolved, nil).Once()
 
 	bsgMock := &automock.BindStateGetter{}
 	defer bsgMock.AssertExpectations(t)
-	bsgMock.On("IsBinded", ts.Exp.InstanceID, ts.Exp.BindingID).Return(true, nil).Once()
+	expOp := ts.FixBindOperation(internal.OperationTypeCreate, internal.OperationStateSucceeded)
+	bsgMock.On("IsBound", ts.Exp.InstanceID, ts.Exp.BindingID).Return(expOp, true, nil).Once()
+	bsgMock.On("IsBindingInProgress", ts.Exp.InstanceID, ts.Exp.BindingID).Return(internal.OperationID(""), false, nil).Once()
 
 	oipFake := func() (internal.OperationID, error) {
 		return ts.Exp.OperationID, nil
@@ -475,7 +547,7 @@ func TestBindServiceBindFailureWhenBindedOnGetIbd(t *testing.T) {
 
 	testHookCalled := make(chan struct{})
 
-	svc := broker.NewBindService(asMock, cgMock, isMock, ibdsMock, ibdsMock,
+	svc := broker.NewBindService(asMock, cgMock, isMock, ibdsMock, ibdsMock, ibdsMock,
 		rendererMock, resolverMock, bsgMock, bosMock, bosMock, bosMock, bosMock, oipFake).
 		WithTestHookOnAsyncCalled(func(opID internal.OperationID) {
 			assert.Equal(t, ts.Exp.OperationID, opID)
@@ -491,6 +563,18 @@ func TestBindServiceBindFailureWhenBindedOnGetIbd(t *testing.T) {
 	//then
 	assert.NotNil(t, err)
 	assert.Nil(t, resp)
+
+	select {
+	case <-operationSucceeded:
+	case <-time.After(time.Millisecond * 100):
+		t.Fatal("timeout on operation succeeded")
+	}
+
+	select {
+	case <-testHookCalled:
+	default:
+		t.Fatal("async test hook not called")
+	}
 }
 
 func TestBindServiceBindSuccessAsyncWhenBindingInProgress(t *testing.T) {
@@ -514,7 +598,6 @@ func TestBindServiceBindSuccessAsyncWhenBindingInProgress(t *testing.T) {
 
 	bsgMock := &automock.BindStateGetter{}
 	defer bsgMock.AssertExpectations(t)
-	bsgMock.On("IsBinded", ts.Exp.InstanceID, ts.Exp.BindingID).Return(false, nil).Once()
 	bsgMock.On("IsBindingInProgress", ts.Exp.InstanceID, ts.Exp.BindingID).Return(ts.Exp.OperationID, true, nil).Once()
 
 	oipFake := func() (internal.OperationID, error) {
@@ -523,7 +606,7 @@ func TestBindServiceBindSuccessAsyncWhenBindingInProgress(t *testing.T) {
 
 	testHookCalled := make(chan struct{})
 
-	svc := broker.NewBindService(asMock, cgMock, isMock, ibdsMock, ibdsMock,
+	svc := broker.NewBindService(asMock, cgMock, isMock, ibdsMock, ibdsMock, ibdsMock,
 		rendererMock, resolverMock, bsgMock, bosMock, bosMock, bosMock, bosMock, oipFake).
 		WithTestHookOnAsyncCalled(func(opID internal.OperationID) {
 			assert.Equal(t, ts.Exp.OperationID, opID)
@@ -557,7 +640,6 @@ func TestBindServiceBindFailureWhenBindingInProgressOnIsBindingInProgress(t *tes
 
 	bsgMock := &automock.BindStateGetter{}
 	defer bsgMock.AssertExpectations(t)
-	bsgMock.On("IsBinded", ts.Exp.InstanceID, ts.Exp.BindingID).Return(false, nil).Once()
 	expIsBindInProgError := errors.New("fake-is-binding-in-progress-error")
 	bsgMock.On("IsBindingInProgress", ts.Exp.InstanceID, ts.Exp.BindingID).Return(internal.OperationID(""), false, expIsBindInProgError).Once()
 
@@ -567,7 +649,7 @@ func TestBindServiceBindFailureWhenBindingInProgressOnIsBindingInProgress(t *tes
 
 	testHookCalled := make(chan struct{})
 
-	svc := broker.NewBindService(asMock, cgMock, isMock, ibdsMock, ibdsMock,
+	svc := broker.NewBindService(asMock, cgMock, isMock, ibdsMock, ibdsMock, ibdsMock,
 		rendererMock, resolverMock, bsgMock, bosMock, bosMock, bosMock, bosMock, oipFake).
 		WithTestHookOnAsyncCalled(func(opID internal.OperationID) {
 			assert.Equal(t, ts.Exp.OperationID, opID)
@@ -604,7 +686,7 @@ func TestBindServiceBindFailureWhenGivenIncorrectParameters(t *testing.T) {
 
 	testHookCalled := make(chan struct{})
 
-	svc := broker.NewBindService(asMock, cgMock, isMock, ibdsMock, ibdsMock, rendererMock, resolverMock,
+	svc := broker.NewBindService(asMock, cgMock, isMock, ibdsMock, ibdsMock, ibdsMock, rendererMock, resolverMock,
 		bsgMock, bosMock, bosMock, bosMock, bosMock, oipFake).
 		WithTestHookOnAsyncCalled(func(opID internal.OperationID) {
 			assert.Equal(t, ts.Exp.OperationID, opID)
@@ -641,7 +723,7 @@ func TestBindServiceBindFailureWhenGivenIncorrectParameters(t *testing.T) {
 	assert.Nil(t, resp)
 }
 
-func TestBindServiceGetLastBindOperationSuccessWhenBinded(t *testing.T) {
+func TestBindServiceGetLastBindOperationSuccessWhenBound(t *testing.T) {
 	ts := newBindServiceTestSuite(t)
 	ts.SetUp()
 
@@ -665,7 +747,7 @@ func TestBindServiceGetLastBindOperationSuccessWhenBinded(t *testing.T) {
 
 	testHookCalled := make(chan struct{})
 
-	svc := broker.NewBindService(asMock, cgMock, isMock, ibdsMock, ibdsMock,
+	svc := broker.NewBindService(asMock, cgMock, isMock, ibdsMock, ibdsMock, ibdsMock,
 		rendererMock, resolverMock, bsgMock, bosMock, bosMock, bosMock, bosMock, oipFake).
 		WithTestHookOnAsyncCalled(func(opID internal.OperationID) {
 			assert.Equal(t, ts.Exp.OperationID, opID)
@@ -714,7 +796,7 @@ func TestBindServiceGetLastBindOperationSuccessWhenBindingInProgress(t *testing.
 
 	testHookCalled := make(chan struct{})
 
-	svc := broker.NewBindService(asMock, cgMock, isMock, ibdsMock, ibdsMock,
+	svc := broker.NewBindService(asMock, cgMock, isMock, ibdsMock, ibdsMock, ibdsMock,
 		rendererMock, resolverMock, bsgMock, bosMock, bosMock, bosMock, bosMock, oipFake).
 		WithTestHookOnAsyncCalled(func(opID internal.OperationID) {
 			assert.Equal(t, ts.Exp.OperationID, opID)
@@ -763,7 +845,7 @@ func TestBindServiceGetLastBindOperationFailureOnGetBindOp(t *testing.T) {
 
 	testHookCalled := make(chan struct{})
 
-	svc := broker.NewBindService(asMock, cgMock, isMock, ibdsMock, ibdsMock,
+	svc := broker.NewBindService(asMock, cgMock, isMock, ibdsMock, ibdsMock, ibdsMock,
 		rendererMock, resolverMock, bsgMock, bosMock, bosMock, bosMock, bosMock, oipFake).
 		WithTestHookOnAsyncCalled(func(opID internal.OperationID) {
 			assert.Equal(t, ts.Exp.OperationID, opID)
@@ -783,7 +865,7 @@ func TestBindServiceGetLastBindOperationFailureOnGetBindOp(t *testing.T) {
 
 }
 
-func TestBindServiceGetServiceBindingSuccessWhenBinded(t *testing.T) {
+func TestBindServiceGetServiceBindingSuccessWhenBound(t *testing.T) {
 	ts := newBindServiceTestSuite(t)
 	ts.SetUp()
 
@@ -797,6 +879,7 @@ func TestBindServiceGetServiceBindingSuccessWhenBinded(t *testing.T) {
 	defer ibdsMock.AssertExpectations(t)
 	expIbd := ts.FixInstanceBindData(expCreds)
 	ibdsMock.On("Get", ts.Exp.InstanceID).Return(&expIbd, nil).Once()
+	ibdsMock.On("Remove", ts.Exp.InstanceID).Return(nil).Once()
 
 	bosMock := &automock.BindOperationStorage{}
 
@@ -813,7 +896,7 @@ func TestBindServiceGetServiceBindingSuccessWhenBinded(t *testing.T) {
 
 	testHookCalled := make(chan struct{})
 
-	svc := broker.NewBindService(asMock, cgMock, isMock, ibdsMock, ibdsMock,
+	svc := broker.NewBindService(asMock, cgMock, isMock, ibdsMock, ibdsMock, ibdsMock,
 		rendererMock, resolverMock, bsgMock, bosMock, bosMock, bosMock, bosMock, oipFake).
 		WithTestHookOnAsyncCalled(func(opID internal.OperationID) {
 			assert.Equal(t, ts.Exp.OperationID, opID)
@@ -834,7 +917,7 @@ func TestBindServiceGetServiceBindingSuccessWhenBinded(t *testing.T) {
 	}, resp.Credentials)
 }
 
-func TestBindServiceGetServiceBindingSuccessWhenBindedOnIbdGet(t *testing.T) {
+func TestBindServiceGetServiceBindingSuccessWhenBoundOnIbdGet(t *testing.T) {
 	ts := newBindServiceTestSuite(t)
 	ts.SetUp()
 
@@ -861,7 +944,7 @@ func TestBindServiceGetServiceBindingSuccessWhenBindedOnIbdGet(t *testing.T) {
 
 	testHookCalled := make(chan struct{})
 
-	svc := broker.NewBindService(asMock, cgMock, isMock, ibdsMock, ibdsMock,
+	svc := broker.NewBindService(asMock, cgMock, isMock, ibdsMock, ibdsMock, ibdsMock,
 		rendererMock, resolverMock, bsgMock, bosMock, bosMock, bosMock, bosMock, oipFake).
 		WithTestHookOnAsyncCalled(func(opID internal.OperationID) {
 			assert.Equal(t, ts.Exp.OperationID, opID)
@@ -902,7 +985,7 @@ func TestBindServiceGetServiceBindingFailureWhenBindingInProgress(t *testing.T) 
 
 	testHookCalled := make(chan struct{})
 
-	svc := broker.NewBindService(asMock, cgMock, isMock, ibdsMock, ibdsMock,
+	svc := broker.NewBindService(asMock, cgMock, isMock, ibdsMock, ibdsMock, ibdsMock,
 		rendererMock, resolverMock, bsgMock, bosMock, bosMock, bosMock, bosMock, oipFake).
 		WithTestHookOnAsyncCalled(func(opID internal.OperationID) {
 			assert.Equal(t, ts.Exp.OperationID, opID)
@@ -946,7 +1029,7 @@ func TestBindServiceGetServiceBindingFailureOnIsBindingInProgress(t *testing.T) 
 
 	testHookCalled := make(chan struct{})
 
-	svc := broker.NewBindService(asMock, cgMock, isMock, ibdsMock, ibdsMock,
+	svc := broker.NewBindService(asMock, cgMock, isMock, ibdsMock, ibdsMock, ibdsMock,
 		rendererMock, resolverMock, bsgMock, bosMock, bosMock, bosMock, bosMock, oipFake).
 		WithTestHookOnAsyncCalled(func(opID internal.OperationID) {
 			assert.Equal(t, ts.Exp.OperationID, opID)
