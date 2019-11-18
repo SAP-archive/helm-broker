@@ -41,7 +41,7 @@ func (r *Renderer) Render(bindTemplate internal.AddonPlanBindTemplate, instance 
 	options := r.createReleaseOptions(instance)
 	chartCap := &chartutil.Capabilities{}
 
-	valsToRender, err := r.toRenderValuesCaps(ch, instance.ReleaseInfo.Config, options, chartCap) //same here
+	valsToRender, err := r.toRenderValuesCaps(ch, instance.ReleaseInfo.Config, options, chartCap)
 	if err != nil {
 		return nil, errors.Wrap(err, "while merging values to render")
 	}
@@ -63,9 +63,9 @@ func (r *Renderer) Render(bindTemplate internal.AddonPlanBindTemplate, instance 
 
 func (*Renderer) createReleaseOptions(instance *internal.Instance) chartutil.ReleaseOptions {
 	return chartutil.ReleaseOptions{
-		Name:      string(instance.ReleaseName), // the same as in instance
+		Name:      string(instance.ReleaseName),
 		Time:      instance.ReleaseInfo.Time,
-		Namespace: string(instance.Namespace), // the same as in instance
+		Namespace: string(instance.Namespace),
 		Revision:  instance.ReleaseInfo.Revision,
 		IsInstall: true,
 	}
