@@ -326,11 +326,11 @@ func TestAddonsConflicts(t *testing.T) {
 	}
 }
 
-// TestDocsTopic check Helm Broker  with conflicts on Addons.
+// TestAssetGroup check Helm Broker  with conflicts on Addons.
 // It's tested only with HTTP and GIT protocols.
 // Test case with GIT protocol covers also implementation
 // for HG and S3 because they are using the same abstraction factory.
-func TestDocsTopic(t *testing.T) {
+func TestAssetGroup(t *testing.T) {
 	// given
 	suite := newTestSuiteAndStartControllers(t, true, false)
 	defer suite.tearDown()
@@ -338,17 +338,17 @@ func TestDocsTopic(t *testing.T) {
 	for name, c := range map[string]struct {
 		kind        string
 		addonName   string
-		docsTopicID string
+		assetGroupID string
 	}{
 		"namespaced-http": {
 			kind:        sourceHTTP,
 			addonName:   addonsConfigName,
-			docsTopicID: accTestAddonID,
+			assetGroupID: accTestAddonID,
 		},
 		"namespaced-git": {
 			kind:        sourceGit,
 			addonName:   addonsConfigNameGit,
-			docsTopicID: accTestAddonIDGit,
+			assetGroupID: accTestAddonIDGit,
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
@@ -357,30 +357,30 @@ func TestDocsTopic(t *testing.T) {
 
 			// then
 			suite.waitForAddonsConfigurationPhase("stage", c.addonName, v1alpha1.AddonsConfigurationReady)
-			suite.assertDocsTopicExist("stage", c.docsTopicID)
+			suite.assertAssetGroupExist("stage", c.assetGroupID)
 
 			// when
 			suite.updateAddonsConfigurationRepositories("stage", c.addonName, []string{redisRepo}, c.kind)
 
 			// then
-			suite.assertDocsTopicListIsEmpty()
+			suite.assertAssetGroupListIsEmpty()
 		})
 	}
 
 	for name, c := range map[string]struct {
 		kind        string
 		addonName   string
-		docsTopicID string
+		assetGroupID string
 	}{
 		"cluster-http": {
 			kind:        sourceHTTP,
 			addonName:   addonsConfigName,
-			docsTopicID: accTestAddonID,
+			assetGroupID: accTestAddonID,
 		},
 		"cluster-git": {
 			kind:        sourceGit,
 			addonName:   addonsConfigNameGit,
-			docsTopicID: accTestAddonIDGit,
+			assetGroupID: accTestAddonIDGit,
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
@@ -388,13 +388,13 @@ func TestDocsTopic(t *testing.T) {
 
 			// then
 			suite.waitForClusterAddonsConfigurationPhase(c.addonName, v1alpha1.AddonsConfigurationReady)
-			suite.assertClusterDocsTopicExist(c.docsTopicID)
+			suite.assertClusterAssetGroupExist(c.assetGroupID)
 
 			// when
 			suite.updateClusterAddonsConfigurationRepositories(c.addonName, []string{redisRepo}, c.kind)
 
 			// then
-			suite.assertClusterDocsTopicListIsEmpty()
+			suite.assertClusterAssetGroupListIsEmpty()
 		})
 	}
 }

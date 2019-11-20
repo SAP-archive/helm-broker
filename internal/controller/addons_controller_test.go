@@ -18,7 +18,7 @@ import (
 	"github.com/kyma-project/helm-broker/internal/storage"
 	"github.com/kyma-project/helm-broker/pkg/apis"
 	"github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
-	cms "github.com/kyma-project/kyma/components/cms-controller-manager/pkg/apis/cms/v1alpha1"
+	rafter "github.com/kyma-project/helm-broker/pkg/apis/rafter/v1beta1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/api/core/v1"
@@ -97,7 +97,7 @@ func TestReconcileAddonsConfiguration_AddAddonsProcess_ErrorIfBrokerExist(t *tes
 
 			ts.addonGetter.On("GetCompleteAddon", e).
 				Return(completeAddon, nil)
-			ts.docsProvider.On("EnsureDocsTopic", completeAddon.Addon).Return(nil)
+			ts.docsProvider.On("EnsureAssetGroup", completeAddon.Addon).Return(nil)
 		}
 	}
 	ts.brokerFacade.On("Exist").Return(false, errors.New("")).Once()
@@ -135,7 +135,7 @@ func TestReconcileAddonsConfiguration_UpdateAddonsProcess(t *testing.T) {
 
 			ts.addonGetter.On("GetCompleteAddon", e).
 				Return(completeAddon, nil)
-			ts.docsProvider.On("EnsureDocsTopic", completeAddon.Addon).Return(nil)
+			ts.docsProvider.On("EnsureAssetGroup", completeAddon.Addon).Return(nil)
 		}
 	}
 	ts.brokerFacade.On("Exist").Return(false, nil).Once()
@@ -570,8 +570,8 @@ func fixAddonWithDocsURL(id, name, url, docsURL string) internal.AddonWithCharts
 			},
 			Docs: []internal.AddonDocs{
 				{
-					Template: cms.CommonDocsTopicSpec{
-						Sources: []cms.Source{
+					Template: rafter.CommonAssetGroupSpec{
+						Sources: []rafter.Source{
 							{
 								URL: docsURL,
 							},
@@ -611,8 +611,8 @@ func fixAddonWithEmptyDocs(id, name, url string) internal.AddonWithCharts {
 			},
 			Docs: []internal.AddonDocs{
 				{
-					Template: cms.CommonDocsTopicSpec{
-						Sources: []cms.Source{
+					Template: rafter.CommonAssetGroupSpec{
+						Sources: []rafter.Source{
 							{},
 						},
 					},

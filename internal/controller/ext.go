@@ -43,8 +43,8 @@ type addonGetter interface {
 //go:generate mockery -name=docsProvider -output=automock -outpkg=automock -case=underscore
 type docsProvider interface {
 	NamespacedService
-	EnsureDocsTopic(addon *internal.Addon) error
-	EnsureDocsTopicRemoved(id string) error
+	EnsureAssetGroup(addon *internal.Addon) error
+	EnsureAssetGroupRemoved(id string) error
 }
 
 //go:generate mockery -name=brokerFacade -output=automock -outpkg=automock -case=underscore

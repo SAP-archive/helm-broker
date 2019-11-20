@@ -32,8 +32,8 @@ import (
 
 	"strings"
 
-	"github.com/kyma-project/helm-broker/internal/assetstore"
-	"github.com/kyma-project/helm-broker/internal/assetstore/automock"
+	"github.com/kyma-project/helm-broker/internal/rafter"
+	"github.com/kyma-project/helm-broker/internal/rafter/automock"
 	"github.com/kyma-project/helm-broker/internal/bind"
 	"github.com/kyma-project/helm-broker/internal/broker"
 	"github.com/kyma-project/helm-broker/internal/config"
@@ -42,7 +42,7 @@ import (
 	"github.com/kyma-project/helm-broker/internal/storage/testdata"
 	"github.com/kyma-project/helm-broker/pkg/apis"
 	"github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
-	dtv1alpha1 "github.com/kyma-project/kyma/components/cms-controller-manager/pkg/apis/cms/v1alpha1"
+	dtv1beta1 "github.com/kyma-project/helm-broker/pkg/apis/rafter/v1beta1"
 )
 
 func init() {
@@ -95,7 +95,7 @@ func newTestSuite(t *testing.T, docsEnabled, httpBasicAuth bool) *testSuite {
 	require.NoError(t, apis.AddToScheme(sch))
 	require.NoError(t, v1beta1.AddToScheme(sch))
 	require.NoError(t, corev1.AddToScheme(sch))
-	require.NoError(t, dtv1alpha1.AddToScheme(sch))
+	require.NoError(t, dtv1beta1.AddToScheme(sch))
 
 	k8sClientset := kubernetes.NewSimpleClientset()
 
@@ -488,14 +488,14 @@ func (ts *testSuite) updateClusterAddonsConfigurationRepositories(name string, u
 	require.NoError(ts.t, ts.dynamicClient.Update(context.TODO(), &clusterAddonsConfiguration))
 }
 
-func (ts *testSuite) assertDocsTopicExist(namespace, name string) {
-	var docsTopic dtv1alpha1.DocsTopic
+func (ts *testSuite) assertAssetGroupExist(namespace, name string) {
+	var assetGroup dtv1beta1.AssetGroup
 
 	err := wait.Poll(1*time.Second, 30*time.Second, func() (done bool, err error) {
 		key := types.NamespacedName{Name: name, Namespace: namespace}
-		err = ts.dynamicClient.Get(context.TODO(), key, &docsTopic)
+		err = ts.dynamicClient.Get(context.TODO(), key, &assetGroup)
 		if apierrors.IsNotFound(err) {
-			ts.t.Logf("DocsTopic %q not found. Retry...", key)
+			ts.t.Logf("AssetGroup %q not found. Retry...", key)
 			return false, nil
 		}
 		if err != nil {
@@ -508,14 +508,14 @@ func (ts *testSuite) assertDocsTopicExist(namespace, name string) {
 	require.NoError(ts.t, err)
 }
 
-func (ts *testSuite) assertClusterDocsTopicExist(name string) {
-	var clusterDocsTopic dtv1alpha1.ClusterDocsTopic
+func (ts *testSuite) assertClusterAssetGroupExist(name string) {
+	var clusterAssetGroup dtv1beta1.ClusterAssetGroup
 
 	err := wait.Poll(1*time.Second, 30*time.Second, func() (done bool, err error) {
 		key := types.NamespacedName{Name: name}
-		err = ts.dynamicClient.Get(context.TODO(), key, &clusterDocsTopic)
+		err = ts.dynamicClient.Get(context.TODO(), key, &clusterAssetGroup)
 		if apierrors.IsNotFound(err) {
-			ts.t.Logf("ClusterDocsTopic %q not found. Retry...", key)
+			ts.t.Logf("ClusterAssetGroup %q not found. Retry...", key)
 			return false, nil
 		}
 		if err != nil {
@@ -528,16 +528,16 @@ func (ts *testSuite) assertClusterDocsTopicExist(name string) {
 	require.NoError(ts.t, err)
 }
 
-func (ts *testSuite) assertDocsTopicListIsEmpty() {
-	var docsTopicList dtv1alpha1.DocsTopicList
+func (ts *testSuite) assertAssetGroupListIsEmpty() {
+	var assetGroupList dtv1beta1.AssetGroupList
 
 	err := wait.Poll(1*time.Second, 30*time.Second, func() (done bool, err error) {
-		err = ts.dynamicClient.List(context.TODO(), &client.ListOptions{}, &docsTopicList)
+		err = ts.dynamicClient.List(context.TODO(), &client.ListOptions{}, &assetGroupList)
 		if err != nil {
 			return false, err
 		}
-		if len(docsTopicList.Items) != 0 {
-			ts.t.Logf("DocsTopicList is not empty, current size %d. Retry...", len(docsTopicList.Items))
+		if len(assetGroupList.Items) != 0 {
+			ts.t.Logf("AssetGroupList is not empty, current size %d. Retry...", len(assetGroupList.Items))
 			return false, nil
 		}
 
@@ -547,16 +547,16 @@ func (ts *testSuite) assertDocsTopicListIsEmpty() {
 	require.NoError(ts.t, err)
 }
 
-func (ts *testSuite) assertClusterDocsTopicListIsEmpty() {
-	var clusterDocsTopicList dtv1alpha1.ClusterDocsTopicList
+func (ts *testSuite) assertClusterAssetGroupListIsEmpty() {
+	var clusterAssetGroupList dtv1beta1.ClusterAssetGroupList
 
 	err := wait.Poll(1*time.Second, 30*time.Second, func() (done bool, err error) {
-		err = ts.dynamicClient.List(context.TODO(), &client.ListOptions{}, &clusterDocsTopicList)
+		err = ts.dynamicClient.List(context.TODO(), &client.ListOptions{}, &clusterAssetGroupList)
 		if err != nil {
 			return false, err
 		}
-		if len(clusterDocsTopicList.Items) != 0 {
-			ts.t.Logf("ClusterDocsTopicList is not empty, current size %d. Retry...", len(clusterDocsTopicList.Items))
+		if len(clusterAssetGroupList.Items) != 0 {
+			ts.t.Logf("ClusterAssetGroupList is not empty, current size %d. Retry...", len(clusterAssetGroupList.Items))
 			return false, nil
 		}
 

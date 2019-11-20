@@ -2,12 +2,12 @@ package provider
 
 import (
 	getter "github.com/hashicorp/go-getter"
-	"github.com/kyma-project/helm-broker/internal/assetstore"
+	"github.com/kyma-project/helm-broker/internal/rafter"
 )
 
 // HgGetterCreator provides functionality for loading addon from any Mercurial repository.
 type HgGetterCreator struct {
-	Cli    assetstore.Client
+	Cli    rafter.Client
 	TmpDir string
 }
 

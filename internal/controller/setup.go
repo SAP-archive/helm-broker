@@ -7,21 +7,21 @@ import (
 	"github.com/kubernetes-incubator/service-catalog/pkg/apis/servicecatalog/v1beta1"
 	"github.com/kyma-project/helm-broker/internal/addon"
 	"github.com/kyma-project/helm-broker/internal/addon/provider"
-	"github.com/kyma-project/helm-broker/internal/assetstore"
+	"github.com/kyma-project/helm-broker/internal/rafter"
 	"github.com/kyma-project/helm-broker/internal/config"
 	"github.com/kyma-project/helm-broker/internal/controller/broker"
 	"github.com/kyma-project/helm-broker/internal/controller/docs"
 	"github.com/kyma-project/helm-broker/internal/controller/repository"
 	"github.com/kyma-project/helm-broker/internal/storage"
 	"github.com/kyma-project/helm-broker/pkg/apis"
-	"github.com/kyma-project/kyma/components/cms-controller-manager/pkg/apis/cms/v1alpha1"
+	rafterv1beta1 "github.com/kyma-project/helm-broker/pkg/apis/rafter/v1beta1"
 	"github.com/sirupsen/logrus"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
 // SetupAndStartController creates and starts the controller
-func SetupAndStartController(cfg *rest.Config, ctrCfg *config.ControllerConfig, metricsAddr string, sFact storage.Factory, uploadClient assetstore.Client, lg *logrus.Entry) manager.Manager {
+func SetupAndStartController(cfg *rest.Config, ctrCfg *config.ControllerConfig, metricsAddr string, sFact storage.Factory, uploadClient rafter.Client, lg *logrus.Entry) manager.Manager {
 	// Create a new Cmd to provide shared dependencies and start components
 	lg.Info("Setting up manager")
 	var mgr manager.Manager
@@ -40,7 +40,7 @@ func SetupAndStartController(cfg *rest.Config, ctrCfg *config.ControllerConfig, 
 	lg.Info("Setting up schemes")
 	fatalOnError(apis.AddToScheme(mgr.GetScheme()), "while adding AC scheme")
 	fatalOnError(v1beta1.AddToScheme(mgr.GetScheme()), "while adding SC scheme")
-	fatalOnError(v1alpha1.AddToScheme(mgr.GetScheme()), "while adding CMS scheme")
+	fatalOnError(rafterv1beta1.AddToScheme(mgr.GetScheme()), "while adding RAFTER scheme")
 
 	// Setup dependencies
 

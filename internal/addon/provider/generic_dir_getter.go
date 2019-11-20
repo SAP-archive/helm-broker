@@ -11,7 +11,7 @@ import (
 
 	getter "github.com/hashicorp/go-getter"
 	"github.com/kyma-project/helm-broker/internal"
-	"github.com/kyma-project/helm-broker/internal/assetstore"
+	"github.com/kyma-project/helm-broker/internal/rafter"
 	"github.com/mholt/archiver"
 	exerr "github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/rand"
@@ -28,14 +28,14 @@ type ClientModeDirGetter struct {
 	addonDirPath string
 	docsURL      string
 
-	cli      assetstore.Client
+	cli      rafter.Client
 	tmpDir   string
 	protocol string
 }
 
 // ClientModeDirGetterCfg holds input parameters for ClientModeDirGetter constructor
 type ClientModeDirGetterCfg struct {
-	Cli        assetstore.Client
+	Cli        rafter.Client
 	TmpDir     string
 	Underlying getter.Getter
 	Addr       string

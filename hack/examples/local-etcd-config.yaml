@@ -4,5 +4,8 @@
       provide:
         all: ~
       etcd:
+        dialTimeout: 5s
+        dialKeepAliveTime: 2s
+        dialKeepAliveTimeout: 5s
         endpoints:
           - http://127.0.0.1:2379

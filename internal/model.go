@@ -10,7 +10,7 @@ import (
 	"github.com/fatih/structs"
 	google_protobuf "github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
-	cms "github.com/kyma-project/kyma/components/cms-controller-manager/pkg/apis/cms/v1alpha1"
+	rafter "github.com/kyma-project/helm-broker/pkg/apis/rafter/v1beta1"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -151,9 +151,9 @@ func (b AddonPlanMetadata) ToMap() map[string]interface{} {
 // AddonTag is a Tag attached to AddonWithCharts.
 type AddonTag string
 
-// AddonDocs contains data to create ClusterDocsTopic for every ClusterServiceClass.
+// AddonDocs contains data to create ClusterAssetGroup for every ClusterServiceClass.
 type AddonDocs struct {
-	Template cms.CommonDocsTopicSpec
+	Template rafter.CommonAssetGroupSpec
 }
 
 // Addon represents addon as defined by OSB API.

@@ -8,7 +8,7 @@ import (
 
 	"github.com/Masterminds/semver"
 	"github.com/kyma-project/helm-broker/internal"
-	"github.com/kyma-project/kyma/components/cms-controller-manager/pkg/apis/cms/v1alpha1"
+	"github.com/kyma-project/helm-broker/pkg/apis/rafter/v1beta1"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -20,9 +20,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
-func TestDocsProvider_EnsureDocsTopic(t *testing.T) {
+func TestDocsProvider_EnsureAssetGroup(t *testing.T) {
 	// given
-	err := v1alpha1.AddToScheme(scheme.Scheme)
+	err := v1beta1.AddToScheme(scheme.Scheme)
 	require.NoError(t, err)
 
 	for tn, tc := range map[string]struct {
@@ -37,24 +37,24 @@ func TestDocsProvider_EnsureDocsTopic(t *testing.T) {
 
 			// when
 			docsProvider.SetNamespace("test")
-			err = docsProvider.EnsureDocsTopic(tc.givenAddon.Addon)
+			err = docsProvider.EnsureAssetGroup(tc.givenAddon.Addon)
 			require.NoError(t, err)
 
 			// then
-			result := v1alpha1.DocsTopic{}
+			result := v1beta1.AssetGroup{}
 			err = c.Get(context.Background(), client.ObjectKey{Namespace: "test", Name: "test"}, &result)
 			require.NoError(t, err)
-			assert.Equal(t, tc.givenAddon.Addon.Docs[0].Template, result.Spec.CommonDocsTopicSpec)
+			assert.Equal(t, tc.givenAddon.Addon.Docs[0].Template, result.Spec.CommonAssetGroupSpec)
 		})
 	}
 }
 
-func TestDocsProvider_EnsureDocsTopic_UpdateIfExist(t *testing.T) {
+func TestDocsProvider_EnsureAssetGroup_UpdateIfExist(t *testing.T) {
 	// given
-	err := v1alpha1.AddToScheme(scheme.Scheme)
+	err := v1beta1.AddToScheme(scheme.Scheme)
 	require.NoError(t, err)
 
-	dt := fixDocsTopic()
+	dt := fixAssetGroup()
 
 	addonWithEmptyDocsURL := fixAddonWithEmptyDocs(dt.Name, "test", "url")
 	addonWithEmptyDocsURL.Addon.Docs[0].Template.Description = "new description"
@@ -64,58 +64,58 @@ func TestDocsProvider_EnsureDocsTopic_UpdateIfExist(t *testing.T) {
 
 	// when
 	docsProvider.SetNamespace("test")
-	err = docsProvider.EnsureDocsTopic(addonWithEmptyDocsURL.Addon)
+	err = docsProvider.EnsureAssetGroup(addonWithEmptyDocsURL.Addon)
 	require.NoError(t, err)
 
 	// then
-	result := v1alpha1.DocsTopic{}
+	result := v1beta1.AssetGroup{}
 	err = c.Get(context.Background(), client.ObjectKey{Namespace: dt.Namespace, Name: dt.Name}, &result)
 	require.NoError(t, err)
-	assert.Equal(t, addonWithEmptyDocsURL.Addon.Docs[0].Template, result.Spec.CommonDocsTopicSpec)
+	assert.Equal(t, addonWithEmptyDocsURL.Addon.Docs[0].Template, result.Spec.CommonAssetGroupSpec)
 }
 
-func TestDocsProvider_EnsureDocsTopicRemoved(t *testing.T) {
+func TestDocsProvider_EnsureAssetGroupRemoved(t *testing.T) {
 	// given
-	err := v1alpha1.AddToScheme(scheme.Scheme)
+	err := v1beta1.AddToScheme(scheme.Scheme)
 	require.NoError(t, err)
 
-	dt := fixDocsTopic()
+	dt := fixAssetGroup()
 	c := fake.NewFakeClient(dt)
 	docsProvider := NewProvider(c, logrus.New())
 
 	// when
 	docsProvider.SetNamespace("test")
-	err = docsProvider.EnsureDocsTopicRemoved(dt.Name)
+	err = docsProvider.EnsureAssetGroupRemoved(dt.Name)
 	require.NoError(t, err)
 
 	// then
-	result := v1alpha1.DocsTopic{}
+	result := v1beta1.AssetGroup{}
 	err = c.Get(context.Background(), client.ObjectKey{Namespace: dt.Namespace, Name: dt.Name}, &result)
 	assert.True(t, errors.IsNotFound(err))
 }
 
-func TestDocsProvider_EnsureDocsTopicRemoved_NotExists(t *testing.T) {
+func TestDocsProvider_EnsureAssetGroupRemoved_NotExists(t *testing.T) {
 	// given
-	err := v1alpha1.AddToScheme(scheme.Scheme)
+	err := v1beta1.AddToScheme(scheme.Scheme)
 	require.NoError(t, err)
 
-	dt := fixDocsTopic()
+	dt := fixAssetGroup()
 	c := fake.NewFakeClient()
 	docsProvider := NewProvider(c, logrus.New())
 
 	// when
 	docsProvider.SetNamespace("test")
-	err = docsProvider.EnsureDocsTopicRemoved(dt.Name)
+	err = docsProvider.EnsureAssetGroupRemoved(dt.Name)
 	require.NoError(t, err)
 
 	// then
-	result := v1alpha1.DocsTopic{}
+	result := v1beta1.AssetGroup{}
 	err = c.Get(context.Background(), client.ObjectKey{Namespace: dt.Namespace, Name: dt.Name}, &result)
 	assert.True(t, errors.IsNotFound(err))
 }
 
-func fixDocsTopic() *v1alpha1.DocsTopic {
-	return &v1alpha1.DocsTopic{
+func fixAssetGroup() *v1beta1.AssetGroup {
+	return &v1beta1.AssetGroup{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "test",
 			Namespace: "test",
@@ -143,8 +143,8 @@ func fixAddonWithDocsURL(id, name, url, docsURL string) internal.AddonWithCharts
 			},
 			Docs: []internal.AddonDocs{
 				{
-					Template: v1alpha1.CommonDocsTopicSpec{
-						Sources: []v1alpha1.Source{
+					Template: v1beta1.CommonAssetGroupSpec{
+						Sources: []v1beta1.Source{
 							{
 								URL: docsURL,
 							},
@@ -184,8 +184,8 @@ func fixAddonWithEmptyDocs(id, name, url string) internal.AddonWithCharts {
 			},
 			Docs: []internal.AddonDocs{
 				{
-					Template: v1alpha1.CommonDocsTopicSpec{
-						Sources: []v1alpha1.Source{
+					Template: v1beta1.CommonAssetGroupSpec{
+						Sources: []v1beta1.Source{
 							{},
 						},
 					},

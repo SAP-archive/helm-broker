@@ -821,12 +821,9 @@
   version = "v0.1.42"
 
 [[projects]]
-  digest = "1:94693b6f3dede8ae157a0660e785a5f29594bddd5ce08f05e1643a401072cc96"
+  digest = "1:3fd94c81ea1acc423bca554c0af861bca05bc602c2a8e9015c97b517041483d4"
   name = "github.com/kyma-project/kyma"
-  packages = [
-    "components/application-gateway/pkg/httpconsts",
-    "components/cms-controller-manager/pkg/apis/cms/v1alpha1",
-  ]
+  packages = ["components/application-gateway/pkg/httpconsts"]
   pruneopts = "UT"
   revision = "eed4ed1c60440b9118f4a97a96d52efdd5a3a336"
 
@@ -1999,12 +1996,13 @@
     "github.com/imdario/mergo",
     "github.com/kubernetes-incubator/service-catalog/pkg/apis/servicecatalog/v1beta1",
     "github.com/kyma-project/kyma/components/application-gateway/pkg/httpconsts",
-    "github.com/kyma-project/kyma/components/cms-controller-manager/pkg/apis/cms/v1alpha1",
     "github.com/mcuadros/go-defaults",
     "github.com/meatballhat/negroni-logrus",
     "github.com/mholt/archiver",
     "github.com/minio/minio-go",
     "github.com/oklog/ulid",
+    "github.com/onsi/ginkgo",
+    "github.com/onsi/gomega",
     "github.com/pborman/uuid",
     "github.com/pkg/errors",
     "github.com/pmorie/go-open-service-broker-client/v2",
@@ -2022,6 +2020,7 @@
     "google.golang.org/grpc",
     "google.golang.org/grpc/credentials",
     "gopkg.in/yaml.v2",
+    "k8s.io/api/apps/v1",
     "k8s.io/api/core/v1",
     "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1",
     "k8s.io/apimachinery/pkg/api/errors",
