@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/kyma-project/helm-broker/internal"
-	//"github.com/kyma-project/kyma/components/cms-controller-manager/pkg/apis/cms/v1alpha1"
 	"github.com/kyma-project/helm-broker/pkg/apis/rafter/v1beta1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -38,7 +37,7 @@ func NewProvider(dynamicClient client.Client, log logrus.FieldLogger) *Provider 
 
 const (
 	rafterLabelKey = "rafter.kyma-project.io/view-context"
-	hbLabelKey  = "helm-broker.kyma-project.io/addon-docs"
+	hbLabelKey     = "helm-broker.kyma-project.io/addon-docs"
 )
 
 // SetNamespace sets service's working namespace
@@ -55,7 +54,7 @@ func (d *Provider) EnsureAssetGroup(addon *internal.Addon) error {
 			Namespace: d.namespace,
 			Labels: map[string]string{
 				rafterLabelKey: "service-catalog",
-				hbLabelKey:  "true",
+				hbLabelKey:     "true",
 			},
 		},
 		Spec: v1beta1.AssetGroupSpec{CommonAssetGroupSpec: addon.Docs[0].Template},

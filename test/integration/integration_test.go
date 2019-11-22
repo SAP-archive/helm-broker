@@ -336,18 +336,18 @@ func TestAssetGroup(t *testing.T) {
 	defer suite.tearDown()
 
 	for name, c := range map[string]struct {
-		kind        string
-		addonName   string
+		kind         string
+		addonName    string
 		assetGroupID string
 	}{
 		"namespaced-http": {
-			kind:        sourceHTTP,
-			addonName:   addonsConfigName,
+			kind:         sourceHTTP,
+			addonName:    addonsConfigName,
 			assetGroupID: accTestAddonID,
 		},
 		"namespaced-git": {
-			kind:        sourceGit,
-			addonName:   addonsConfigNameGit,
+			kind:         sourceGit,
+			addonName:    addonsConfigNameGit,
 			assetGroupID: accTestAddonIDGit,
 		},
 	} {
@@ -368,18 +368,18 @@ func TestAssetGroup(t *testing.T) {
 	}
 
 	for name, c := range map[string]struct {
-		kind        string
-		addonName   string
+		kind         string
+		addonName    string
 		assetGroupID string
 	}{
 		"cluster-http": {
-			kind:        sourceHTTP,
-			addonName:   addonsConfigName,
+			kind:         sourceHTTP,
+			addonName:    addonsConfigName,
 			assetGroupID: accTestAddonID,
 		},
 		"cluster-git": {
-			kind:        sourceGit,
-			addonName:   addonsConfigNameGit,
+			kind:         sourceGit,
+			addonName:    addonsConfigNameGit,
 			assetGroupID: accTestAddonIDGit,
 		},
 	} {

@@ -41,7 +41,7 @@ func (d *ClusterProvider) EnsureAssetGroup(addon *internal.Addon) error {
 			Name: string(addon.ID),
 			Labels: map[string]string{
 				rafterLabelKey: "service-catalog",
-				hbLabelKey:  "true",
+				hbLabelKey:     "true",
 			},
 		},
 		Spec: v1beta1.ClusterAssetGroupSpec{CommonAssetGroupSpec: addon.Docs[0].Template},

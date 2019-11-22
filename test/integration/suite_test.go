@@ -32,12 +32,12 @@ import (
 
 	"strings"
 
-	"github.com/kyma-project/helm-broker/internal/rafter"
-	"github.com/kyma-project/helm-broker/internal/rafter/automock"
 	"github.com/kyma-project/helm-broker/internal/bind"
 	"github.com/kyma-project/helm-broker/internal/broker"
 	"github.com/kyma-project/helm-broker/internal/config"
 	"github.com/kyma-project/helm-broker/internal/controller"
+	"github.com/kyma-project/helm-broker/internal/rafter"
+	"github.com/kyma-project/helm-broker/internal/rafter/automock"
 	"github.com/kyma-project/helm-broker/internal/storage"
 	"github.com/kyma-project/helm-broker/internal/storage/testdata"
 	"github.com/kyma-project/helm-broker/pkg/apis"

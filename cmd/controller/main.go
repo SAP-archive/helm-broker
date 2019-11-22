@@ -4,11 +4,11 @@ import (
 	"flag"
 	"fmt"
 
-	"github.com/kyma-project/helm-broker/internal/rafter"
 	envs "github.com/kyma-project/helm-broker/internal/config"
 	"github.com/kyma-project/helm-broker/internal/controller"
 	"github.com/kyma-project/helm-broker/internal/health"
 	"github.com/kyma-project/helm-broker/internal/platform/logger"
+	"github.com/kyma-project/helm-broker/internal/rafter"
 	"github.com/kyma-project/helm-broker/internal/storage"
 
 	"github.com/sirupsen/logrus"
