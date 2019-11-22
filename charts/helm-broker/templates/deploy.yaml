@@ -26,21 +26,16 @@ spec:
 
       initContainers:
       - name: "init-{{ .Chart.Name }}"
-        image: "{{ .Values.global.alpine_kubectl.image }}:{{ .Values.global.alpine_kubectl.version }}"
+        image: "{{ .Values.global.containerRegistry.path }}{{ .Values.global.helm_broker.dir }}/health-check:{{ .Values.global.helm_broker.version }}"
         imagePullPolicy: {{ .Values.global.initImage.pullPolicy }}
         command:
-          - "sh"
-          - "-c"
-          - |
-            URL=http://{{ .Release.Name }}-etcd-stateful-client.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.global.etcdClientPort }}/health
-            until $(curl --output /dev/null --silent --fail $URL); do
-              echo waiting for etcd service at $URL; sleep 1;
-            done;
-            TILLER=$(kubectl get pod -l app=helm,name=tiller --all-namespaces --field-selector status.phase=Running -o name)
-            if [ -z "$TILLER" ]; then
-              echo "Tiller Pod for helm does not exist"
-              exit 1
-            fi
+          - "/health-check"
+          - "-path=health"
+          - "-host={{ .Release.Name }}-etcd-stateful-client.{{ .Release.Namespace }}.svc.cluster.local"
+          - "-statusPort={{ .Values.global.etcdClientPort }}"
+          - "-retry=20"
+        ports:
+          - containerPort: {{ .Values.broker.internalPort }}
 
       containers:
       - name: broker
@@ -71,24 +66,26 @@ spec:
           readOnly: true
         ports:
         - containerPort: {{ .Values.broker.internalPort }}
-        # Temporary solution for readiness probe
-        # Ref: https://github.com/istio/istio/issues/2628
+        # We use health-check binary to monitor the state of application
+        # Current solution is suited for deployment on cluster with mTLS enabled
+        # https://medium.com/cloud-native-the-gathering/kubernetes-liveness-probe-for-scratch-image-with-istio-mtls-enabled-90543e4bae34
         readinessProbe:
           exec:
             command:
-              - curl
-              - localhost:{{ .Values.broker.statusPort }}/ready
-          failureThreshold: 3
-          periodSeconds: 3
+              - "/health-check"
+              - "-path=ready"
+              - "-statusPort={{ .Values.broker.statusPort }}"
+          periodSeconds: 10
           successThreshold: 1
-          timeoutSeconds: 2
+          timeoutSeconds: 10
         livenessProbe:
           exec:
             command:
-              - curl
-              - localhost:{{ .Values.broker.statusPort }}/live
+              - "/health-check"
+              - "-path=live"
+              - "-statusPort={{ .Values.broker.statusPort }}"
           periodSeconds: 10
-          timeoutSeconds: 2
+          timeoutSeconds: 10
           successThreshold: 1
 
       - name: ctrl
@@ -124,24 +121,23 @@ spec:
           readOnly: true
         ports:
         - containerPort: {{ .Values.ctrl.internalPort }}
-        # Temporary solution for readiness probe
-        # Ref: https://github.com/istio/istio/issues/2628
         readinessProbe:
           exec:
             command:
-              - curl
-              - localhost:{{ .Values.ctrl.statusPort }}/ready
-          failureThreshold: 3
-          periodSeconds: 3
+              - "/health-check"
+              - "-path=ready"
+              - "-statusPort={{ .Values.ctrl.statusPort }}"
+          periodSeconds: 10
           successThreshold: 1
-          timeoutSeconds: 2
+          timeoutSeconds: 10
         livenessProbe:
           exec:
             command:
-              - curl
-              - localhost:{{ .Values.ctrl.statusPort }}/live
-          periodSeconds: 60
-          timeoutSeconds: 30
+              - "/health-check"
+              - "-path=live"
+              - "-statusPort={{ .Values.ctrl.statusPort }}"
+          periodSeconds: 100
+          timeoutSeconds: 10
           successThreshold: 1
 
       volumes:

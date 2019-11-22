@@ -10,17 +10,14 @@ global:
   image:
     pullPolicy: IfNotPresent
   # paths to docker images
-  alpine_kubectl:
-    image: eu.gcr.io/kyma-project/test-infra/alpine-kubectl
-    version: v20190325-ff66a3a
   helm_broker:
     image: helm-broker
     dir: /pr
-    version: PR-40
+    version: PR-52
   helm_controller:
     image: helm-controller
     dir: /pr
-    version: PR-40
+    version: PR-52
   # helm broker service parameters
   service:
     type: NodePort
@@ -45,4 +42,4 @@ ctrl:
 tests:
   image: helm-broker-tests
   dir: /pr
-  tag: PR-37
+  tag: PR-52
