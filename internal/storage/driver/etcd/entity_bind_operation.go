@@ -46,7 +46,6 @@ func (s *BindOperation) WithTimeProvider(nowProvider func() time.Time) *BindOper
 
 // Insert inserts object into storage.
 func (s *BindOperation) Insert(bo *internal.BindOperation) error {
-
 	if bo == nil {
 		return errors.New("entity may not be nil")
 	}
@@ -81,7 +80,7 @@ func (s *BindOperation) Insert(bo *internal.BindOperation) error {
 	}
 
 	if _, err := s.kv.Put(context.TODO(), opKey, dso); err != nil {
-		return errors.Wrap(err, "while calling database on put")
+		return errors.Wrap(err, "while putting bind operation")
 	}
 
 	return nil
@@ -134,14 +133,13 @@ func (s *BindOperation) get(iID internal.InstanceID, bID internal.BindingID, opI
 	return s.decodeDSOToDM(resp.Kvs[0].Value)
 }
 
-// GetAll returns all objects from storage.
+// GetAll returns all objects from storage for a given Instance ID
 func (s *BindOperation) GetAll(iID internal.InstanceID) ([]*internal.BindOperation, error) {
-
 	if iID.IsZero() {
 		return nil, errors.New("instance id cannot be empty")
 	}
 
-	out := []*internal.BindOperation{}
+	var out []*internal.BindOperation
 
 	resp, err := s.kv.Get(context.TODO(), s.instanceKeyPrefix(iID), clientv3.WithPrefix())
 	if err != nil {
@@ -199,7 +197,7 @@ func (s *BindOperation) updateStateDesc(iID internal.InstanceID, bID internal.Bi
 func (s *BindOperation) Remove(iID internal.InstanceID, bID internal.BindingID, opID internal.OperationID) error {
 	resp, err := s.kv.Delete(context.TODO(), s.key(iID, bID, opID))
 	if err != nil {
-		return errors.Wrap(err, "while calling database")
+		return errors.Wrap(err, "while deleting bind operation")
 	}
 
 	switch resp.Deleted {
@@ -231,7 +229,7 @@ func (*BindOperation) bindKeyPrefix(id internal.BindingID) string {
 }
 
 func (*BindOperation) handleGetError(errIn error) error {
-	return errors.Wrap(errIn, "while calling database")
+	return errors.Wrap(errIn, "while getting bind operation")
 }
 
 func (s *BindOperation) encodeDMToDSO(dm *internal.BindOperation) (string, error) {

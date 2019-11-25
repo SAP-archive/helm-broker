@@ -114,7 +114,7 @@ func TestInstanceStateServiceIsProvisioned(t *testing.T) {
 		got, err := svc.IsProvisioned(ts.Exp.InstanceID)
 
 		// THEN
-		assert.EqualError(t, err, fmt.Sprintf("while getting operations from storage: %s", fixErr.Error()))
+		assert.EqualError(t, err, fmt.Sprintf("while getting instance operations from storage: %s", fixErr.Error()))
 		assert.False(t, got)
 	})
 }
@@ -208,7 +208,7 @@ func TestInstanceStateServiceIsDeprovisioned(t *testing.T) {
 		got, err := svc.IsDeprovisioned(ts.Exp.InstanceID)
 
 		// THEN
-		assert.EqualError(t, err, fmt.Sprintf("while getting operations from storage: %s", fixErr.Error()))
+		assert.EqualError(t, err, fmt.Sprintf("while getting instance operations from storage: %s", fixErr.Error()))
 		assert.False(t, got)
 	})
 }
@@ -304,7 +304,7 @@ func TestInstanceStateServiceIsDeprovisioningInProgress(t *testing.T) {
 		gotOpID, got, err := svc.IsDeprovisioningInProgress(ts.Exp.InstanceID)
 
 		// THEN
-		assert.EqualError(t, err, fmt.Sprintf("while getting operations from storage: %s", fixErr.Error()))
+		assert.EqualError(t, err, fmt.Sprintf("while getting instance operations from storage: %s", fixErr.Error()))
 		assert.False(t, got)
 		assert.Zero(t, gotOpID)
 	})
@@ -399,7 +399,7 @@ func TestInstanceStateServiceIsProvisioningInProgress(t *testing.T) {
 		gotOpID, got, err := svc.IsProvisioningInProgress(ts.Exp.InstanceID)
 
 		// THEN
-		assert.EqualError(t, err, fmt.Sprintf("while getting operations from storage: %s", fixErr.Error()))
+		assert.EqualError(t, err, fmt.Sprintf("while getting instance operations from storage: %s", fixErr.Error()))
 		assert.False(t, got)
 		assert.Zero(t, gotOpID)
 	})
@@ -507,7 +507,7 @@ func TestBindStateServiceIsBound(t *testing.T) {
 		_, got, err := svc.IsBound(ts.Exp.InstanceID, ts.Exp.BindingID)
 
 		// THEN
-		assert.EqualError(t, err, fmt.Sprintf("while getting operations from storage: %s", fixErr.Error()))
+		assert.EqualError(t, err, fmt.Sprintf("while getting bind operations from storage: %s", fixErr.Error()))
 		assert.False(t, got)
 	})
 }
@@ -601,7 +601,7 @@ func TestBindStateServiceIsBindingInProgress(t *testing.T) {
 		gotOpID, got, err := svc.IsBindingInProgress(ts.Exp.InstanceID, ts.Exp.BindingID)
 
 		// THEN
-		assert.EqualError(t, err, fmt.Sprintf("while getting operations from storage: %s", fixErr.Error()))
+		assert.EqualError(t, err, fmt.Sprintf("while getting bind operations from storage: %s", fixErr.Error()))
 		assert.False(t, got)
 		assert.Zero(t, gotOpID)
 	})

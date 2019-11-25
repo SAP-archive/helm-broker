@@ -19,7 +19,7 @@ func (svc *instanceStateService) IsProvisioned(iID internal.InstanceID) (bool, e
 	case IsNotFoundError(err):
 		return false, nil
 	default:
-		return false, errors.Wrap(err, "while getting operations from storage")
+		return false, errors.Wrap(err, "while getting instance operations from storage")
 	}
 
 OpsLoop:
@@ -46,7 +46,7 @@ func (svc *instanceStateService) IsProvisioningInProgress(iID internal.InstanceI
 	case IsNotFoundError(err):
 		return resultOpID, false, nil
 	default:
-		return resultOpID, false, errors.Wrap(err, "while getting operations from storage")
+		return resultOpID, false, errors.Wrap(err, "while getting instance operations from storage")
 	}
 
 OpsLoop:
@@ -70,7 +70,7 @@ func (svc *instanceStateService) IsDeprovisioned(iID internal.InstanceID) (bool,
 	case IsNotFoundError(err):
 		return false, err
 	default:
-		return false, errors.Wrap(err, "while getting operations from storage")
+		return false, errors.Wrap(err, "while getting instance operations from storage")
 	}
 
 OpsLoop:
@@ -94,7 +94,7 @@ func (svc *instanceStateService) IsDeprovisioningInProgress(iID internal.Instanc
 	case IsNotFoundError(err):
 		return resultOpID, false, nil
 	default:
-		return resultOpID, false, errors.Wrap(err, "while getting operations from storage")
+		return resultOpID, false, errors.Wrap(err, "while getting instance operations from storage")
 	}
 
 OpsLoop:
@@ -121,7 +121,7 @@ func (svc *bindStateService) IsBound(iID internal.InstanceID, bID internal.Bindi
 	case IsNotFoundError(err):
 		return internal.BindOperation{}, false, nil
 	default:
-		return internal.BindOperation{}, false, errors.Wrap(err, "while getting operations from storage")
+		return internal.BindOperation{}, false, errors.Wrap(err, "while getting bind operations from storage")
 	}
 
 	boundOp := &internal.BindOperation{}
@@ -150,7 +150,7 @@ func (svc *bindStateService) IsBindingInProgress(iID internal.InstanceID, bID in
 	case IsNotFoundError(err):
 		return resultOpID, false, nil
 	default:
-		return resultOpID, false, errors.Wrap(err, "while getting operations from storage")
+		return resultOpID, false, errors.Wrap(err, "while getting bind operations from storage")
 	}
 
 	for _, op := range ops {

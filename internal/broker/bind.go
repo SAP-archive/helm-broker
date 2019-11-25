@@ -21,9 +21,7 @@ type bindService struct {
 	instanceGetter                instanceGetter
 	bindTemplateRenderer          bindTemplateRenderer
 	bindTemplateResolver          bindTemplateResolver
-	instanceBindDataInserter      instanceBindDataInserter
-	instanceBindDataGetter        instanceBindDataGetter
-	instanceBindDataRemover       instanceBindDataRemover
+	instanceBindDataStorage       instanceBindDataStorage
 	bindStateGetter               bindStateBindingGetter
 	bindOperationGetter           bindOperationGetter
 	bindOperationCollectionGetter bindOperationCollectionGetter
@@ -81,8 +79,8 @@ func (svc *bindService) Bind(ctx context.Context, osbCtx OsbContext, req *osb.Bi
 
 		credsOut := svc.dtoFromModel(out.Credentials)
 
-		if removerErr := svc.instanceBindDataRemover.Remove(iID); removerErr != nil {
-			svc.log.Errorf("while removing instance bind data after getting it from memory on bind, got error: %v", removerErr)
+		if err := svc.instanceBindDataStorage.Remove(iID); err != nil {
+			svc.log.Errorf("while removing instance bind data after getting it from memory on bind, got error: %v", err)
 		}
 
 		return &osb.BindResponse{
@@ -161,14 +159,14 @@ func (svc *bindService) GetServiceBinding(ctx context.Context, osbCtx OsbContext
 		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusNotFound, ErrorMessage: strPtr(fmt.Sprintf("service binding id: %q is in progress", opIDInProgress))}
 	}
 
-	out, err := svc.instanceBindDataGetter.Get(iID)
+	out, err := svc.instanceBindDataStorage.Get(iID)
 	if err != nil {
 		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusNotFound, ErrorMessage: strPtr(fmt.Sprintf("while getting bind data from memory for instance id: %q and service binding id: %q with error: %v", iID, bID, err))}
 	}
 
 	credsOut := svc.dtoFromModel(out.Credentials)
 
-	if removerErr := svc.instanceBindDataRemover.Remove(iID); removerErr != nil {
+	if removerErr := svc.instanceBindDataStorage.Remove(iID); removerErr != nil {
 		svc.log.Errorf("while removing instance bind data after getting it from memory on get service binding, got error: %v", removerErr)
 	}
 
@@ -295,7 +293,7 @@ func (svc *bindService) renderAndResolveBindData(addonPlan internal.AddonPlan, i
 		Credentials: out.Credentials,
 	}
 
-	err = svc.instanceBindDataInserter.Insert(&in)
+	err = svc.instanceBindDataStorage.Insert(&in)
 	if err != nil {
 		return errors.Wrap(err, "while inserting instance bind data to memory")
 	}
@@ -308,7 +306,7 @@ func (svc *bindService) getInstanceBindData(iID internal.InstanceID, bID interna
 		return nil, errors.New("both instance and binding id must be set")
 	}
 
-	ibd, err := svc.instanceBindDataGetter.Get(iID)
+	ibd, err := svc.instanceBindDataStorage.Get(iID)
 	if err != nil {
 		return nil, errors.Wrap(err, "while getting instance bind data from memory")
 	}
