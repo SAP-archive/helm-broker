@@ -183,6 +183,11 @@ type CommonAddon struct {
 	Status v1alpha1.CommonAddonsConfigurationStatus
 }
 
+// IsReadyForInitialProcessing checks if the object is in the initial state - has never been processed.
+func (ca *CommonAddon) IsReadyForInitialProcessing() bool {
+	return ca.Status.ObservedGeneration == 0 || ca.Status.Phase == v1alpha1.AddonsConfigurationPending
+}
+
 // AddonWithCharts aggregates an addon with its chart(s)
 type AddonWithCharts struct {
 	Addon  *Addon

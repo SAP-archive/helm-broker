@@ -10,7 +10,7 @@ import (
 
 func TestHttpBasicAuth(t *testing.T) {
 	// given
-	suite := newTestSuite(t, true, true)
+	suite := newTestSuiteAndStartControllers(t, true, true)
 	defer suite.tearDown()
 
 	t.Run("namespaced", func(t *testing.T) {
@@ -40,9 +40,41 @@ func TestHttpBasicAuth(t *testing.T) {
 	})
 }
 
+func TestPendingClusterAddonsConfiguration(t *testing.T) {
+	// given
+	suite := newTestSuite(t, false, false)
+	defer suite.tearDown()
+
+	// create a ClusterAddonsConfiguration with status Pending
+	suite.createClusterAddonsConfiguration(addonsConfigName, []string{redisRepo}, sourceHTTP)
+	suite.updateClusterAddonsConfigurationStatusPhase(addonsConfigName, v1alpha1.AddonsConfigurationPending)
+
+	// when
+	suite.StartControllers(false)
+
+	// then
+	suite.waitForClusterAddonsConfigurationPhase(addonsConfigName, v1alpha1.AddonsConfigurationReady)
+}
+
+func TestPendingAddonsConfiguration(t *testing.T) {
+	// given
+	suite := newTestSuite(t, false, false)
+	defer suite.tearDown()
+
+	// create an AddonsConfiguration with status Pending
+	suite.createAddonsConfiguration("stage", addonsConfigName, []string{redisRepo}, sourceHTTP)
+	suite.updateAddonsConfigurationStatusPhase("stage", addonsConfigName, v1alpha1.AddonsConfigurationPending)
+
+	// when
+	suite.StartControllers(false)
+
+	// then
+	suite.waitForAddonsConfigurationPhase("stage", addonsConfigName, v1alpha1.AddonsConfigurationReady)
+}
+
 func TestGetCatalogHappyPath(t *testing.T) {
 	// given
-	suite := newTestSuite(t, true, false)
+	suite := newTestSuiteAndStartControllers(t, true, false)
 	// run minio server only if S3 is tested, running the "minio server" each time initiate test in "TestSuite" takes too much time
 	suite.initMinioServer()
 	defer suite.tearDown()
@@ -156,7 +188,7 @@ func TestGetCatalogHappyPath(t *testing.T) {
 // conflicts resolving is in higher layer, so it's protocol agnostic.
 func TestAddonsConflicts(t *testing.T) {
 	// given
-	suite := newTestSuite(t, true, false)
+	suite := newTestSuiteAndStartControllers(t, true, false)
 	defer suite.tearDown()
 
 	for name, c := range map[string]struct {
@@ -300,7 +332,7 @@ func TestAddonsConflicts(t *testing.T) {
 // for HG and S3 because they are using the same abstraction factory.
 func TestDocsTopic(t *testing.T) {
 	// given
-	suite := newTestSuite(t, true, false)
+	suite := newTestSuiteAndStartControllers(t, true, false)
 	defer suite.tearDown()
 
 	for name, c := range map[string]struct {
@@ -372,7 +404,7 @@ func TestDocsTopic(t *testing.T) {
 // Test case with GIT protocol covers also implementation
 // for HG and S3 because they are using the same abstraction factory.
 func TestDisabledDocs(t *testing.T) {
-	suite := newTestSuite(t, false, false)
+	suite := newTestSuiteAndStartControllers(t, false, false)
 	defer suite.tearDown()
 
 	for tn, tc := range map[string]struct {

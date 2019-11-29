@@ -27,41 +27,50 @@ import (
 )
 
 func TestReconcileClusterAddonsConfiguration_AddAddonsProcess(t *testing.T) {
-	// GIVEN
-	fixAddonsCfg := fixClusterAddonsConfiguration()
-	ts := getClusterTestSuite(t, fixAddonsCfg)
-	indexDTO := fixIndexDTO()
-	tmpDir := os.TempDir()
+	for tn, ac := range map[string]*v1alpha1.ClusterAddonsConfiguration{
+		"fresh cluster addons configuration":   fixClusterAddonsConfiguration(),
+		"pending cluster addons configuration": fixPendingClusterAddonsConfiguration(),
+	} {
+		t.Run(tn, func(t *testing.T) {
+			// GIVEN
+			fixAddonsCfg := ac
+			ts := getClusterTestSuite(t, fixAddonsCfg)
+			indexDTO := fixIndexDTO()
+			tmpDir := os.TempDir()
 
-	ts.addonGetter.On("GetIndex").Return(indexDTO, nil)
-	ts.addonGetter.On("Cleanup").Return(nil)
-	for _, entry := range indexDTO.Entries {
-		for _, e := range entry {
-			completeAddon := fixAddonWithDocsURL(string(e.Name), string(e.Name), "example.com", "example.com")
+			ts.addonGetter.On("GetIndex").Return(indexDTO, nil)
+			ts.addonGetter.On("Cleanup").Return(nil)
+			for _, entry := range indexDTO.Entries {
+				for _, e := range entry {
+					completeAddon := fixAddonWithDocsURL(string(e.Name), string(e.Name), "example.com", "example.com")
 
-			ts.addonGetter.On("GetCompleteAddon", e).
-				Return(completeAddon, nil)
-			ts.docsProvider.On("EnsureDocsTopic", completeAddon.Addon).Return(nil)
+					ts.addonGetter.On("GetCompleteAddon", e).
+						Return(completeAddon, nil)
+					ts.docsProvider.On("EnsureDocsTopic", completeAddon.Addon).Return(nil)
 
-		}
+				}
+			}
+			ts.brokerFacade.On("Exist").Return(false, nil).Once()
+			ts.brokerFacade.On("Create").Return(nil).Once()
+			ts.addonGetterFactory.On("NewGetter", fixAddonsCfg.Spec.Repositories[0].URL, path.Join(tmpDir, "cluster-addon-loader-dst")).Return(ts.addonGetter, nil).Once()
+			defer ts.assertExpectations()
+
+			// WHEN
+			reconciler := NewReconcileClusterAddonsConfiguration(ts.mgr, ts.addonGetterFactory, ts.chartStorage, ts.addonStorage, ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, ts.templateService, os.TempDir(), spy.NewLogDummy())
+
+			// THEN
+			result, err := reconciler.Reconcile(reconcile.Request{NamespacedName: types.NamespacedName{Name: fixAddonsCfg.Name}})
+			assert.NoError(t, err)
+			assert.False(t, result.Requeue)
+
+			res := v1alpha1.ClusterAddonsConfiguration{}
+			err = ts.mgr.GetClient().Get(context.Background(), types.NamespacedName{Namespace: fixAddonsCfg.Namespace, Name: fixAddonsCfg.Name}, &res)
+			assert.NoError(t, err)
+			assert.Contains(t, res.Finalizers, v1alpha1.FinalizerAddonsConfiguration)
+			assert.Equal(t, res.Status.Phase, v1alpha1.AddonsConfigurationReady)
+		})
 	}
-	ts.brokerFacade.On("Exist").Return(false, nil).Once()
-	ts.brokerFacade.On("Create").Return(nil).Once()
-	ts.addonGetterFactory.On("NewGetter", fixAddonsCfg.Spec.Repositories[0].URL, path.Join(tmpDir, "cluster-addon-loader-dst")).Return(ts.addonGetter, nil).Once()
-	defer ts.assertExpectations()
 
-	// WHEN
-	reconciler := NewReconcileClusterAddonsConfiguration(ts.mgr, ts.addonGetterFactory, ts.chartStorage, ts.addonStorage, ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, ts.templateService, os.TempDir(), spy.NewLogDummy())
-
-	// THEN
-	result, err := reconciler.Reconcile(reconcile.Request{NamespacedName: types.NamespacedName{Name: fixAddonsCfg.Name}})
-	assert.NoError(t, err)
-	assert.False(t, result.Requeue)
-
-	res := v1alpha1.ClusterAddonsConfiguration{}
-	err = ts.mgr.GetClient().Get(context.Background(), types.NamespacedName{Namespace: fixAddonsCfg.Namespace, Name: fixAddonsCfg.Name}, &res)
-	assert.NoError(t, err)
-	assert.Contains(t, res.Finalizers, v1alpha1.FinalizerAddonsConfiguration)
 }
 
 func TestReconcileClusterAddonsConfiguration_AddAddonsProcess_Error(t *testing.T) {
@@ -310,9 +319,30 @@ func fixClusterAddonsConfiguration() *v1alpha1.ClusterAddonsConfiguration {
 				},
 			},
 		},
+	}
+}
+
+func fixPendingClusterAddonsConfiguration() *v1alpha1.ClusterAddonsConfiguration {
+	return &v1alpha1.ClusterAddonsConfiguration{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "test",
+			Generation: 1,
+		},
+		Spec: v1alpha1.ClusterAddonsConfigurationSpec{
+			CommonAddonsConfigurationSpec: v1alpha1.CommonAddonsConfigurationSpec{
+				ReprocessRequest: 0,
+				Repositories: []v1alpha1.SpecRepository{
+					{
+						URL: "http://example.com/index.yaml",
+					},
+				},
+			},
+		},
 		Status: v1alpha1.ClusterAddonsConfigurationStatus{
 			CommonAddonsConfigurationStatus: v1alpha1.CommonAddonsConfigurationStatus{
-				Repositories: fixRepositories(),
+				Repositories:       fixRepositories(),
+				Phase:              v1alpha1.AddonsConfigurationPending,
+				ObservedGeneration: 1,
 			},
 		},
 	}
