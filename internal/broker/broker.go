@@ -235,12 +235,9 @@ func newWithIDProvider(bs addonStorage, cs chartStorage, os operationStorage, bo
 			bindStateGetter: &bindStateService{
 				bindOperationCollectionGetter: bos,
 			},
-			bindOperationGetter:           bos,
-			bindOperationCollectionGetter: bos,
-			bindOperationInserter:         bos,
-			bindOperationUpdater:          bos,
-			operationIDProvider:           idp,
-			log:                           log.WithField("service", "binder"),
+			bindOperationStorage: bos,
+			operationIDProvider:  idp,
+			log:                  log.WithField("service", "binder"),
 		},
 		unbinder: &unbindService{},
 		lastOpGetter: &getLastOperationService{

@@ -16,19 +16,16 @@ import (
 )
 
 type bindService struct {
-	addonIDGetter                 addonIDGetter
-	chartGetter                   chartGetter
-	instanceGetter                instanceGetter
-	bindTemplateRenderer          bindTemplateRenderer
-	bindTemplateResolver          bindTemplateResolver
-	instanceBindDataStorage       instanceBindDataStorage
-	bindStateGetter               bindStateBindingGetter
-	bindOperationGetter           bindOperationGetter
-	bindOperationCollectionGetter bindOperationCollectionGetter
-	bindOperationInserter         bindOperationInserter
-	bindOperationUpdater          bindOperationUpdater
-	operationIDProvider           func() (internal.OperationID, error)
-	mu                            sync.Mutex
+	addonIDGetter           addonIDGetter
+	chartGetter             chartGetter
+	instanceGetter          instanceGetter
+	bindTemplateRenderer    bindTemplateRenderer
+	bindTemplateResolver    bindTemplateResolver
+	instanceBindDataStorage instanceBindDataStorage
+	bindStateGetter         bindStateBindingGetter
+	bindOperationStorage    bindOperationStorage
+	operationIDProvider     func() (internal.OperationID, error)
+	mu                      sync.Mutex
 
 	log *logrus.Entry
 
@@ -55,7 +52,7 @@ func (svc *bindService) Bind(ctx context.Context, osbCtx OsbContext, req *osb.Bi
 
 	switch opIDInProgress, inProgress, err := svc.bindStateGetter.IsBindingInProgress(iID, bID); true {
 	case err != nil:
-		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusBadRequest, ErrorMessage: strPtr(fmt.Sprintf("while checking if service binding is being created: %v", err))}
+		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusInternalServerError, ErrorMessage: strPtr(fmt.Sprintf("while checking if service binding is being created: %v", err))}
 	case inProgress:
 		opKeyInProgress := osb.OperationKey(opIDInProgress)
 		return &osb.BindResponse{Async: true, OperationKey: &opKeyInProgress}, nil
@@ -63,7 +60,7 @@ func (svc *bindService) Bind(ctx context.Context, osbCtx OsbContext, req *osb.Bi
 
 	switch bindOp, state, err := svc.bindStateGetter.IsBound(iID, bID); true {
 	case err != nil:
-		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusBadRequest, ErrorMessage: strPtr(fmt.Sprintf("while checking if service binding for service instance already exists: %v", err))}
+		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusInternalServerError, ErrorMessage: strPtr(fmt.Sprintf("while checking if service binding for service instance already exists: %v", err))}
 	case state:
 		opID := bindOp.OperationID
 		bindInput, err := svc.prepareBindInput(osbCtx, iID, bID, svcID, svcPlanID, opID, paramHash)
@@ -94,7 +91,7 @@ func (svc *bindService) Bind(ctx context.Context, osbCtx OsbContext, req *osb.Bi
 		return nil, err
 	}
 
-	if err := svc.bindOperationInserter.Insert(&op); err != nil {
+	if err := svc.bindOperationStorage.Insert(&op); err != nil {
 		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusBadRequest, ErrorMessage: strPtr(fmt.Sprintf("while inserting instance operation to storage: %v", err))}
 	}
 
@@ -126,7 +123,7 @@ func (svc *bindService) GetLastBindOperation(ctx context.Context, osbCtx OsbCont
 		opID = internal.OperationID(*req.OperationKey)
 	}
 
-	op, err := svc.bindOperationGetter.Get(iID, bID, opID)
+	op, err := svc.bindOperationStorage.Get(iID, bID, opID)
 	switch {
 	case IsNotFoundError(err):
 		return nil, err
@@ -154,7 +151,7 @@ func (svc *bindService) GetServiceBinding(ctx context.Context, osbCtx OsbContext
 
 	switch opIDInProgress, inProgress, err := svc.bindStateGetter.IsBindingInProgress(iID, bID); true {
 	case err != nil:
-		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusBadRequest, ErrorMessage: strPtr(fmt.Sprintf("while checking if service binding is being created: %v", err))}
+		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusInternalServerError, ErrorMessage: strPtr(fmt.Sprintf("while checking if service binding is being created: %v", err))}
 	case inProgress:
 		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusNotFound, ErrorMessage: strPtr(fmt.Sprintf("service binding id: %q is in progress", opIDInProgress))}
 	}
@@ -186,14 +183,20 @@ type bindingInput struct {
 
 func (svc *bindService) prepareBindInput(osbCtx OsbContext, iID internal.InstanceID, bID internal.BindingID, svcID internal.ServiceID, svcPlanID internal.ServicePlanID, opID internal.OperationID, paramHash string) (bindingInput, *osb.HTTPStatusCodeError) {
 	instance, err := svc.instanceGetter.Get(iID)
-	if err != nil {
+	switch {
+	case IsNotFoundError(err):
 		return bindingInput{}, &osb.HTTPStatusCodeError{StatusCode: http.StatusBadRequest, ErrorMessage: strPtr(fmt.Sprintf("while getting instance from storage for id: %q with error: %v", iID, err))}
+	case err != nil:
+		return bindingInput{}, &osb.HTTPStatusCodeError{StatusCode: http.StatusInternalServerError, ErrorMessage: strPtr(fmt.Sprintf("while getting instance from storage for id: %q with error: %v", iID, err))}
 	}
 
 	addonID := internal.AddonID(svcID)
 	addon, err := svc.addonIDGetter.GetByID(osbCtx.BrokerNamespace, addonID)
-	if err != nil {
+	switch {
+	case IsNotFoundError(err):
 		return bindingInput{}, &osb.HTTPStatusCodeError{StatusCode: http.StatusBadRequest, ErrorMessage: strPtr(fmt.Sprintf("while getting addon from storage in namespace %q for id: %q with error: %v", osbCtx.BrokerNamespace, addonID, err))}
+	case err != nil:
+		return bindingInput{}, &osb.HTTPStatusCodeError{StatusCode: http.StatusInternalServerError, ErrorMessage: strPtr(fmt.Sprintf("while getting addon from storage in namespace %q for id: %q with error: %v", osbCtx.BrokerNamespace, addonID, err))}
 	}
 
 	// addonPlanID is in 1:1 match with servicePlanID (from service catalog)
@@ -218,7 +221,7 @@ func (svc *bindService) prepareBindInput(osbCtx OsbContext, iID internal.Instanc
 func (svc *bindService) prepareBindOperation(iID internal.InstanceID, bID internal.BindingID, paramHash string) (internal.BindOperation, *osb.HTTPStatusCodeError) {
 	opID, err := svc.operationIDProvider()
 	if err != nil {
-		return internal.BindOperation{}, &osb.HTTPStatusCodeError{StatusCode: http.StatusBadRequest, ErrorMessage: strPtr(fmt.Sprintf("while generating ID for operation: %v", err))}
+		return internal.BindOperation{}, &osb.HTTPStatusCodeError{StatusCode: http.StatusInternalServerError, ErrorMessage: strPtr(fmt.Sprintf("while generating ID for operation: %v", err))}
 	}
 
 	op := internal.BindOperation{
@@ -266,7 +269,7 @@ func (svc *bindService) do(ctx context.Context, input bindingInput) {
 		opDesc = fmt.Sprintf("binding failed on error: %s", err.Error())
 	}
 
-	if err := svc.bindOperationUpdater.UpdateStateDesc(input.instance.ID, input.bindingID, input.operationID, opState, &opDesc); err != nil {
+	if err := svc.bindOperationStorage.UpdateStateDesc(input.instance.ID, input.bindingID, input.operationID, opState, &opDesc); err != nil {
 		svc.log.Errorf("State description was not updated, got error: %v", err)
 	}
 

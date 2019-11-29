@@ -461,13 +461,16 @@ func (srv *Server) getServiceBinding(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sResp, err := srv.binder.GetServiceBinding(r.Context(), osbCtx, &sReq)
-
-	switch {
-	case IsNotFoundError(err):
-		srv.writeResponse(w, http.StatusGone, map[string]interface{}{})
-		return
-	case err != nil:
-		srv.writeErrorResponse(w, http.StatusBadRequest, err.Error(), "")
+	if err != nil {
+		var errMsg string
+		var errDesc string
+		if err.ErrorMessage != nil {
+			errMsg = *err.ErrorMessage
+		}
+		if err.Description != nil {
+			errDesc = *err.Description
+		}
+		srv.writeErrorResponse(w, err.StatusCode, errMsg, errDesc)
 		return
 	}
 
@@ -516,7 +519,6 @@ func (srv *Server) getServiceBindingLastOperationAction(w http.ResponseWriter, r
 	}
 
 	sResp, err := srv.binder.GetLastBindOperation(r.Context(), osbCtx, &sReq)
-
 	switch {
 	case IsNotFoundError(err):
 		srv.writeResponse(w, http.StatusGone, map[string]interface{}{})

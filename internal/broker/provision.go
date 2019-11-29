@@ -52,7 +52,7 @@ func (svc *provisionService) Provision(ctx context.Context, osbCtx OsbContext, r
 
 	switch state, err := svc.instanceStateGetter.IsProvisioned(iID); true {
 	case err != nil:
-		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusBadRequest, ErrorMessage: strPtr(fmt.Sprintf("while checking if instance is already provisioned: %v", err))}
+		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusInternalServerError, ErrorMessage: strPtr(fmt.Sprintf("while checking if instance is already provisioned: %v", err))}
 	case state:
 		if err := svc.compareProvisioningParameters(iID, paramHash); err != nil {
 			return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusConflict, ErrorMessage: strPtr(fmt.Sprintf("while comparing provisioning parameters %v: %v", req.Parameters, err))}
@@ -62,7 +62,7 @@ func (svc *provisionService) Provision(ctx context.Context, osbCtx OsbContext, r
 
 	switch opIDInProgress, inProgress, err := svc.instanceStateGetter.IsProvisioningInProgress(iID); true {
 	case err != nil:
-		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusBadRequest, ErrorMessage: strPtr(fmt.Sprintf("while checking if instance is being provisioned: %v", err))}
+		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusInternalServerError, ErrorMessage: strPtr(fmt.Sprintf("while checking if instance is being provisioned: %v", err))}
 	case inProgress:
 		if err := svc.compareProvisioningParameters(iID, paramHash); err != nil {
 			return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusConflict, ErrorMessage: strPtr(fmt.Sprintf("while comparing provisioning parameters %v: %v", req.Parameters, err))}
@@ -80,12 +80,19 @@ func (svc *provisionService) Provision(ctx context.Context, osbCtx OsbContext, r
 	svcID := internal.ServiceID(req.ServiceID)
 	addonID := internal.AddonID(svcID)
 	addon, err := svc.addonIDGetter.GetByID(osbCtx.BrokerNamespace, addonID)
-	if err != nil {
+	switch {
+	case IsNotFoundError(err):
 		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusBadRequest, ErrorMessage: strPtr(fmt.Sprintf("while getting addon: %v", err))}
+	case err != nil:
+		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusInternalServerError, ErrorMessage: strPtr(fmt.Sprintf("while getting addon: %v", err))}
 	}
+
 	instances, err := svc.instanceGetter.GetAll()
-	if err != nil {
+	switch {
+	case IsNotFoundError(err):
 		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusBadRequest, ErrorMessage: strPtr(fmt.Sprintf("while getting instance collection: %v", err))}
+	case err != nil:
+		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusInternalServerError, ErrorMessage: strPtr(fmt.Sprintf("while getting instance collection: %v", err))}
 	}
 	if !addon.IsProvisioningAllowed(namespace, instances) {
 		svc.log.Infof("addon with name: %q (id: %s) and flag 'provisionOnlyOnce' in namespace %q will be not provisioned because his instance already exist", addon.Name, addon.ID, namespace)
@@ -94,7 +101,7 @@ func (svc *provisionService) Provision(ctx context.Context, osbCtx OsbContext, r
 
 	opID, err := svc.operationIDProvider()
 	if err != nil {
-		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusBadRequest, ErrorMessage: strPtr(fmt.Sprintf("while generating ID for operation: %v", err))}
+		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusInternalServerError, ErrorMessage: strPtr(fmt.Sprintf("while generating ID for operation: %v", err))}
 	}
 
 	op := internal.InstanceOperation{
@@ -131,7 +138,7 @@ func (svc *provisionService) Provision(ctx context.Context, osbCtx OsbContext, r
 
 	exist, err := svc.instanceInserter.Upsert(&i)
 	if err != nil {
-		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusConflict, ErrorMessage: strPtr(fmt.Sprintf("while inserting instance to storage: %v", err))}
+		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusBadRequest, ErrorMessage: strPtr(fmt.Sprintf("while inserting instance to storage: %v", err))}
 	}
 	if exist {
 		svc.log.Infof("Instance %s already existed in storage, instance was replaced", i.ID)
@@ -268,7 +275,11 @@ func (svc *provisionService) compareProvisioningParameters(iID internal.Instance
 }
 
 func getNamespaceFromContext(contextProfile map[string]interface{}) (internal.Namespace, error) {
-	return internal.Namespace(contextProfile["namespace"].(string)), nil
+	ns, ok := contextProfile["namespace"]
+	if !ok {
+		return internal.Namespace(""), errors.New("namespace does not exists in given context")
+	}
+	return internal.Namespace(ns.(string)), nil
 }
 
 func createReleaseName(name internal.AddonName, planName internal.AddonPlanName, iID internal.InstanceID) internal.ReleaseName {

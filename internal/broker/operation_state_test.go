@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/kyma-project/helm-broker/internal/storage/driver/memory"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kyma-project/helm-broker/internal"
@@ -477,11 +478,7 @@ func TestBindStateServiceIsBound(t *testing.T) {
 		ts := newBindStateServiceTestSuite(t)
 		ts.SetUp()
 
-		bocgMock := &automock.BindOperationStorage{}
-		defer bocgMock.AssertExpectations(t)
-		bocgMock.On("GetAll", ts.Exp.InstanceID).Return(nil, notFoundError{}).Once()
-
-		svc := broker.NewBindStateService(bocgMock)
+		svc := broker.NewBindStateService(memory.NewBindOperation())
 
 		// WHEN
 		_, got, err := svc.IsBound(ts.Exp.InstanceID, ts.Exp.BindingID)
@@ -570,11 +567,7 @@ func TestBindStateServiceIsBindingInProgress(t *testing.T) {
 		ts := newBindStateServiceTestSuite(t)
 		ts.SetUp()
 
-		bocgMock := &automock.BindOperationStorage{}
-		defer bocgMock.AssertExpectations(t)
-		bocgMock.On("GetAll", ts.Exp.InstanceID).Return(nil, notFoundError{}).Once()
-
-		svc := broker.NewBindStateService(bocgMock)
+		svc := broker.NewBindStateService(memory.NewBindOperation())
 
 		// WHEN
 		gotOpID, got, err := svc.IsBindingInProgress(ts.Exp.InstanceID, ts.Exp.BindingID)
