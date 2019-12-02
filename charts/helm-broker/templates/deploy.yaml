@@ -26,7 +26,7 @@ spec:
 
       initContainers:
       - name: "init-{{ .Chart.Name }}"
-        image: "{{ .Values.global.containerRegistry.path }}{{ .Values.global.helm_broker.dir }}/health-check:{{ .Values.global.helm_broker.version }}"
+        image: "eu.gcr.io/kyma-project/health-check-proxy:PR-6466"
         imagePullPolicy: {{ .Values.global.initImage.pullPolicy }}
         command:
           - "/health-check"
@@ -75,9 +75,9 @@ spec:
               - "/health-check"
               - "-path=ready"
               - "-statusPort={{ .Values.broker.statusPort }}"
-          periodSeconds: 10
+          periodSeconds: 3
           successThreshold: 1
-          timeoutSeconds: 10
+          timeoutSeconds: 2
         livenessProbe:
           exec:
             command:
@@ -85,7 +85,7 @@ spec:
               - "-path=live"
               - "-statusPort={{ .Values.broker.statusPort }}"
           periodSeconds: 10
-          timeoutSeconds: 10
+          timeoutSeconds: 2
           successThreshold: 1
 
       - name: ctrl
@@ -127,17 +127,17 @@ spec:
               - "/health-check"
               - "-path=ready"
               - "-statusPort={{ .Values.ctrl.statusPort }}"
-          periodSeconds: 10
+          periodSeconds: 3
           successThreshold: 1
-          timeoutSeconds: 10
+          timeoutSeconds: 2
         livenessProbe:
           exec:
             command:
               - "/health-check"
               - "-path=live"
               - "-statusPort={{ .Values.ctrl.statusPort }}"
-          periodSeconds: 100
-          timeoutSeconds: 10
+          periodSeconds: 60
+          timeoutSeconds: 30
           successThreshold: 1
 
       volumes:
