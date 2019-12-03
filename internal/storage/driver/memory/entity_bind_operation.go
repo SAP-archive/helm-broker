@@ -35,14 +35,6 @@ func (s *BindOperation) WithTimeProvider(nowProvider func() time.Time) *BindOper
 func (s *BindOperation) Insert(bo *internal.BindOperation) error {
 	defer unlock(s.lockW())
 
-	if bo == nil {
-		return errors.New("entity may not be nil")
-	}
-
-	if bo.InstanceID.IsZero() || bo.BindingID.IsZero() || bo.OperationID.IsZero() {
-		return errors.New("all parameters: instance, binding and operation id must be set")
-	}
-
 	if _, found := s.storage[bo.InstanceID]; !found {
 		s.storage[bo.InstanceID] = make(map[internal.OperationID]*internal.BindOperation)
 	}

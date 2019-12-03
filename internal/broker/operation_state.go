@@ -171,3 +171,19 @@ func IsNotFoundError(err error) bool {
 	})
 	return ok && nfe.NotFound()
 }
+
+// IsAlreadyExistsError checks if errors is BadRequest one.
+func IsAlreadyExistsError(err error) bool {
+	nfe, ok := err.(interface {
+		AlreadyExists() bool
+	})
+	return ok && nfe.AlreadyExists()
+}
+
+// IsActiveOperationInProgressError checks if errors is BadRequest one.
+func IsActiveOperationInProgressError(err error) bool {
+	nfe, ok := err.(interface {
+		ActiveOperationInProgress() bool
+	})
+	return ok && nfe.ActiveOperationInProgress()
+}

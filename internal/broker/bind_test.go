@@ -908,7 +908,7 @@ func TestBindServiceGetServiceBindingSuccessWhenBound(t *testing.T) {
 	req := ts.FixGetBindingRequest()
 
 	//when
-	resp, err := svc.GetServiceBinding(ctx, osbCtx, &req)
+	resp, err := svc.GetBindData(ctx, osbCtx, &req)
 
 	//then
 	assert.Nil(t, err)
@@ -956,7 +956,7 @@ func TestBindServiceGetServiceBindingSuccessWhenBoundOnIbdGet(t *testing.T) {
 	req := ts.FixGetBindingRequest()
 
 	//when
-	resp, err := svc.GetServiceBinding(ctx, osbCtx, &req)
+	resp, err := svc.GetBindData(ctx, osbCtx, &req)
 
 	//then
 	assert.NotNil(t, err)
@@ -997,7 +997,7 @@ func TestBindServiceGetServiceBindingFailureWhenBindingInProgress(t *testing.T) 
 	req := ts.FixGetBindingRequest()
 
 	//when
-	resp, err := svc.GetServiceBinding(ctx, osbCtx, &req)
+	resp, err := svc.GetBindData(ctx, osbCtx, &req)
 
 	//then
 	assert.NotNil(t, err)
@@ -1041,7 +1041,7 @@ func TestBindServiceGetServiceBindingFailureOnIsBindingInProgress(t *testing.T) 
 	req := ts.FixGetBindingRequest()
 
 	//when
-	resp, err := svc.GetServiceBinding(ctx, osbCtx, &req)
+	resp, err := svc.GetBindData(ctx, osbCtx, &req)
 
 	//then
 	assert.NotNil(t, err)

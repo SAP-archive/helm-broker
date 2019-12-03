@@ -46,19 +46,11 @@ func (s *BindOperation) WithTimeProvider(nowProvider func() time.Time) *BindOper
 
 // Insert inserts object into storage.
 func (s *BindOperation) Insert(bo *internal.BindOperation) error {
-	if bo == nil {
-		return errors.New("entity may not be nil")
-	}
-
-	if bo.InstanceID.IsZero() || bo.BindingID.IsZero() || bo.OperationID.IsZero() {
-		return errors.New("all parameters: instance, binding and operation id must be set")
-	}
-
 	opKey := s.key(bo.InstanceID, bo.BindingID, bo.OperationID)
 
 	respGet, err := s.kv.Get(context.TODO(), opKey)
 	if err != nil {
-		return errors.Wrap(err, "while calling database on get")
+		return errors.Wrap(err, "while getting bind operation")
 	}
 	if respGet.Count > 0 {
 		return alreadyExistsError{}
@@ -113,10 +105,6 @@ func (s *BindOperation) Get(iID internal.InstanceID, bID internal.BindingID, opI
 }
 
 func (s *BindOperation) get(iID internal.InstanceID, bID internal.BindingID, opID internal.OperationID) (*internal.BindOperation, error) {
-	if iID.IsZero() || bID.IsZero() || opID.IsZero() {
-		return nil, errors.Errorf("all parameters: instance, binding and operation id must be set. InstanceID: %q | BindingID: %q | OperationID: %q", iID, bID, opID)
-	}
-
 	resp, err := s.kv.Get(context.TODO(), s.key(iID, bID, opID))
 	if err != nil {
 		return nil, s.handleGetError(err)

@@ -38,7 +38,7 @@ type (
 	binder interface {
 		Bind(ctx context.Context, osbCtx OsbContext, req *osb.BindRequest) (*osb.BindResponse, *osb.HTTPStatusCodeError)
 		GetLastBindOperation(ctx context.Context, osbCtx OsbContext, req *osb.BindingLastOperationRequest) (*osb.LastOperationResponse, error)
-		GetServiceBinding(ctx context.Context, osbCtx OsbContext, req *osb.GetBindingRequest) (*osb.GetBindingResponse, *osb.HTTPStatusCodeError)
+		GetBindData(ctx context.Context, osbCtx OsbContext, req *osb.GetBindingRequest) (*osb.GetBindingResponse, *osb.HTTPStatusCodeError)
 	}
 
 	unbinder interface {
@@ -431,7 +431,6 @@ func (srv *Server) bindAction(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !sResp.Async {
-		//logResp(logRespFields)
 		egDTO := BindSuccessResponseDTO{
 			Credentials: sResp.Credentials,
 		}
@@ -460,7 +459,7 @@ func (srv *Server) getServiceBinding(w http.ResponseWriter, r *http.Request) {
 		BindingID:  bindingID,
 	}
 
-	sResp, err := srv.binder.GetServiceBinding(r.Context(), osbCtx, &sReq)
+	sResp, err := srv.binder.GetBindData(r.Context(), osbCtx, &sReq)
 	if err != nil {
 		var errMsg string
 		var errDesc string
@@ -524,7 +523,7 @@ func (srv *Server) getServiceBindingLastOperationAction(w http.ResponseWriter, r
 		srv.writeResponse(w, http.StatusGone, map[string]interface{}{})
 		return
 	case err != nil:
-		srv.writeErrorResponse(w, http.StatusBadRequest, err.Error(), "")
+		srv.writeErrorResponse(w, http.StatusInternalServerError, err.Error(), "")
 		return
 	}
 

@@ -101,7 +101,7 @@ func (svc *provisionService) Provision(ctx context.Context, osbCtx OsbContext, r
 
 	opID, err := svc.operationIDProvider()
 	if err != nil {
-		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusInternalServerError, ErrorMessage: strPtr(fmt.Sprintf("while generating ID for operation: %v", err))}
+		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusInternalServerError, ErrorMessage: strPtr(fmt.Sprintf("while generating operation ID: %v", err))}
 	}
 
 	op := internal.InstanceOperation{

@@ -291,8 +291,14 @@ type ReleaseName string
 // ServiceID is an ID of the Service exposed via Service Catalog.
 type ServiceID string
 
+// IsZero checks if ServiceID equals zero
+func (id ServiceID) IsZero() bool { return id == ServiceID("") }
+
 // ServicePlanID is an ID of the Plan of Service exposed via Service Catalog.
 type ServicePlanID string
+
+// IsZero checks if ServicePlanID equals zero
+func (id ServicePlanID) IsZero() bool { return id == ServicePlanID("") }
 
 // Namespace is the name of namespace in k8s
 type Namespace string
