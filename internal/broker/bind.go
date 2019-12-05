@@ -97,14 +97,7 @@ func (svc *bindService) Bind(ctx context.Context, osbCtx OsbContext, req *osb.Bi
 	}
 
 	if err := svc.bindOperationStorage.Insert(&op); err != nil {
-		switch {
-		case IsAlreadyExistsError(err):
-			return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusBadRequest, ErrorMessage: strPtr(fmt.Sprintf("while inserting instance operation to storage: %v", err.Error()))}
-		case IsActiveOperationInProgressError(err):
-			return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusBadRequest, ErrorMessage: strPtr(fmt.Sprintf("while inserting instance operation to storage: %v", err.Error()))}
-		default:
-			return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusInternalServerError, ErrorMessage: strPtr(fmt.Sprintf("while inserting instance operation to storage: %v", err))}
-		}
+		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusInternalServerError, ErrorMessage: strPtr(fmt.Sprintf("while inserting instance operation to storage: %v", err))}
 	}
 
 	opID := op.OperationID
