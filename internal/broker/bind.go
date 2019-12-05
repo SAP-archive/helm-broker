@@ -256,7 +256,6 @@ func (svc *bindService) prepareBindOperation(iID internal.InstanceID, bID intern
 		OperationID: opID,
 		Type:        internal.OperationTypeCreate,
 		State:       internal.OperationStateInProgress,
-		ParamsHash:  paramHash,
 	}
 
 	return op, nil

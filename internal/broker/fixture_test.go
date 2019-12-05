@@ -194,7 +194,6 @@ func (exp *expAll) NewBindOperation(tpe internal.OperationType, state internal.O
 		OperationID: exp.OperationID,
 		Type:        tpe,
 		State:       state,
-		ParamsHash:  exp.ParamsHash,
 	}
 }
 
@@ -206,7 +205,6 @@ func (exp *expAll) NewBindOperationCollection() []*internal.BindOperation {
 			OperationID: exp.OperationID,
 			Type:        internal.OperationTypeCreate,
 			State:       internal.OperationStateSucceeded,
-			ParamsHash:  exp.ParamsHash,
 		},
 		&internal.BindOperation{
 			InstanceID:  "new-id-not-exist-1",
@@ -214,7 +212,6 @@ func (exp *expAll) NewBindOperationCollection() []*internal.BindOperation {
 			OperationID: "new-opid-not-exists-1",
 			Type:        internal.OperationTypeCreate,
 			State:       internal.OperationStateSucceeded,
-			ParamsHash:  exp.ParamsHash,
 		},
 		&internal.BindOperation{
 			InstanceID:  "new-id-not-exist-1",
@@ -222,7 +219,6 @@ func (exp *expAll) NewBindOperationCollection() []*internal.BindOperation {
 			OperationID: "new-opid-not-exists-1",
 			Type:        internal.OperationTypeCreate,
 			State:       internal.OperationStateSucceeded,
-			ParamsHash:  exp.ParamsHash,
 		},
 	}
 }

@@ -121,7 +121,6 @@ func TestBindServiceBindSuccessAsyncWhenNotBound(t *testing.T) {
 	bosMock := &automock.BindOperationStorage{}
 	defer bosMock.AssertExpectations(t)
 	expBindOp := ts.FixBindOperation(internal.OperationTypeCreate, internal.OperationStateInProgress)
-	expBindOp.ParamsHash = params
 	bosMock.On("Insert", &expBindOp).Return(nil).Once()
 	operationSucceeded := make(chan struct{})
 	bosMock.On("UpdateStateDesc", ts.Exp.InstanceID, ts.Exp.BindingID, ts.Exp.OperationID, internal.OperationStateSucceeded, mock.Anything).Return(nil).Once().
@@ -256,7 +255,6 @@ func TestBindServiceBindFailureAsyncWhenNotBoundOnChartGet(t *testing.T) {
 	bosMock := &automock.BindOperationStorage{}
 	defer bosMock.AssertExpectations(t)
 	expBindOp := ts.FixBindOperation(internal.OperationTypeCreate, internal.OperationStateInProgress)
-	expBindOp.ParamsHash = params
 	bosMock.On("Insert", &expBindOp).Return(nil).Once()
 	operationFailed := make(chan struct{})
 	bosMock.On("UpdateStateDesc", ts.Exp.InstanceID, ts.Exp.BindingID, ts.Exp.OperationID, internal.OperationStateFailed, mock.Anything).Return(nil).Once().
@@ -336,7 +334,6 @@ func TestBindServiceBindFailureWhenNotBoundAsyncOnRenderAndResolve(t *testing.T)
 	bosMock := &automock.BindOperationStorage{}
 	defer bosMock.AssertExpectations(t)
 	expBindOp := ts.FixBindOperation(internal.OperationTypeCreate, internal.OperationStateInProgress)
-	expBindOp.ParamsHash = params
 	bosMock.On("Insert", &expBindOp).Return(nil).Once()
 	operationFailed := make(chan struct{})
 	bosMock.On("UpdateStateDesc", ts.Exp.InstanceID, ts.Exp.BindingID, ts.Exp.OperationID, internal.OperationStateFailed, mock.Anything).Return(nil).Once().
@@ -424,8 +421,6 @@ func TestBindServiceBindSuccessAsyncWhenBound(t *testing.T) {
 	bosMock := &automock.BindOperationStorage{}
 	defer bosMock.AssertExpectations(t)
 	expBindOp := ts.FixBindOperation(internal.OperationTypeCreate, internal.OperationStateSucceeded)
-	params := jsonhash.HashS(ts.FixBindRequest().Parameters)
-	expBindOp.ParamsHash = params
 	operationSucceeded := make(chan struct{})
 	bosMock.On("UpdateStateDesc", ts.Exp.InstanceID, ts.Exp.BindingID, ts.Exp.OperationID, internal.OperationStateSucceeded, mock.Anything).Return(nil).Once().
 		Run(func(mock.Arguments) { close(operationSucceeded) })
@@ -515,9 +510,6 @@ func TestBindServiceBindFailureAsyncWhenBoundOnGetIbd(t *testing.T) {
 
 	bosMock := &automock.BindOperationStorage{}
 	defer bosMock.AssertExpectations(t)
-	expBindOp := ts.FixBindOperation(internal.OperationTypeCreate, internal.OperationStateInProgress)
-	params := jsonhash.HashS(ts.FixBindRequest().Parameters)
-	expBindOp.ParamsHash = params
 	operationSucceeded := make(chan struct{})
 	bosMock.On("UpdateStateDesc", ts.Exp.InstanceID, ts.Exp.BindingID, ts.Exp.OperationID, internal.OperationStateSucceeded, mock.Anything).Return(nil).Once().
 		Run(func(mock.Arguments) { close(operationSucceeded) })
