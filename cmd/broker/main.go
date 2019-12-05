@@ -55,6 +55,8 @@ func main() {
 	defer cancelFunc()
 	cancelOnInterrupt(ctx, cancelFunc)
 
+	fatalOnError(storageConfig.WaitForEtcdReadiness())
+
 	err = srv.Run(ctx, fmt.Sprintf(":%d", cfg.Port), startedCh)
 	fatalOnError(err)
 }

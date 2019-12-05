@@ -4,8 +4,12 @@ import (
 	"github.com/pkg/errors"
 	yaml "gopkg.in/yaml.v2"
 
+	"net/http"
+	"time"
+
 	"github.com/kyma-project/helm-broker/internal/storage/driver/etcd"
 	"github.com/kyma-project/helm-broker/internal/storage/driver/memory"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 // Factory provides access to concrete storage.
@@ -91,6 +95,20 @@ func (cl *ConfigList) ExtractEtcdURL() string {
 		}
 	}
 	return etcdURL
+}
+
+// WaitForEtcdReadiness waits for ETCD to be ready
+func (cl *ConfigList) WaitForEtcdReadiness() error {
+	return wait.Poll(time.Second, time.Second*30, func() (bool, error) {
+		resp, err := http.Get(cl.ExtractEtcdURL() + "/health")
+		if err != nil {
+			return false, nil
+		}
+		if resp.StatusCode == http.StatusOK {
+			return true, nil
+		}
+		return false, nil
+	})
 }
 
 // NewFactory is a factory for entities based on given ConfigList
