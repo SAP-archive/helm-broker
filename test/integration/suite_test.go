@@ -26,6 +26,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	k8s "k8s.io/client-go/kubernetes"
 	kubernetes "k8s.io/client-go/kubernetes/fake"
+	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 
@@ -82,8 +83,13 @@ const (
 	basicUsername = "user001"
 )
 
-func newTestSuite(t *testing.T, docsEnabled, httpBasicAuth bool) *testSuite {
+func newTestSuiteAndStartControllers(t *testing.T, docsEnabled, httpBasicAuth bool) *testSuite {
+	ts := newTestSuite(t, docsEnabled, httpBasicAuth)
+	ts.StartControllers(docsEnabled)
+	return ts
+}
 
+func newTestSuite(t *testing.T, docsEnabled, httpBasicAuth bool) *testSuite {
 	sch, err := v1alpha1.SchemeBuilder.Build()
 	require.NoError(t, err)
 	require.NoError(t, apis.AddToScheme(sch))
@@ -138,33 +144,13 @@ func newTestSuite(t *testing.T, docsEnabled, httpBasicAuth bool) *testSuite {
 		require.NoError(t, err)
 	}
 
-	uploadClient := &automock.Client{}
-	if docsEnabled {
-		uploadClient.On("Upload", mock.AnythingOfType("string"), mock.Anything).Return(assetstore.UploadedFile{}, nil)
-	} else {
-		uploadClient.On("Upload", mock.AnythingOfType("string"), mock.Anything).Return(assetstore.UploadedFile{}, errors.New("Upload must not be called, the service does not exists"))
-	}
-
-	mgr := controller.SetupAndStartController(restConfig, &config.ControllerConfig{
-		DevelopMode:              true, // DevelopMode allows "http" urls
-		ClusterServiceBrokerName: "helm-broker",
-		TmpDir:                   cfg.TmpDir,
-		DocumentationEnabled:     docsEnabled,
-	}, ":8001", sFact, uploadClient, logger.WithField("svc", "broker"))
-
-	stopCh := make(chan struct{})
-	go func() {
-		if err := mgr.Start(stopCh); err != nil {
-			t.Errorf("Controller Manager could not start: %v", err.Error())
-		}
-	}()
-
 	// create a client for managing (cluster) addons configurations
 	dynamicClient, err := client.New(restConfig, client.Options{Scheme: sch})
 
 	// initialize git repositoryDirName
 	gitRepository, err := newGitRepository(t, addonSource)
 	require.NoError(t, err)
+	stopCh := make(chan struct{})
 
 	return &testSuite{
 		t: t,
@@ -174,10 +160,36 @@ func newTestSuite(t *testing.T, docsEnabled, httpBasicAuth bool) *testSuite {
 		server:        server,
 		k8sClient:     k8sClientset,
 
-		stopCh:        stopCh,
-		tmpDir:        cfg.TmpDir,
-		gitRepository: gitRepository,
+		stopCh:         stopCh,
+		tmpDir:         cfg.TmpDir,
+		gitRepository:  gitRepository,
+		restConfig:     restConfig,
+		storageFactory: sFact,
+
+		logger: logger,
 	}
+}
+
+func (ts *testSuite) StartControllers(docsEnabled bool) {
+	uploadClient := &automock.Client{}
+	if docsEnabled {
+		uploadClient.On("Upload", mock.AnythingOfType("string"), mock.Anything).Return(assetstore.UploadedFile{}, nil)
+	} else {
+		uploadClient.On("Upload", mock.AnythingOfType("string"), mock.Anything).Return(assetstore.UploadedFile{}, errors.New("Upload must not be called, the service does not exists"))
+	}
+
+	mgr := controller.SetupAndStartController(ts.restConfig, &config.ControllerConfig{
+		DevelopMode:              true, // DevelopMode allows "http" urls
+		ClusterServiceBrokerName: "helm-broker",
+		TmpDir:                   os.TempDir(),
+		DocumentationEnabled:     docsEnabled,
+	}, ":8001", ts.storageFactory, uploadClient, ts.logger.WithField("svc", "broker"))
+
+	go func() {
+		if err := mgr.Start(ts.stopCh); err != nil {
+			ts.t.Errorf("Controller Manager could not start: %v", err.Error())
+		}
+	}()
 }
 
 func newOSBClient(url string) (osb.Client, error) {
@@ -203,9 +215,13 @@ type testSuite struct {
 	osbClient     osb.Client
 	dynamicClient client.Client
 	k8sClient     k8s.Interface
+	restConfig    *rest.Config
 
-	tmpDir string
-	stopCh chan struct{}
+	tmpDir         string
+	stopCh         chan struct{}
+	storageFactory storage.Factory
+
+	logger logrus.FieldLogger
 }
 
 func (ts *testSuite) tearDown() {
@@ -374,6 +390,30 @@ func (ts *testSuite) createClusterAddonsConfiguration(name string, urls []string
 			},
 		},
 	})
+}
+
+func (ts *testSuite) updateAddonsConfigurationStatusPhase(namespace, name string, phase v1alpha1.AddonsConfigurationPhase) {
+	var addon v1alpha1.AddonsConfiguration
+	ts.dynamicClient.Get(context.TODO(), types.NamespacedName{Name: name, Namespace: namespace}, &addon)
+
+	// copy from common.go updateAddonStatus
+	addon.Status.ObservedGeneration = addon.Generation
+	addon.Status.LastProcessedTime = &v1.Time{Time: time.Now()}
+	addon.Status.Phase = phase
+
+	ts.dynamicClient.Status().Update(context.TODO(), &addon)
+}
+
+func (ts *testSuite) updateClusterAddonsConfigurationStatusPhase(name string, phase v1alpha1.AddonsConfigurationPhase) {
+	var addon v1alpha1.ClusterAddonsConfiguration
+	ts.dynamicClient.Get(context.TODO(), types.NamespacedName{Name: name}, &addon)
+
+	// copy from common.go updateAddonStatus
+	addon.Status.ObservedGeneration = addon.Generation
+	addon.Status.LastProcessedTime = &v1.Time{Time: time.Now()}
+	addon.Status.Phase = phase
+
+	ts.dynamicClient.Status().Update(context.TODO(), &addon)
 }
 
 func (ts *testSuite) createSpecRepositories(urls []string, repoKind string, repoModifiers ...func(r *v1alpha1.SpecRepository)) []v1alpha1.SpecRepository {

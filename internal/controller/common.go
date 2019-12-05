@@ -87,7 +87,7 @@ func (c *common) Reconcile(addon *internal.CommonAddon, trace string) (reconcile
 		return reconcile.Result{}, nil
 	}
 
-	if addon.Status.ObservedGeneration == 0 {
+	if addon.IsReadyForInitialProcessing() {
 		c.log.Infof("Start add %s process", trace)
 
 		if err := c.PrepareForProcessing(addon); err != nil {
