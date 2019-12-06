@@ -7,6 +7,8 @@ import (
 
 	"k8s.io/apimachinery/pkg/util/wait"
 
+	"flag"
+
 	"github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
 	"github.com/kyma-project/helm-broker/pkg/client/clientset/versioned"
 	osb "github.com/pmorie/go-open-service-broker-client/v2"
@@ -47,6 +49,11 @@ type Config struct {
 //    go test test/charts/helm_broker_test.go -v
 
 func TestHelmBrokerChartHappyPath(t *testing.T) {
+	err := flag.Set("logtostderr", "true")
+	if err != nil {
+		t.Fatal("while configuring logger")
+	}
+
 	// given
 	suite := NewTestSuite(t)
 

@@ -1,7 +1,7 @@
 FROM alpine:3.10 as certs
 RUN apk --no-cache add ca-certificates
 
-FROM eu.gcr.io/kyma-project/health-check-proxy:PR-6466
+FROM scratch
 
 COPY --from=certs /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY ./helm-broker /root/helm-broker
