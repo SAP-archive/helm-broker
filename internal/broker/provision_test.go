@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	jsonhash "github.com/komkom/go-jsonhash"
 	osb "github.com/pmorie/go-open-service-broker-client/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -57,7 +56,7 @@ func (ts *provisionServiceTestSuite) FixProvisionRequest() osb.ProvisionRequest 
 		InstanceID: string(ts.Exp.InstanceID),
 		ServiceID:  string(ts.Exp.Service.ID),
 		PlanID:     string(ts.Exp.ServicePlan.ID),
-		Parameters: make(internal.ChartValues),
+		Parameters: ts.Exp.ProvisioningParameters.Data,
 		Context: map[string]interface{}{
 			"namespace": string(ts.Exp.Namespace),
 		},
@@ -88,8 +87,6 @@ func TestProvisionServiceProvisionSuccessAsyncInstall(t *testing.T) {
 	iiMock := &automock.InstanceStorage{}
 	defer iiMock.AssertExpectations(t)
 	expInstance := ts.FixInstance()
-	params := jsonhash.HashS(ts.FixProvisionRequest().Parameters)
-	expInstance.ParamsHash = params
 	expInstanceCollection := ts.FixInstanceCollection()
 	iiMock.On("Upsert", &expInstance).Return(true, nil)
 	iiMock.On("GetAll").Return(expInstanceCollection, nil)
@@ -97,7 +94,6 @@ func TestProvisionServiceProvisionSuccessAsyncInstall(t *testing.T) {
 	ioMock := &automock.OperationStorage{}
 	defer ioMock.AssertExpectations(t)
 	expInstOp := ts.FixInstanceOperation()
-	expInstOp.ParamsHash = params
 	ioMock.On("Insert", &expInstOp).Return(nil).Once()
 	operationSucceeded := make(chan struct{})
 	ioMock.On("UpdateStateDesc", ts.Exp.InstanceID, ts.Exp.OperationID, internal.OperationStateSucceeded, mock.Anything).Return(nil).Once().
@@ -165,8 +161,6 @@ func TestProvisionServiceProvisionFailureAsync(t *testing.T) {
 	iiMock := &automock.InstanceStorage{}
 	defer iiMock.AssertExpectations(t)
 	expInstance := ts.FixInstance()
-	params := jsonhash.HashS(ts.FixProvisionRequest().Parameters)
-	expInstance.ParamsHash = params
 	expInstanceCollection := ts.FixInstanceCollection()
 	iiMock.On("Upsert", &expInstance).Return(true, nil)
 	iiMock.On("GetAll").Return(expInstanceCollection, nil)
@@ -174,7 +168,6 @@ func TestProvisionServiceProvisionFailureAsync(t *testing.T) {
 	ioMock := &automock.OperationStorage{}
 	defer ioMock.AssertExpectations(t)
 	expInstOp := ts.FixInstanceOperation()
-	expInstOp.ParamsHash = params
 	ioMock.On("Insert", &expInstOp).Return(nil).Once()
 
 	cgMock := &automock.ChartGetter{}
@@ -243,7 +236,6 @@ func TestProvisionServiceProvisionSuccessRepeatedOnAlreadyFullyProvisionedInstan
 
 	iiMock := &automock.InstanceStorage{}
 	fixInstance := ts.FixInstance()
-	fixInstance.ParamsHash = jsonhash.HashS(map[string]interface{}{})
 	iiMock.On("Get", fixInstance.ID).Return(&fixInstance, nil)
 	defer iiMock.AssertExpectations(t)
 
@@ -300,11 +292,6 @@ func TestProvisionServiceProvisionSuccessRepeatedOnProvisioningInProgress(t *tes
 	defer cgMock.AssertExpectations(t)
 
 	iiMock := &automock.InstanceStorage{}
-	fixInstance := ts.FixInstance()
-	fixInstance.ParamsHash = jsonhash.HashS(map[string]interface{}{})
-	iiMock.On("Get", fixInstance.ID).Return(&fixInstance, nil)
-	defer iiMock.AssertExpectations(t)
-
 	ioMock := &automock.OperationStorage{}
 	defer ioMock.AssertExpectations(t)
 

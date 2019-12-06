@@ -39,12 +39,13 @@ type expAll struct {
 	}
 	Namespace   internal.Namespace
 	ReleaseName internal.ReleaseName
-	ParamsHash  string
 	ReleaseInfo struct {
 		Time     *google_protobuf.Timestamp
 		Revision int
 		Config   *chart.Config
 	}
+	ProvisioningParameters        *internal.ProvisioningParameters
+	RequestProvisioningParameters map[string]interface{}
 }
 
 func (exp *expAll) Populate() {
@@ -71,7 +72,6 @@ func (exp *expAll) Populate() {
 
 	exp.Namespace = internal.Namespace("fix-namespace")
 	exp.ReleaseName = internal.ReleaseName(fmt.Sprintf("hb-%s-%s-%s", exp.Addon.Name, exp.AddonPlan.Name, exp.InstanceID))
-	exp.ParamsHash = "TODO"
 	exp.ReleaseInfo.Time = &google_protobuf.Timestamp{
 		Seconds: 123123123,
 		Nanos:   1,
@@ -79,6 +79,14 @@ func (exp *expAll) Populate() {
 	exp.ReleaseInfo.Revision = 123
 	exp.ReleaseInfo.Config = &chart.Config{
 		Raw: "raw-config",
+	}
+	exp.ProvisioningParameters = &internal.ProvisioningParameters{
+		Data: map[string]interface{}{
+			"addonsRepositoryURL": exp.Addon.RepositoryURL,
+		},
+	}
+	exp.RequestProvisioningParameters = map[string]interface{}{
+		"addonsRepositoryURL": "different-fix-url",
 	}
 }
 
@@ -134,12 +142,12 @@ func (exp *expAll) NewAddon() *internal.Addon {
 
 func (exp *expAll) NewInstance() *internal.Instance {
 	return &internal.Instance{
-		ID:            exp.InstanceID,
-		ServiceID:     exp.Service.ID,
-		ServicePlanID: exp.ServicePlan.ID,
-		ReleaseName:   exp.ReleaseName,
-		Namespace:     exp.Namespace,
-		ParamsHash:    exp.ParamsHash,
+		ID:                     exp.InstanceID,
+		ServiceID:              exp.Service.ID,
+		ServicePlanID:          exp.ServicePlan.ID,
+		ReleaseName:            exp.ReleaseName,
+		Namespace:              exp.Namespace,
+		ProvisioningParameters: exp.ProvisioningParameters,
 	}
 }
 
@@ -154,13 +162,13 @@ func (exp *expAll) NewReleaseInfo() internal.ReleaseInfo {
 func (exp *expAll) NewInstanceWithInfo() *internal.Instance {
 	r := exp.NewReleaseInfo()
 	return &internal.Instance{
-		ID:            exp.InstanceID,
-		ServiceID:     exp.Service.ID,
-		ServicePlanID: exp.ServicePlan.ID,
-		ReleaseName:   exp.ReleaseName,
-		Namespace:     exp.Namespace,
-		ParamsHash:    exp.ParamsHash,
-		ReleaseInfo:   r,
+		ID:                     exp.InstanceID,
+		ServiceID:              exp.Service.ID,
+		ServicePlanID:          exp.ServicePlan.ID,
+		ReleaseName:            exp.ReleaseName,
+		Namespace:              exp.Namespace,
+		ProvisioningParameters: exp.ProvisioningParameters,
+		ReleaseInfo:            r,
 	}
 }
 
@@ -179,11 +187,21 @@ func (exp *expAll) NewInstanceCredentials() *internal.InstanceCredentials {
 
 func (exp *expAll) NewInstanceOperation(tpe internal.OperationType, state internal.OperationState) *internal.InstanceOperation {
 	return &internal.InstanceOperation{
-		InstanceID:  exp.InstanceID,
-		OperationID: exp.OperationID,
-		Type:        tpe,
-		State:       state,
-		ParamsHash:  exp.ParamsHash,
+		InstanceID:             exp.InstanceID,
+		OperationID:            exp.OperationID,
+		Type:                   tpe,
+		State:                  state,
+		ProvisioningParameters: exp.ProvisioningParameters,
+	}
+}
+
+func (exp *expAll) NewInstanceOperationWithEmptyParams(tpe internal.OperationType, state internal.OperationState) *internal.InstanceOperation {
+	return &internal.InstanceOperation{
+		InstanceID:             exp.InstanceID,
+		OperationID:            exp.OperationID,
+		Type:                   tpe,
+		State:                  state,
+		ProvisioningParameters: &internal.ProvisioningParameters{Data: make(map[string]interface{})},
 	}
 }
 

@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	jsonhash "github.com/komkom/go-jsonhash"
 	"github.com/kyma-project/helm-broker/internal"
 	"github.com/kyma-project/helm-broker/internal/bind"
 	osb "github.com/pmorie/go-open-service-broker-client/v2"
@@ -109,8 +108,6 @@ func TestBindServiceBindSuccessAsyncWhenNotBound(t *testing.T) {
 	isMock := &automock.InstanceStorage{}
 	defer isMock.AssertExpectations(t)
 	expInstance := ts.FixInstanceWithInfo()
-	params := jsonhash.HashS(ts.FixBindRequest().Parameters)
-	expInstance.ParamsHash = params
 	isMock.On("Get", ts.Exp.InstanceID).Return(&expInstance, nil).Once()
 
 	ibdsMock := &automock.InstanceBindDataStorage{}
@@ -246,8 +243,6 @@ func TestBindServiceBindFailureAsyncWhenNotBoundOnChartGet(t *testing.T) {
 	isMock := &automock.InstanceStorage{}
 	defer isMock.AssertExpectations(t)
 	expInstance := ts.FixInstanceWithInfo()
-	params := jsonhash.HashS(ts.FixBindRequest().Parameters)
-	expInstance.ParamsHash = params
 	isMock.On("Get", ts.Exp.InstanceID).Return(&expInstance, nil).Once()
 
 	ibdsMock := &automock.InstanceBindDataStorage{}
@@ -324,8 +319,6 @@ func TestBindServiceBindFailureWhenNotBoundAsyncOnRenderAndResolve(t *testing.T)
 	isMock := &automock.InstanceStorage{}
 	defer isMock.AssertExpectations(t)
 	expInstance := ts.FixInstanceWithInfo()
-	params := jsonhash.HashS(ts.FixBindRequest().Parameters)
-	expInstance.ParamsHash = params
 	isMock.On("Get", ts.Exp.InstanceID).Return(&expInstance, nil).Once()
 
 	ibdsMock := &automock.InstanceBindDataStorage{}

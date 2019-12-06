@@ -129,17 +129,20 @@ type instanceTestSuite struct {
 }
 
 func (ts *instanceTestSuite) generateFixtures() {
-	for fs, ft := range map[string]struct{ id, sID, spID, rName, pHash string }{
-		"A1": {"id-01", "sID-01", "spID-01", "rName-01-01", "pHash-01"},
-		"A2": {"id-02", "sID-01", "spID-01", "rName-01-02", "pHash-02"},
-		"A3": {"id-03", "sID-03", "spID-03", "rName-03", "pHash-03"},
+	for fs, ft := range map[string]struct {
+		id, sID, spID, rName string
+		params               map[string]interface{}
+	}{
+		"A1": {"id-01", "sID-01", "spID-01", "rName-01-01", map[string]interface{}{"param-01": "value-01"}},
+		"A2": {"id-02", "sID-01", "spID-01", "rName-01-02", map[string]interface{}{"param-02": "value-02"}},
+		"A3": {"id-03", "sID-03", "spID-03", "rName-03", map[string]interface{}{"param-03": "value-03"}},
 	} {
 		i := &internal.Instance{
-			ID:            internal.InstanceID(ft.id),
-			ServiceID:     internal.ServiceID(ft.sID),
-			ServicePlanID: internal.ServicePlanID(ft.spID),
-			ReleaseName:   internal.ReleaseName(ft.rName),
-			ParamsHash:    ft.pHash,
+			ID:                     internal.InstanceID(ft.id),
+			ServiceID:              internal.ServiceID(ft.sID),
+			ServicePlanID:          internal.ServicePlanID(ft.spID),
+			ReleaseName:            internal.ReleaseName(ft.rName),
+			ProvisioningParameters: &internal.ProvisioningParameters{Data: ft.params},
 		}
 
 		ts.fixtures[i.ID] = i
@@ -171,11 +174,11 @@ func (ts *instanceTestSuite) MustGetFixture(sym string) *internal.Instance {
 // BEWARE: not all fields are copied, only those currently used in this test suite scope
 func (ts *instanceTestSuite) MustCopyFixture(in *internal.Instance) *internal.Instance {
 	return &internal.Instance{
-		ID:            in.ID,
-		ServiceID:     in.ServiceID,
-		ServicePlanID: in.ServicePlanID,
-		ReleaseName:   in.ReleaseName,
-		ParamsHash:    in.ParamsHash,
+		ID:                     in.ID,
+		ServiceID:              in.ServiceID,
+		ServicePlanID:          in.ServicePlanID,
+		ReleaseName:            in.ReleaseName,
+		ProvisioningParameters: in.ProvisioningParameters,
 	}
 }
 

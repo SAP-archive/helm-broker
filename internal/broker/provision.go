@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"reflect"
 	"sync"
 
-	jsonhash "github.com/komkom/go-jsonhash"
 	"github.com/kyma-project/helm-broker/internal"
 	"github.com/pkg/errors"
 	osb "github.com/pmorie/go-open-service-broker-client/v2"
@@ -48,25 +48,27 @@ func (svc *provisionService) Provision(ctx context.Context, osbCtx OsbContext, r
 	defer svc.mu.Unlock()
 
 	iID := internal.InstanceID(req.InstanceID)
-	paramHash := jsonhash.HashS(req.Parameters)
+	requestedProvisioningParameters := internal.ProvisioningParameters{
+		Data: req.Parameters,
+	}
 
-	switch state, err := svc.instanceStateGetter.IsProvisioned(iID); true {
+	switch alreadyProvisioned, err := svc.instanceStateGetter.IsProvisioned(iID); {
 	case err != nil:
 		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusInternalServerError, ErrorMessage: strPtr(fmt.Sprintf("while checking if instance is already provisioned: %v", err))}
-	case state:
-		if err := svc.compareProvisioningParameters(iID, paramHash); err != nil {
-			return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusConflict, ErrorMessage: strPtr(fmt.Sprintf("while comparing provisioning parameters %v: %v", req.Parameters, err))}
+	case alreadyProvisioned:
+		switch conflictOccurred, err := svc.requestedParametersAreDifferent(iID, requestedProvisioningParameters); {
+		case err != nil:
+			return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusInternalServerError, ErrorMessage: strPtr(fmt.Sprintf("while comparing provisioning parameters %v: %v", req.Parameters, err))}
+		case conflictOccurred:
+			return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusConflict, ErrorMessage: strPtr(fmt.Sprintf("service instance exists with different parameters: %v", req.Parameters))}
 		}
 		return &osb.ProvisionResponse{Async: false}, nil
 	}
 
-	switch opIDInProgress, inProgress, err := svc.instanceStateGetter.IsProvisioningInProgress(iID); true {
+	switch opIDInProgress, inProgress, err := svc.instanceStateGetter.IsProvisioningInProgress(iID); {
 	case err != nil:
-		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusInternalServerError, ErrorMessage: strPtr(fmt.Sprintf("while checking if instance is being provisioned: %v", err))}
+		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusInternalServerError, ErrorMessage: strPtr(fmt.Sprintf("service instance exists with different parameters: %v", req.Parameters))}
 	case inProgress:
-		if err := svc.compareProvisioningParameters(iID, paramHash); err != nil {
-			return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusConflict, ErrorMessage: strPtr(fmt.Sprintf("while comparing provisioning parameters %v: %v", req.Parameters, err))}
-		}
 		opKeyInProgress := osb.OperationKey(opIDInProgress)
 		return &osb.ProvisionResponse{Async: true, OperationKey: &opKeyInProgress}, nil
 	}
@@ -105,11 +107,11 @@ func (svc *provisionService) Provision(ctx context.Context, osbCtx OsbContext, r
 	}
 
 	op := internal.InstanceOperation{
-		InstanceID:  iID,
-		OperationID: opID,
-		Type:        internal.OperationTypeCreate,
-		State:       internal.OperationStateInProgress,
-		ParamsHash:  paramHash,
+		InstanceID:             iID,
+		OperationID:            opID,
+		Type:                   internal.OperationTypeCreate,
+		State:                  internal.OperationStateInProgress,
+		ProvisioningParameters: &requestedProvisioningParameters,
 	}
 
 	if err := svc.operationInserter.Insert(&op); err != nil {
@@ -127,13 +129,13 @@ func (svc *provisionService) Provision(ctx context.Context, osbCtx OsbContext, r
 	releaseName := createReleaseName(addon.Name, addonPlan.Name, iID)
 
 	i := internal.Instance{
-		ID:            iID,
-		Namespace:     namespace,
-		ServiceID:     svcID,
-		ServicePlanID: svcPlanID,
-		ReleaseName:   releaseName,
-		ParamsHash:    paramHash,
-		ReleaseInfo:   internal.ReleaseInfo{},
+		ID:                     iID,
+		Namespace:              namespace,
+		ServiceID:              svcID,
+		ServicePlanID:          svcPlanID,
+		ReleaseName:            releaseName,
+		ReleaseInfo:            internal.ReleaseInfo{},
+		ProvisioningParameters: &requestedProvisioningParameters,
 	}
 
 	exist, err := svc.instanceInserter.Upsert(&i)
@@ -144,7 +146,7 @@ func (svc *provisionService) Provision(ctx context.Context, osbCtx OsbContext, r
 		svc.log.Infof("Instance %s already existed in storage, instance was replaced", i.ID)
 	}
 
-	chartOverrides := internal.ChartValues(req.Parameters)
+	chartOverrides := internal.ChartValues(requestedProvisioningParameters.Data)
 
 	provisionInput := provisioningInput{
 		instanceID:          iID,
@@ -257,21 +259,21 @@ func (svc *provisionService) do(ctx context.Context, input provisioningInput) {
 	}
 }
 
-func (svc *provisionService) compareProvisioningParameters(iID internal.InstanceID, newHash string) error {
+func (svc *provisionService) requestedParametersAreDifferent(iID internal.InstanceID, requestedParams internal.ProvisioningParameters) (bool, error) {
 	instance, err := svc.instanceGetter.Get(iID)
-	switch {
-	case err == nil:
-	case IsNotFoundError(err):
-		return nil
-	default:
-		return errors.Wrapf(err, "while getting instance %s from storage", iID)
+	if err != nil {
+		return false, errors.Wrapf(err, "while getting instance %s from storage", iID)
 	}
 
-	if instance.ParamsHash != newHash {
-		return errors.Errorf("provisioning parameters hash differs - new %s, old %s, for instance %s", newHash, instance.ParamsHash, iID)
+	if instance.ProvisioningParameters == nil && len(requestedParams.Data) == 0 { // instance with given ID has empty parameters and request parameters are also empty
+		return false, nil
 	}
 
-	return nil
+	if instance.ProvisioningParameters != nil && reflect.DeepEqual(instance.ProvisioningParameters.Data, requestedParams.Data) { // OR instance parameters are identical to request parameters
+		return false, nil
+	}
+
+	return true, nil
 }
 
 func getNamespaceFromContext(contextProfile map[string]interface{}) (internal.Namespace, error) {

@@ -274,15 +274,12 @@ func (id OperationID) IsZero() bool { return id == OperationID("") }
 
 // InstanceOperation represents single provisioning operation.
 type InstanceOperation struct {
-	InstanceID       InstanceID
-	OperationID      OperationID
-	Type             OperationType
-	State            OperationState
-	StateDescription *string
-
-	// ParamsHash is an immutable hash for operation parameters
-	// used to match requests.
-	ParamsHash string
+	InstanceID             InstanceID
+	OperationID            OperationID
+	Type                   OperationType
+	State                  OperationState
+	StateDescription       *string
+	ProvisioningParameters *ProvisioningParameters
 
 	// CreatedAt points to creation time of the operation.
 	// Field should be treated as immutable and is responsibility of storage implementation.
@@ -308,6 +305,18 @@ func (id ServicePlanID) IsZero() bool { return id == ServicePlanID("") }
 // Namespace is the name of namespace in k8s
 type Namespace string
 
+// ReleaseInfo contains additional data about release installed on instance provisioning.
+type ReleaseInfo struct {
+	Time     *google_protobuf.Timestamp
+	Revision int
+	Config   *chart.Config
+}
+
+// ProvisioningParameters wraps a map containing provided YAML with provisioning parameters
+type ProvisioningParameters struct {
+	Data map[string]interface{}
+}
+
 const (
 	// ClusterWide is a value which refers to cluster wide resources.
 	ClusterWide Namespace = ""
@@ -315,13 +324,13 @@ const (
 
 // Instance contains info about Service exposed via Service Catalog.
 type Instance struct {
-	ID            InstanceID
-	ServiceID     ServiceID
-	ServicePlanID ServicePlanID
-	ReleaseName   ReleaseName
-	Namespace     Namespace
-	ParamsHash    string
-	ReleaseInfo   ReleaseInfo
+	ID                     InstanceID
+	ServiceID              ServiceID
+	ServicePlanID          ServicePlanID
+	ReleaseName            ReleaseName
+	Namespace              Namespace
+	ReleaseInfo            ReleaseInfo
+	ProvisioningParameters *ProvisioningParameters
 }
 
 // InstanceCredentials are created when we bind a service instance.
@@ -352,13 +361,6 @@ type BindOperation struct {
 type InstanceBindData struct {
 	InstanceID  InstanceID
 	Credentials InstanceCredentials
-}
-
-// ReleaseInfo contains additional data about release installed on instance provisioning.
-type ReleaseInfo struct {
-	Time     *google_protobuf.Timestamp
-	Revision int
-	Config   *chart.Config
 }
 
 // OperationState defines the possible states of an asynchronous request to a broker.

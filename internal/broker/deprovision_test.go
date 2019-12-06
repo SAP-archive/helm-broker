@@ -437,7 +437,7 @@ func (ts *deprovisionServiceTestSuite) FixInstance() internal.Instance {
 }
 
 func (ts *deprovisionServiceTestSuite) FixInstanceOperation() internal.InstanceOperation {
-	return *ts.Exp.NewInstanceOperation(internal.OperationTypeRemove, internal.OperationStateInProgress)
+	return *ts.Exp.NewInstanceOperationWithEmptyParams(internal.OperationTypeRemove, internal.OperationStateInProgress)
 }
 
 func (ts *deprovisionServiceTestSuite) FixDeprovisionRequest() osb.DeprovisionRequest {
