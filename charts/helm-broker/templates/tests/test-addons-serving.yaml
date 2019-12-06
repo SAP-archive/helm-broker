@@ -6,6 +6,10 @@ metadata:
     "helm.sh/hook": test-success
 spec:
   serviceAccountName: {{ .Chart.Name }}-tests
+  {{- with .Values.securityContext }}
+  securityContext:
+{{ toYaml . | indent 8 }}
+  {{- end }}
   containers:
   - name: {{ .Release.Name }}--addon-serving-test
     image: "{{ .Values.global.containerRegistry.path }}{{ .Values.tests.dir }}/{{ .Values.tests.image }}:{{ .Values.tests.tag }}"

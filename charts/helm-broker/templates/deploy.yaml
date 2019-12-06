@@ -23,6 +23,10 @@ spec:
         heritage: "{{ .Release.Service }}"
     spec:
       serviceAccountName: {{ template "fullname" . }}
+      {{- with .Values.securityContext }}
+      securityContext:
+{{ toYaml . | indent 8 }}
+      {{- end }}
       containers:
       - name: broker
         image: "{{ .Values.global.containerRegistry.path }}{{ .Values.global.helm_broker.dir }}/{{ .Values.global.helm_broker.image }}:{{ .Values.global.helm_broker.version }}"
@@ -52,21 +56,20 @@ spec:
           readOnly: true
         ports:
         - containerPort: {{ .Values.broker.internalPort }}
-        # We use health-check binary to monitor the state of application
-        # Current solution is suited for deployment on cluster with mTLS enabled
-        # https://medium.com/cloud-native-the-gathering/kubernetes-liveness-probe-for-scratch-image-with-istio-mtls-enabled-90543e4bae34
         readinessProbe:
           httpGet:
             path: /ready
             port: {{ .Values.broker.statusPort }}
           periodSeconds: 3
           timeoutSeconds: 2
+          initialDelaySeconds: 5
         livenessProbe:
           httpGet:
             path: /live
             port: {{ .Values.broker.statusPort }}
           periodSeconds: 10
           timeoutSeconds: 2
+          initialDelaySeconds: 5
 
       - name: ctrl
         image: "{{ .Values.global.containerRegistry.path }}{{ .Values.global.helm_controller.dir }}/{{ .Values.global.helm_controller.image }}:{{ .Values.global.helm_controller.version }}"
@@ -107,12 +110,14 @@ spec:
             port: {{ .Values.ctrl.statusPort }}
           periodSeconds: 3
           timeoutSeconds: 2
+          initialDelaySeconds: 5
         livenessProbe:
           httpGet:
             path: /live
             port: {{ .Values.ctrl.statusPort }}
           periodSeconds: 60
           timeoutSeconds: 30
+          initialDelaySeconds: 5
 
       volumes:
       - name: tmp-empty-dir

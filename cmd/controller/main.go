@@ -11,6 +11,11 @@ import (
 	"github.com/kyma-project/helm-broker/internal/platform/logger"
 	"github.com/kyma-project/helm-broker/internal/storage"
 
+	"bytes"
+	"os"
+	"os/exec"
+	"strings"
+
 	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
@@ -39,6 +44,9 @@ func main() {
 	uploadClient := assetstore.NewClient(ctrCfg.UploadServiceURL, lg)
 	mgr := controller.SetupAndStartController(cfg, ctrCfg, metricsAddr, sFact, uploadClient, lg)
 
+	// starts the ssh agent and exposes necessary env variables
+	setupSSH()
+
 	// TODO: switch to native implementation after merge: https://github.com/kubernetes-sigs/controller-runtime/pull/419
 	go health.NewControllerProbes(fmt.Sprintf(":%d", ctrCfg.StatusPort), storageConfig.ExtractEtcdURL(), mgr.GetClient()).Handle()
 
@@ -47,6 +55,17 @@ func main() {
 	lg.Info("Starting the Controller.")
 	err = mgr.Start(signals.SetupSignalHandler())
 	fatalOnError(err, "unable to run the manager")
+}
+
+func setupSSH() {
+	cmd := exec.Command("ssh-agent", "-s")
+	var outbuf bytes.Buffer
+	cmd.Stdout = &outbuf
+	fatalOnError(cmd.Run(), "while executing ssh-agent")
+
+	out := strings.Replace(outbuf.String(), "\n", "", -1)
+	fatalOnError(os.Setenv("SSH_AUTH_SOCK", strings.Split(strings.Split(out, ";")[0], "=")[1]), "while setting SSH_AUTH_SOCK env")
+	fatalOnError(os.Setenv("SSH_AGENT_PID", strings.Split(strings.Split(out, ";")[2], "=")[1]), "while setting SSH_AGENT_PID env")
 }
 
 func fatalOnError(err error, msg string) {

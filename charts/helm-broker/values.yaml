@@ -43,3 +43,6 @@ tests:
   image: helm-broker-tests
   dir: /pr
   tag: PR-52
+
+securityContext:
+  runAsUser: 2000
