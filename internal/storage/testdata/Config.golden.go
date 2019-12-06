@@ -25,6 +25,8 @@ func GoldenConfigMemorySingleSeparate() storage.ConfigList {
 				storage.EntityChart:             storage.ProviderConfig{},
 				storage.EntityInstance:          storage.ProviderConfig{},
 				storage.EntityInstanceOperation: storage.ProviderConfig{},
+				storage.EntityInstanceBindData: storage.ProviderConfig{},
+				storage.EntityBindOperation: storage.ProviderConfig{},
 			},
 		},
 	}
@@ -36,6 +38,8 @@ func GoldenConfigMemoryMultipleSeparate() storage.ConfigList {
 		{Driver: storage.DriverMemory, Provide: storage.ProviderConfigMap{storage.EntityChart: storage.ProviderConfig{}}},
 		{Driver: storage.DriverMemory, Provide: storage.ProviderConfigMap{storage.EntityInstance: storage.ProviderConfig{}}},
 		{Driver: storage.DriverMemory, Provide: storage.ProviderConfigMap{storage.EntityInstanceOperation: storage.ProviderConfig{}}},
+		{Driver: storage.DriverMemory, Provide: storage.ProviderConfigMap{storage.EntityInstanceBindData: storage.ProviderConfig{}}},
+		{Driver: storage.DriverMemory, Provide: storage.ProviderConfigMap{storage.EntityBindOperation: storage.ProviderConfig{}}},
 	}
 }
 
@@ -65,6 +69,8 @@ func GoldenConfigEtcdSingleSeparate(address string) storage.ConfigList {
 				storage.EntityChart:             storage.ProviderConfig{},
 				storage.EntityInstance:          storage.ProviderConfig{},
 				storage.EntityInstanceOperation: storage.ProviderConfig{},
+				storage.EntityInstanceBindData: storage.ProviderConfig{},
+				storage.EntityBindOperation: storage.ProviderConfig{},
 			},
 			Etcd: etcd.Config{
 				DialTimeout:          "5s",
@@ -106,10 +112,24 @@ func GoldenConfigEtcdMultipleSeparate(address string) storage.ConfigList {
 				DialKeepAliveTimeout: "5s",
 				Endpoints:            []string{address},
 			}},
+		{Driver: storage.DriverEtcd, Provide: storage.ProviderConfigMap{storage.EntityInstanceBindData: storage.ProviderConfig{}},
+			Etcd: etcd.Config{
+				DialTimeout:          "5s",
+				DialKeepAliveTime:    "2s",
+				DialKeepAliveTimeout: "5s",
+				Endpoints:            []string{address},
+			}},
+		{Driver: storage.DriverEtcd, Provide: storage.ProviderConfigMap{storage.EntityBindOperation: storage.ProviderConfig{}},
+			Etcd: etcd.Config{
+				DialTimeout:          "5s",
+				DialKeepAliveTime:    "2s",
+				DialKeepAliveTimeout: "5s",
+				Endpoints:            []string{address},
+			}},
 	}
 }
 
-func GoldenConfigMixEMMESeparate(address string) storage.ConfigList {
+func GoldenConfigMixEMMEMESeparate(address string) storage.ConfigList {
 	return storage.ConfigList{
 		{Driver: storage.DriverEtcd, Provide: storage.ProviderConfigMap{storage.EntityAddon: storage.ProviderConfig{}},
 			Etcd: etcd.Config{
@@ -127,14 +147,23 @@ func GoldenConfigMixEMMESeparate(address string) storage.ConfigList {
 				DialKeepAliveTimeout: "5s",
 				Endpoints:            []string{address},
 			}},
+		{Driver: storage.DriverMemory, Provide: storage.ProviderConfigMap{storage.EntityInstanceBindData: storage.ProviderConfig{}}},
+		{Driver: storage.DriverEtcd, Provide: storage.ProviderConfigMap{storage.EntityBindOperation: storage.ProviderConfig{}},
+			Etcd: etcd.Config{
+				DialTimeout:          "5s",
+				DialKeepAliveTime:    "2s",
+				DialKeepAliveTimeout: "5s",
+				Endpoints:            []string{address},
+			}},
 	}
 }
 
-func GoldenConfigMixMMEEGrouped(address string) storage.ConfigList {
+func GoldenConfigMixMMMEEEGrouped(address string) storage.ConfigList {
 	return storage.ConfigList{
 		{Driver: storage.DriverMemory, Provide: storage.ProviderConfigMap{
 			storage.EntityAddon: storage.ProviderConfig{},
 			storage.EntityChart: storage.ProviderConfig{},
+			storage.EntityInstanceBindData: storage.ProviderConfig{},
 		},
 			Etcd: etcd.Config{
 				DialTimeout:          "5s",
@@ -145,6 +174,7 @@ func GoldenConfigMixMMEEGrouped(address string) storage.ConfigList {
 		{Driver: storage.DriverEtcd, Provide: storage.ProviderConfigMap{
 			storage.EntityInstance:          storage.ProviderConfig{},
 			storage.EntityInstanceOperation: storage.ProviderConfig{},
+			storage.EntityBindOperation: storage.ProviderConfig{},
 		},
 			Etcd: etcd.Config{
 				DialTimeout:          "5s",

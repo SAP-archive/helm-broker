@@ -36,7 +36,9 @@ type (
 	}
 
 	binder interface {
-		Bind(ctx context.Context, osbCtx OsbContext, req *osb.BindRequest) (*osb.BindResponse, error)
+		Bind(ctx context.Context, osbCtx OsbContext, req *osb.BindRequest) (*osb.BindResponse, *osb.HTTPStatusCodeError)
+		GetLastBindOperation(ctx context.Context, osbCtx OsbContext, req *osb.BindingLastOperationRequest) (*osb.LastOperationResponse, error)
+		GetBindData(ctx context.Context, osbCtx OsbContext, req *osb.GetBindingRequest) (*osb.GetBindingResponse, *osb.HTTPStatusCodeError)
 	}
 
 	unbinder interface {
@@ -117,6 +119,7 @@ func (srv *Server) run(ctx context.Context, addr string, listenAndServe func(srv
 		}
 	}()
 	return listenAndServe(httpSrv)
+
 }
 
 // CreateHandler creates an http handler
@@ -151,18 +154,22 @@ func (srv *Server) handleRouter(router *mux.Router) {
 		Handler(negroni.New(osbContextMiddleware, negroni.WrapFunc(srv.catalogAction)))
 	router.Path("/v2/service_instances/{instance_id}/last_operation").Methods(http.MethodGet).
 		Handler(negroni.New(osbContextMiddleware, negroni.WrapFunc(srv.getServiceInstanceLastOperationAction)))
-	router.Path("/v2/service_instances/{instance_id}/service_bindings/{binding_id}").Methods(http.MethodPut).
-		Handler(negroni.New(osbContextMiddleware, negroni.WrapFunc(srv.bindAction)))
+	router.Path("/v2/service_instances/{instance_id}/service_bindings/{binding_id}").Methods(http.MethodGet).
+		Handler(negroni.New(osbContextMiddleware, negroni.WrapFunc(srv.getServiceBinding)))
 	router.Path("/v2/service_instances/{instance_id}/service_bindings/{binding_id}").Methods(http.MethodDelete).
 		Handler(negroni.New(osbContextMiddleware, negroni.WrapFunc(srv.unBindAction)))
+	router.Path("/v2/service_instances/{instance_id}/service_bindings/{binding_id}/last_operation").Methods(http.MethodGet).
+		Handler(negroni.New(osbContextMiddleware, negroni.WrapFunc(srv.getServiceBindingLastOperationAction)))
 
 	// async operations
 	router.Path("/v2/service_instances/{instance_id}").Methods(http.MethodPut).Handler(
-		negroni.New(osbContextMiddleware, reqAsyncMiddleware, negroni.WrapFunc(srv.provisionAction)),
-	)
+		negroni.New(osbContextMiddleware, reqAsyncMiddleware, negroni.WrapFunc(srv.provisionAction)))
 	router.Path("/v2/service_instances/{instance_id}").Methods(http.MethodDelete).Handler(
 		negroni.New(osbContextMiddleware, reqAsyncMiddleware, negroni.WrapFunc(srv.deprovisionAction)),
 	)
+	router.Path("/v2/service_instances/{instance_id}/service_bindings/{binding_id}").Methods(http.MethodPut).
+		Handler(negroni.New(osbContextMiddleware, reqAsyncMiddleware, negroni.WrapFunc(srv.bindAction)))
+
 }
 
 func (srv *Server) catalogAction(w http.ResponseWriter, r *http.Request) {
@@ -383,18 +390,30 @@ func (srv *Server) bindAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	q := r.URL.Query()
-	bindIDRaw := q.Get("binding_id")
+	bindIDRaw := mux.Vars(r)["binding_id"]
 
 	sReq := osb.BindRequest{
-		InstanceID: instanceID,
-		ServiceID:  params.ServiceID,
-		PlanID:     params.PlanID,
-		BindingID:  bindIDRaw,
+		AcceptsIncomplete: true,
+		InstanceID:        string(instanceID),
+		ServiceID:         string(params.ServiceID),
+		PlanID:            string(params.PlanID),
+		BindingID:         bindIDRaw,
+		Parameters:        params.Parameters,
+		Context: map[string]interface{}{
+			"namespace": string(params.Context.Namespace),
+		},
 	}
-	sResp, err := srv.binder.Bind(r.Context(), osbCtx, &sReq)
-	if err != nil {
-		srv.writeErrorResponse(w, http.StatusBadRequest, err.Error(), "")
+	sResp, sErr := srv.binder.Bind(r.Context(), osbCtx, &sReq)
+	if sErr != nil {
+		var errMsg string
+		var errDesc string
+		if sErr.ErrorMessage != nil {
+			errMsg = *sErr.ErrorMessage
+		}
+		if sErr.Description != nil {
+			errDesc = *sErr.Description
+		}
+		srv.writeErrorResponse(w, sErr.StatusCode, errMsg, errDesc)
 		return
 	}
 
@@ -405,20 +424,131 @@ func (srv *Server) bindAction(w http.ResponseWriter, r *http.Request) {
 		}
 		logRespFields := logrus.Fields{
 			"action":                "bind",
-			"resp:async":            false,
+			"resp:async":            sResp.Async,
 			"resp:credentials:keys": keys,
 		}
+		srv.logger.WithFields(logRespFields).Info("action response")
+	}
+
+	if !sResp.Async {
+		egDTO := BindSuccessResponseDTO{
+			Credentials: sResp.Credentials,
+		}
+		srv.writeResponse(w, http.StatusOK, egDTO)
+		return
+	}
+
+	opID := internal.OperationID(*sResp.OperationKey)
+	egDTO := BindInProgressResponseDTO{Operation: &opID}
+
+	srv.writeResponse(w, http.StatusAccepted, egDTO)
+}
+
+func (srv *Server) unBindAction(w http.ResponseWriter, r *http.Request) {
+	srv.writeResponse(w, http.StatusGone, map[string]interface{}{})
+}
+
+func (srv *Server) getServiceBinding(w http.ResponseWriter, r *http.Request) {
+	osbCtx, _ := osbContextFromContext(r.Context())
+
+	instanceID := mux.Vars(r)["instance_id"]
+	bindingID := mux.Vars(r)["binding_id"]
+
+	sReq := osb.GetBindingRequest{
+		InstanceID: instanceID,
+		BindingID:  bindingID,
+	}
+
+	sResp, err := srv.binder.GetBindData(r.Context(), osbCtx, &sReq)
+	if err != nil {
+		var errMsg string
+		var errDesc string
+		if err.ErrorMessage != nil {
+			errMsg = *err.ErrorMessage
+		}
+		if err.Description != nil {
+			errDesc = *err.Description
+		}
+		srv.writeErrorResponse(w, err.StatusCode, errMsg, errDesc)
+		return
+	}
+
+	logRespFields := logrus.Fields{
+		"action":      "getServiceBinding",
+		"instance:id": instanceID,
+		"binding:id":  bindingID,
+	}
+
+	if srv.logger != nil {
 		srv.logger.WithFields(logRespFields).Info("action response")
 	}
 
 	egDTO := BindSuccessResponseDTO{
 		Credentials: sResp.Credentials,
 	}
-	srv.writeResponse(w, http.StatusCreated, egDTO)
+	srv.writeResponse(w, http.StatusOK, egDTO)
+
 }
 
-func (srv *Server) unBindAction(w http.ResponseWriter, r *http.Request) {
-	srv.writeResponse(w, http.StatusGone, map[string]interface{}{})
+func (srv *Server) getServiceBindingLastOperationAction(w http.ResponseWriter, r *http.Request) {
+	osbCtx, _ := osbContextFromContext(r.Context())
+
+	instanceID := mux.Vars(r)["instance_id"]
+	bindingID := mux.Vars(r)["binding_id"]
+	var operationID internal.OperationID
+
+	q := r.URL.Query()
+
+	sReq := osb.BindingLastOperationRequest{
+		InstanceID: string(instanceID),
+		BindingID:  string(bindingID),
+	}
+	if svcIDRaw := q.Get("service_id"); svcIDRaw != "" {
+		svcID := svcIDRaw
+		sReq.ServiceID = &svcID
+	}
+	if planIDRaw := q.Get("plan_id"); planIDRaw != "" {
+		planID := planIDRaw
+		sReq.PlanID = &planID
+	}
+	if opIDRaw := q.Get("operation"); opIDRaw != "" {
+		operationID = internal.OperationID(opIDRaw)
+		opKey := osb.OperationKey(opIDRaw)
+		sReq.OperationKey = &opKey
+	}
+
+	sResp, err := srv.binder.GetLastBindOperation(r.Context(), osbCtx, &sReq)
+	switch {
+	case IsNotFoundError(err):
+		srv.writeResponse(w, http.StatusGone, map[string]interface{}{})
+		return
+	case err != nil:
+		srv.writeErrorResponse(w, http.StatusInternalServerError, err.Error(), "")
+		return
+	}
+
+	logRespFields := logrus.Fields{
+		"action":               "getLastOperation",
+		"instance:id":          instanceID,
+		"binding:id":           bindingID,
+		"operation:id":         operationID,
+		"resp:operation:state": sResp.State,
+		"resp:operation:desc":  sResp.Description,
+	}
+
+	resp := LastOperationSuccessResponseDTO{
+		State: internal.OperationState(sResp.State),
+	}
+	if sResp.Description != nil {
+		desc := string(*sResp.Description)
+		logRespFields["resp:operation:desc"] = desc
+		resp.Description = &desc
+	}
+
+	if srv.logger != nil {
+		srv.logger.WithFields(logRespFields).Info("action response")
+	}
+	srv.writeResponse(w, http.StatusOK, resp)
 }
 
 func (srv *Server) writeResponse(w http.ResponseWriter, code int, object interface{}) {

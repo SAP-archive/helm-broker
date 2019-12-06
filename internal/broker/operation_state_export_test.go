@@ -5,3 +5,9 @@ func NewInstanceStateService(ocg operationCollectionGetter) *instanceStateServic
 		operationCollectionGetter: ocg,
 	}
 }
+
+func NewBindStateService(bocg bindOperationCollectionGetter) *bindStateService {
+	return &bindStateService{
+		bindOperationCollectionGetter: bocg,
+	}
+}

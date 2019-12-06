@@ -20,10 +20,12 @@ func TestNewFactory(t *testing.T) {
 		expChart             interface{}
 		expInstance          interface{}
 		expInstanceOperation interface{}
+		expInstanceBindData  interface{}
+		expBindOperation     interface{}
 	}{
-		"MemorySingleAll":        {testdata.GoldenConfigMemorySingleAll, &memory.Addon{}, &memory.Chart{}, &memory.Instance{}, &memory.InstanceOperation{}},
-		"MemorySingleSeparate":   {testdata.GoldenConfigMemorySingleSeparate, &memory.Addon{}, &memory.Chart{}, &memory.Instance{}, &memory.InstanceOperation{}},
-		"MemoryMultipleSeparate": {testdata.GoldenConfigMemoryMultipleSeparate, &memory.Addon{}, &memory.Chart{}, &memory.Instance{}, &memory.InstanceOperation{}},
+		"MemorySingleAll":        {testdata.GoldenConfigMemorySingleAll, &memory.Addon{}, &memory.Chart{}, &memory.Instance{}, &memory.InstanceOperation{}, &memory.InstanceBindData{}, &memory.BindOperation{}},
+		"MemorySingleSeparate":   {testdata.GoldenConfigMemorySingleSeparate, &memory.Addon{}, &memory.Chart{}, &memory.Instance{}, &memory.InstanceOperation{}, &memory.InstanceBindData{}, &memory.BindOperation{}},
+		"MemoryMultipleSeparate": {testdata.GoldenConfigMemoryMultipleSeparate, &memory.Addon{}, &memory.Chart{}, &memory.Instance{}, &memory.InstanceOperation{}, &memory.InstanceBindData{}, &memory.BindOperation{}},
 	} {
 		t.Run(s, func(t *testing.T) {
 			// GIVEN:
@@ -39,6 +41,8 @@ func TestNewFactory(t *testing.T) {
 			assert.IsType(t, tc.expChart, got.Chart())
 			assert.IsType(t, tc.expInstance, got.Instance())
 			assert.IsType(t, tc.expInstanceOperation, got.InstanceOperation())
+			assert.IsType(t, tc.expInstanceBindData, got.InstanceBindData())
+			assert.IsType(t, tc.expBindOperation, got.BindOperation())
 		})
 	}
 }
@@ -54,12 +58,14 @@ func TestNewFactory_WithEtcd(t *testing.T) {
 		expChart             interface{}
 		expInstance          interface{}
 		expInstanceOperation interface{}
+		expInstanceBindData  interface{}
+		expBindOperation     interface{}
 	}{
-		"EtcdSingleAll":        {testdata.GoldenConfigEtcdSingleAll, &etcd.Addon{}, &etcd.Chart{}, &etcd.Instance{}, &etcd.InstanceOperation{}},
-		"EtcdSingleSeparate":   {testdata.GoldenConfigEtcdSingleSeparate, &etcd.Addon{}, &etcd.Chart{}, &etcd.Instance{}, &etcd.InstanceOperation{}},
-		"EtcdMultipleSeparate": {testdata.GoldenConfigEtcdMultipleSeparate, &etcd.Addon{}, &etcd.Chart{}, &etcd.Instance{}, &etcd.InstanceOperation{}},
-		"MixEMMESeparate":      {testdata.GoldenConfigMixEMMESeparate, &etcd.Addon{}, &memory.Chart{}, &memory.Instance{}, &etcd.InstanceOperation{}},
-		"MixMMEEGrouped":       {testdata.GoldenConfigMixMMEEGrouped, &memory.Addon{}, &memory.Chart{}, &etcd.Instance{}, &etcd.InstanceOperation{}},
+		"EtcdSingleAll":        {testdata.GoldenConfigEtcdSingleAll, &etcd.Addon{}, &etcd.Chart{}, &etcd.Instance{}, &etcd.InstanceOperation{}, &memory.InstanceBindData{}, &etcd.BindOperation{}},
+		"EtcdSingleSeparate":   {testdata.GoldenConfigEtcdSingleSeparate, &etcd.Addon{}, &etcd.Chart{}, &etcd.Instance{}, &etcd.InstanceOperation{}, &memory.InstanceBindData{}, &etcd.BindOperation{}},
+		"EtcdMultipleSeparate": {testdata.GoldenConfigEtcdMultipleSeparate, &etcd.Addon{}, &etcd.Chart{}, &etcd.Instance{}, &etcd.InstanceOperation{}, &memory.InstanceBindData{}, &etcd.BindOperation{}},
+		"MixEMMESeparate":      {testdata.GoldenConfigMixEMMEMESeparate, &etcd.Addon{}, &memory.Chart{}, &memory.Instance{}, &etcd.InstanceOperation{}, &memory.InstanceBindData{}, &etcd.BindOperation{}},
+		"MixMMEEGrouped":       {testdata.GoldenConfigMixMMMEEEGrouped, &memory.Addon{}, &memory.Chart{}, &etcd.Instance{}, &etcd.InstanceOperation{}, &memory.InstanceBindData{}, &etcd.BindOperation{}},
 	} {
 		t.Run(s, func(t *testing.T) {
 			// GIVEN:
@@ -74,6 +80,8 @@ func TestNewFactory_WithEtcd(t *testing.T) {
 			assert.IsType(t, tc.expChart, got.Chart())
 			assert.IsType(t, tc.expInstance, got.Instance())
 			assert.IsType(t, tc.expInstanceOperation, got.InstanceOperation())
+			assert.IsType(t, tc.expInstanceBindData, got.InstanceBindData())
+			assert.IsType(t, tc.expBindOperation, got.BindOperation())
 		})
 	}
 }

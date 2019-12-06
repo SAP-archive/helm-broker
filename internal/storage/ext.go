@@ -29,6 +29,7 @@ type Chart interface {
 // Instance is an interface that describe storage layer operations for Instances
 type Instance interface {
 	Insert(*internal.Instance) error
+	Upsert(*internal.Instance) (replace bool, err error)
 	Get(internal.InstanceID) (*internal.Instance, error)
 	GetAll() ([]*internal.Instance, error)
 	Remove(internal.InstanceID) error
@@ -44,6 +45,16 @@ type InstanceOperation interface {
 	UpdateState(internal.InstanceID, internal.OperationID, internal.OperationState) error
 	UpdateStateDesc(internal.InstanceID, internal.OperationID, internal.OperationState, *string) error
 	Remove(internal.InstanceID, internal.OperationID) error
+}
+
+// BindOperation is an interface that describe storage layer operations for BindOperations
+type BindOperation interface {
+	Insert(*internal.BindOperation) error
+	Get(internal.InstanceID, internal.BindingID, internal.OperationID) (*internal.BindOperation, error)
+	GetAll(internal.InstanceID) ([]*internal.BindOperation, error)
+	UpdateState(internal.InstanceID, internal.BindingID, internal.OperationID, internal.OperationState) error
+	UpdateStateDesc(internal.InstanceID, internal.BindingID, internal.OperationID, internal.OperationState, *string) error
+	Remove(internal.InstanceID, internal.BindingID, internal.OperationID) error
 }
 
 // InstanceBindData is an interface that describe storage layer operations for InstanceBindData entities

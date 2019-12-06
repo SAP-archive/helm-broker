@@ -9,7 +9,8 @@ import (
 //   Create lease on element delete and attach it to each object which should be deleted.
 
 const (
-	entityNamespaceSeparator = "/"
+	entityNamespaceSeparator   = "/"
+	entityOperationIDSeparator = "/"
 
 	entityNamespaceAddon          = "addon"
 	entityNamespaceAddonMappingID = "id"
@@ -18,7 +19,7 @@ const (
 	entityNamespaceChart             = "chart"
 	entityNamespaceInstance          = "instance/"
 	entityNamespaceInstanceOperation = "instanceOperation/"
-	entityNamespaceInstanceBindData  = "instanceBindData/"
+	entityNamespaceBindOperation     = "bindOperation/"
 )
 
 // Config holds configuration for etcd access in storage.

@@ -108,7 +108,7 @@ func newTestSuite(t *testing.T, docsEnabled, httpBasicAuth bool) *testSuite {
 	require.NoError(t, err)
 	logger := logrus.New()
 
-	brokerServer := broker.New(sFact.Addon(), sFact.Chart(), sFact.InstanceOperation(), sFact.Instance(), sFact.InstanceBindData(),
+	brokerServer := broker.New(sFact.Addon(), sFact.Chart(), sFact.InstanceOperation(), sFact.BindOperation(), sFact.Instance(), sFact.InstanceBindData(),
 		bind.NewRenderer(), bind.NewResolver(k8sClientset.CoreV1()), nil, logger.WithField("test", "int"))
 
 	// OSB API Server

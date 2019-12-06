@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"k8s.io/helm/pkg/proto/hapi/chart"
 	rls "k8s.io/helm/pkg/proto/hapi/services"
 
 	"github.com/kyma-project/helm-broker/internal/platform/ptr"
@@ -51,6 +52,7 @@ func newOSBAPITestSuite(t *testing.T) *osbapiTestSuite {
 		sFact.Addon(),
 		sFact.Chart(),
 		sFact.InstanceOperation(),
+		sFact.BindOperation(),
 		sFact.Instance(),
 		sFact.InstanceBindData(),
 		&fakeBindTmplRenderer{},
@@ -106,6 +108,7 @@ func (ts *osbapiTestSuite) OSBClient() osb.Client {
 		config := osb.DefaultClientConfiguration()
 		config.URL = fmt.Sprintf("http://%s/cluster", ts.ServerAddr)
 		config.APIVersion = osb.Version2_13()
+		config.EnableAlphaFeatures = true
 
 		osbClient, err := osb.NewClient(config)
 		require.NoError(ts.t, err)
@@ -122,6 +125,7 @@ func (ts *osbapiTestSuite) OSBClientNS() osb.Client {
 		config := osb.DefaultClientConfiguration()
 		config.URL = fmt.Sprintf("http://%s/ns/%s", ts.ServerAddr, testNs)
 		config.APIVersion = osb.Version2_13()
+		config.EnableAlphaFeatures = true
 
 		osbClient, err := osb.NewClient(config)
 		require.NoError(ts.t, err)
@@ -152,6 +156,39 @@ Polling:
 		select {
 		case <-timeoutTotal:
 			ts.t.Error("timeout on instance operation state change")
+			break Polling
+		case <-time.After(time.Millisecond):
+		}
+
+		if doCheck() {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (ts *osbapiTestSuite) AssertBindOperationState(exp internal.OperationState) bool {
+
+	doCheck := func() bool {
+		op, err := ts.StorageFactory.BindOperation().Get(ts.Exp.InstanceID, ts.Exp.BindingID, ts.Exp.OperationID)
+		require.NoError(ts.t, err)
+		if op.State == exp {
+			return true
+		}
+		return false
+	}
+
+	if doCheck() {
+		return true
+	}
+
+	timeoutTotal := time.After(time.Second)
+Polling:
+	for {
+		select {
+		case <-timeoutTotal:
+			ts.t.Error("timeout on bind operation state change")
 			break Polling
 		case <-time.After(time.Millisecond):
 		}
@@ -527,12 +564,6 @@ func TestOSBAPILastOperationSuccess(t *testing.T) {
 	ts.ServerRun()
 	defer ts.ServerShutdown()
 
-	fixAddon := ts.Exp.NewAddon()
-	ts.StorageFactory.Addon().Upsert(internal.ClusterWide, fixAddon)
-
-	fixInstance := ts.Exp.NewInstance()
-	ts.StorageFactory.Instance().Insert(fixInstance)
-
 	fixOperation := ts.Exp.NewInstanceOperation(internal.OperationTypeCreate, internal.OperationStateInProgress)
 	ts.StorageFactory.InstanceOperation().Insert(fixOperation)
 
@@ -558,9 +589,6 @@ func TestOSBAPILastOperationForNonExistingInstance(t *testing.T) {
 	ts := newOSBAPITestSuite(t)
 	ts.ServerRun()
 	defer ts.ServerShutdown()
-
-	fixAddon := ts.Exp.NewAddon()
-	ts.StorageFactory.Addon().Upsert(internal.ClusterWide, fixAddon)
 
 	// WHEN
 	opKey := osb.OperationKey(ts.Exp.OperationID)
@@ -588,16 +616,228 @@ func TestOSBAPIBindFailureWithDisallowedParametersFieldInReq(t *testing.T) {
 
 	// WHEN
 	req := &osb.BindRequest{
-		BindingID:  "bind-id",
-		InstanceID: "instance-id",
-		ServiceID:  "svc-id",
-		PlanID:     "bind-id",
+		AcceptsIncomplete: true,
+		BindingID:         "bind-id",
+		InstanceID:        "instance-id",
+		ServiceID:         "svc-id",
+		PlanID:            "bind-id",
 		Parameters: map[string]interface{}{
 			"params": "set-but-not-allowed",
 		},
 		OriginatingIdentity: &osb.OriginatingIdentity{Platform: osb.PlatformKubernetes, Value: "{}"},
 	}
 	_, err := ts.OSBClient().Bind(req)
+
+	// THEN
+	require.Error(t, err)
+	castedErr, ok := osb.IsHTTPError(err)
+	require.True(t, ok)
+	assert.Equal(t, http.StatusBadRequest, castedErr.StatusCode)
+}
+
+func TestOSBAPIBindSuccess(t *testing.T) {
+	// given
+	ts := newOSBAPITestSuite(t)
+
+	ts.ServerRun()
+	defer ts.ServerShutdown()
+
+	fixAddon := ts.Exp.NewAddon()
+	ts.StorageFactory.Addon().Upsert(internal.ClusterWide, fixAddon)
+
+	fixChart := ts.Exp.NewChart()
+	ts.StorageFactory.Chart().Upsert(internal.ClusterWide, fixChart)
+
+	fixInstance := ts.Exp.NewInstance()
+	ts.StorageFactory.Instance().Upsert(fixInstance)
+
+	req := &osb.BindRequest{
+		AcceptsIncomplete: true,
+		BindingID:         string(ts.Exp.BindingID),
+		InstanceID:        string(ts.Exp.InstanceID),
+		ServiceID:         string(ts.Exp.Service.ID),
+		PlanID:            string(ts.Exp.ServicePlan.ID),
+		Context: map[string]interface{}{
+			"namespace": string(ts.Exp.Namespace),
+		},
+		OriginatingIdentity: &osb.OriginatingIdentity{Platform: osb.PlatformKubernetes, Value: "{}"},
+	}
+
+	// when
+	resp, err := ts.OSBClient().Bind(req)
+
+	// then
+	require.NoError(t, err)
+
+	require.True(t, resp.Async)
+	assert.EqualValues(t, ts.Exp.OperationID, *resp.OperationKey)
+
+	ts.AssertBindOperationState(internal.OperationStateSucceeded)
+}
+
+func TestOSBAPIBindRepeatedOnAlreadyExistingBinding(t *testing.T) {
+	// given
+	ts := newOSBAPITestSuite(t)
+
+	fixInstance := ts.Exp.NewInstance()
+	fixInstance.ParamsHash = jsonhash.HashS(map[string]interface{}{})
+	ts.StorageFactory.Instance().Upsert(fixInstance)
+
+	fixAddon := ts.Exp.NewAddon()
+	ts.StorageFactory.Addon().Upsert(internal.ClusterWide, fixAddon)
+
+	fixChart := ts.Exp.NewChart()
+	ts.StorageFactory.Chart().Upsert(internal.ClusterWide, fixChart)
+
+	fixOperation := ts.Exp.NewBindOperation(internal.OperationTypeCreate, internal.OperationStateSucceeded)
+	ts.StorageFactory.BindOperation().Insert(fixOperation)
+
+	fixCreds := *ts.Exp.NewInstanceCredentials()
+	fixIbd := ts.Exp.NewInstanceBindData(fixCreds)
+	ts.StorageFactory.InstanceBindData().Insert(fixIbd)
+
+	ts.ServerRun()
+	defer ts.ServerShutdown()
+
+	req := &osb.BindRequest{
+		BindingID:         string(ts.Exp.BindingID),
+		InstanceID:        string(ts.Exp.InstanceID),
+		AcceptsIncomplete: true,
+		ServiceID:         string(ts.Exp.Service.ID),
+		PlanID:            string(ts.Exp.ServicePlan.ID),
+		Context: map[string]interface{}{
+			"namespace": string(ts.Exp.Namespace),
+		},
+		OriginatingIdentity: &osb.OriginatingIdentity{Platform: osb.PlatformKubernetes, Value: "{}"},
+	}
+
+	// when
+	resp, err := ts.OSBClient().Bind(req)
+
+	// then
+	require.NoError(t, err)
+
+	assert.False(t, resp.Async)
+	assert.Nil(t, resp.OperationKey)
+	assert.EqualValues(t, map[string]interface{}{
+		"password": "secret",
+	}, resp.Credentials)
+}
+
+func TestOSBAPIBindRepeatedOnBindingInProgress(t *testing.T) {
+	// given
+	ts := newOSBAPITestSuite(t)
+
+	fixInstance := ts.Exp.NewInstance()
+	fixInstance.ParamsHash = jsonhash.HashS(map[string]interface{}{})
+	ts.StorageFactory.Instance().Insert(fixInstance)
+
+	fixOperation := ts.Exp.NewBindOperation(internal.OperationTypeCreate, internal.OperationStateInProgress)
+	ts.StorageFactory.BindOperation().Insert(fixOperation)
+
+	ts.ServerRun()
+	defer ts.ServerShutdown()
+
+	req := &osb.BindRequest{
+		BindingID:         string(ts.Exp.BindingID),
+		InstanceID:        string(ts.Exp.InstanceID),
+		AcceptsIncomplete: true,
+		ServiceID:         string(ts.Exp.Service.ID),
+		PlanID:            string(ts.Exp.ServicePlan.ID),
+		Context: map[string]interface{}{
+			"namespace": string(ts.Exp.Namespace),
+		},
+		OriginatingIdentity: &osb.OriginatingIdentity{Platform: osb.PlatformKubernetes, Value: "{}"},
+	}
+
+	// when
+	resp, err := ts.OSBClient().Bind(req)
+
+	// then
+	require.NoError(t, err)
+
+	assert.True(t, resp.Async)
+	assert.EqualValues(t, fixOperation.OperationID, *resp.OperationKey)
+}
+
+func TestOSBAPIBindingLastOperationSuccess(t *testing.T) {
+	// given
+	ts := newOSBAPITestSuite(t)
+	ts.ServerRun()
+	defer ts.ServerShutdown()
+
+	fixOperation := ts.Exp.NewBindOperation(internal.OperationTypeCreate, internal.OperationStateInProgress)
+	ts.StorageFactory.BindOperation().Insert(fixOperation)
+
+	opKey := osb.OperationKey(ts.Exp.OperationID)
+	req := &osb.BindingLastOperationRequest{
+		InstanceID:          string(ts.Exp.InstanceID),
+		BindingID:           string(ts.Exp.BindingID),
+		ServiceID:           ptr.String(string(ts.Exp.Service.ID)),
+		PlanID:              ptr.String(string(ts.Exp.ServicePlan.ID)),
+		OperationKey:        &opKey,
+		OriginatingIdentity: &osb.OriginatingIdentity{Platform: osb.PlatformKubernetes, Value: "{}"},
+	}
+
+	// when
+	resp, err := ts.OSBClient().PollBindingLastOperation(req)
+
+	// then
+	require.NoError(t, err)
+	assert.EqualValues(t, internal.OperationStateInProgress, resp.State)
+
+}
+
+func TestOSBAPIBindingLastOperationFailure(t *testing.T) {
+	// given
+	ts := newOSBAPITestSuite(t)
+	ts.ServerRun()
+	defer ts.ServerShutdown()
+
+	fixOperation := ts.Exp.NewBindOperation(internal.OperationTypeCreate, internal.OperationStateInProgress)
+	ts.StorageFactory.BindOperation().Insert(fixOperation)
+
+	opKey := osb.OperationKey(ts.Exp.OperationID)
+	req := &osb.BindingLastOperationRequest{
+		InstanceID:          "",
+		BindingID:           string(ts.Exp.BindingID),
+		ServiceID:           ptr.String(string(ts.Exp.Service.ID)),
+		PlanID:              ptr.String(string(ts.Exp.ServicePlan.ID)),
+		OperationKey:        &opKey,
+		OriginatingIdentity: &osb.OriginatingIdentity{Platform: osb.PlatformKubernetes, Value: "{}"},
+	}
+
+	// when
+	resp, err := ts.OSBClient().PollBindingLastOperation(req)
+
+	// then
+	require.Error(t, err)
+	assert.Nil(t, resp)
+
+}
+
+func TestOSBAPIBindFailureWithDisallowedParametersFieldInReqNS(t *testing.T) {
+	// GIVEN
+	ts := newOSBAPITestSuite(t)
+	ts.ServerRun()
+	defer ts.ServerShutdown()
+
+	fixAddon := ts.Exp.NewAddon()
+	ts.StorageFactory.Addon().Upsert(testNs, fixAddon)
+
+	// WHEN
+	req := &osb.BindRequest{
+		AcceptsIncomplete: true,
+		BindingID:         "bind-id",
+		InstanceID:        "instance-id",
+		ServiceID:         "svc-id",
+		PlanID:            "bind-id",
+		Parameters: map[string]interface{}{
+			"params": "set-but-not-allowed",
+		},
+		OriginatingIdentity: &osb.OriginatingIdentity{Platform: osb.PlatformKubernetes, Value: "{}"},
+	}
+	_, err := ts.OSBClientNS().Bind(req)
 
 	// THEN
 	require.Error(t, err)
@@ -969,12 +1209,6 @@ func TestOSBAPILastOperationSuccessNS(t *testing.T) {
 	ts.ServerRun()
 	defer ts.ServerShutdown()
 
-	fixAddon := ts.Exp.NewAddon()
-	ts.StorageFactory.Addon().Upsert(testNs, fixAddon)
-
-	fixInstance := ts.Exp.NewInstance()
-	ts.StorageFactory.Instance().Insert(fixInstance)
-
 	fixOperation := ts.Exp.NewInstanceOperation(internal.OperationTypeCreate, internal.OperationStateInProgress)
 	ts.StorageFactory.InstanceOperation().Insert(fixOperation)
 
@@ -1001,9 +1235,6 @@ func TestOSBAPILastOperationForNonExistingInstanceNS(t *testing.T) {
 	ts.ServerRun()
 	defer ts.ServerShutdown()
 
-	fixAddon := ts.Exp.NewAddon()
-	ts.StorageFactory.Addon().Upsert(testNs, fixAddon)
-
 	// WHEN
 	opKey := osb.OperationKey(ts.Exp.OperationID)
 	req := &osb.LastOperationRequest{
@@ -1019,38 +1250,190 @@ func TestOSBAPILastOperationForNonExistingInstanceNS(t *testing.T) {
 	assert.True(t, osb.IsGoneError(err))
 }
 
-func TestOSBAPIBindFailureWithDisallowedParametersFieldInReqNS(t *testing.T) {
-	// GIVEN
+func TestOSBAPIBindSuccessNS(t *testing.T) {
+	// given
 	ts := newOSBAPITestSuite(t)
+
 	ts.ServerRun()
 	defer ts.ServerShutdown()
 
 	fixAddon := ts.Exp.NewAddon()
 	ts.StorageFactory.Addon().Upsert(testNs, fixAddon)
 
-	// WHEN
+	fixChart := ts.Exp.NewChart()
+	ts.StorageFactory.Chart().Upsert(testNs, fixChart)
+
+	fixInstance := ts.Exp.NewInstance()
+	ts.StorageFactory.Instance().Upsert(fixInstance)
+
 	req := &osb.BindRequest{
-		BindingID:  "bind-id",
-		InstanceID: "instance-id",
-		ServiceID:  "svc-id",
-		PlanID:     "bind-id",
-		Parameters: map[string]interface{}{
-			"params": "set-but-not-allowed",
+		AcceptsIncomplete: true,
+		BindingID:         string(ts.Exp.BindingID),
+		InstanceID:        string(ts.Exp.InstanceID),
+		ServiceID:         string(ts.Exp.Service.ID),
+		PlanID:            string(ts.Exp.ServicePlan.ID),
+		Context: map[string]interface{}{
+			"namespace": string(ts.Exp.Namespace),
 		},
 		OriginatingIdentity: &osb.OriginatingIdentity{Platform: osb.PlatformKubernetes, Value: "{}"},
 	}
-	_, err := ts.OSBClientNS().Bind(req)
 
-	// THEN
+	// when
+	resp, err := ts.OSBClientNS().Bind(req)
+
+	// then
+	require.NoError(t, err)
+
+	require.True(t, resp.Async)
+	assert.EqualValues(t, ts.Exp.OperationID, *resp.OperationKey)
+
+	ts.AssertBindOperationState(internal.OperationStateSucceeded)
+}
+
+func TestOSBAPIBindRepeatedOnAlreadyExistingBindingNS(t *testing.T) {
+	// given
+	ts := newOSBAPITestSuite(t)
+
+	fixInstance := ts.Exp.NewInstance()
+	fixInstance.ParamsHash = jsonhash.HashS(map[string]interface{}{})
+	ts.StorageFactory.Instance().Insert(fixInstance)
+
+	fixAddon := ts.Exp.NewAddon()
+	ts.StorageFactory.Addon().Upsert(testNs, fixAddon)
+
+	fixChart := ts.Exp.NewChart()
+	ts.StorageFactory.Chart().Upsert(testNs, fixChart)
+
+	fixOperation := ts.Exp.NewBindOperation(internal.OperationTypeCreate, internal.OperationStateSucceeded)
+	ts.StorageFactory.BindOperation().Insert(fixOperation)
+
+	fixCreds := *ts.Exp.NewInstanceCredentials()
+	fixIbd := ts.Exp.NewInstanceBindData(fixCreds)
+	ts.StorageFactory.InstanceBindData().Insert(fixIbd)
+
+	ts.ServerRun()
+	defer ts.ServerShutdown()
+
+	req := &osb.BindRequest{
+		BindingID:         string(ts.Exp.BindingID),
+		InstanceID:        string(ts.Exp.InstanceID),
+		AcceptsIncomplete: true,
+		ServiceID:         string(ts.Exp.Service.ID),
+		PlanID:            string(ts.Exp.ServicePlan.ID),
+		Context: map[string]interface{}{
+			"namespace": string(ts.Exp.Namespace),
+		},
+		OriginatingIdentity: &osb.OriginatingIdentity{Platform: osb.PlatformKubernetes, Value: "{}"},
+	}
+
+	// when
+	resp, err := ts.OSBClientNS().Bind(req)
+
+	// then
+	require.NoError(t, err)
+
+	assert.False(t, resp.Async)
+	assert.Nil(t, resp.OperationKey)
+	assert.EqualValues(t, map[string]interface{}{
+		"password": "secret",
+	}, resp.Credentials)
+}
+
+func TestOSBAPIBindRepeatedOnBindingInProgressNS(t *testing.T) {
+	// given
+	ts := newOSBAPITestSuite(t)
+
+	fixInstance := ts.Exp.NewInstance()
+	fixInstance.ParamsHash = jsonhash.HashS(map[string]interface{}{})
+	ts.StorageFactory.Instance().Insert(fixInstance)
+
+	fixOperation := ts.Exp.NewBindOperation(internal.OperationTypeCreate, internal.OperationStateInProgress)
+	ts.StorageFactory.BindOperation().Insert(fixOperation)
+
+	ts.ServerRun()
+	defer ts.ServerShutdown()
+
+	req := &osb.BindRequest{
+		BindingID:         string(ts.Exp.BindingID),
+		InstanceID:        string(ts.Exp.InstanceID),
+		AcceptsIncomplete: true,
+		ServiceID:         string(ts.Exp.Service.ID),
+		PlanID:            string(ts.Exp.ServicePlan.ID),
+		Context: map[string]interface{}{
+			"namespace": string(ts.Exp.Namespace),
+		},
+		OriginatingIdentity: &osb.OriginatingIdentity{Platform: osb.PlatformKubernetes, Value: "{}"},
+	}
+
+	// when
+	resp, err := ts.OSBClientNS().Bind(req)
+
+	// then
+	require.NoError(t, err)
+
+	assert.True(t, resp.Async)
+	assert.EqualValues(t, fixOperation.OperationID, *resp.OperationKey)
+}
+
+func TestOSBAPIBindingLastOperationSuccessNS(t *testing.T) {
+	// given
+	ts := newOSBAPITestSuite(t)
+	ts.ServerRun()
+	defer ts.ServerShutdown()
+
+	fixOperation := ts.Exp.NewBindOperation(internal.OperationTypeCreate, internal.OperationStateInProgress)
+	ts.StorageFactory.BindOperation().Insert(fixOperation)
+
+	opKey := osb.OperationKey(ts.Exp.OperationID)
+	req := &osb.BindingLastOperationRequest{
+		InstanceID:          string(ts.Exp.InstanceID),
+		BindingID:           string(ts.Exp.BindingID),
+		ServiceID:           ptr.String(string(ts.Exp.Service.ID)),
+		PlanID:              ptr.String(string(ts.Exp.ServicePlan.ID)),
+		OperationKey:        &opKey,
+		OriginatingIdentity: &osb.OriginatingIdentity{Platform: osb.PlatformKubernetes, Value: "{}"},
+	}
+
+	// when
+	resp, err := ts.OSBClientNS().PollBindingLastOperation(req)
+
+	// then
+	require.NoError(t, err)
+	assert.EqualValues(t, internal.OperationStateInProgress, resp.State)
+
+}
+
+func TestOSBAPIBindingLastOperationFailureNS(t *testing.T) {
+	// given
+	ts := newOSBAPITestSuite(t)
+	ts.ServerRun()
+	defer ts.ServerShutdown()
+
+	fixOperation := ts.Exp.NewBindOperation(internal.OperationTypeCreate, internal.OperationStateInProgress)
+	ts.StorageFactory.BindOperation().Insert(fixOperation)
+
+	opKey := osb.OperationKey(ts.Exp.OperationID)
+	req := &osb.BindingLastOperationRequest{
+		InstanceID:          "",
+		BindingID:           string(ts.Exp.BindingID),
+		ServiceID:           ptr.String(string(ts.Exp.Service.ID)),
+		PlanID:              ptr.String(string(ts.Exp.ServicePlan.ID)),
+		OperationKey:        &opKey,
+		OriginatingIdentity: &osb.OriginatingIdentity{Platform: osb.PlatformKubernetes, Value: "{}"},
+	}
+
+	// when
+	resp, err := ts.OSBClientNS().PollBindingLastOperation(req)
+
+	// then
 	require.Error(t, err)
-	castedErr, ok := osb.IsHTTPError(err)
-	require.True(t, ok)
-	assert.Equal(t, http.StatusBadRequest, castedErr.StatusCode)
+	assert.Nil(t, resp)
+
 }
 
 type fakeBindTmplRenderer struct{}
 
-func (fakeBindTmplRenderer) Render(bindTemplate internal.AddonPlanBindTemplate, resp *rls.InstallReleaseResponse) (bind.RenderedBindYAML, error) {
+func (fakeBindTmplRenderer) Render(bindTemplate internal.AddonPlanBindTemplate, instance *internal.Instance, chart *chart.Chart) (bind.RenderedBindYAML, error) {
 	return []byte(`fake`), nil
 }
 

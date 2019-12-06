@@ -15,22 +15,22 @@ import (
 	rls "k8s.io/helm/pkg/proto/hapi/services"
 )
 
-const addonsRepositoryURLName = "addonsRepositoryURL"
+const (
+	goTplEngine             = "gotpl"
+	addonsRepositoryURLName = "addonsRepositoryURL"
+)
 
 type provisionService struct {
-	addonIDGetter            addonIDGetter
-	chartGetter              chartGetter
-	instanceInserter         instanceInserter
-	instanceGetter           instanceGetter
-	instanceStateGetter      instanceStateProvisionGetter
-	operationInserter        operationInserter
-	operationUpdater         operationUpdater
-	instanceBindDataInserter instanceBindDataInserter
-	operationIDProvider      func() (internal.OperationID, error)
-	helmInstaller            helmInstaller
-	bindTemplateRenderer     bindTemplateRenderer
-	bindTemplateResolver     bindTemplateResolver
-	mu                       sync.Mutex
+	addonIDGetter       addonIDGetter
+	chartGetter         chartGetter
+	instanceInserter    instanceInserter
+	instanceGetter      instanceGetter
+	instanceStateGetter instanceStateProvisionGetter
+	operationInserter   operationInserter
+	operationUpdater    operationUpdater
+	operationIDProvider func() (internal.OperationID, error)
+	helmInstaller       helmInstaller
+	mu                  sync.Mutex
 
 	log *logrus.Entry
 
@@ -52,7 +52,7 @@ func (svc *provisionService) Provision(ctx context.Context, osbCtx OsbContext, r
 
 	switch state, err := svc.instanceStateGetter.IsProvisioned(iID); true {
 	case err != nil:
-		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusBadRequest, ErrorMessage: strPtr(fmt.Sprintf("while checking if instance is already provisioned: %v", err))}
+		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusInternalServerError, ErrorMessage: strPtr(fmt.Sprintf("while checking if instance is already provisioned: %v", err))}
 	case state:
 		if err := svc.compareProvisioningParameters(iID, paramHash); err != nil {
 			return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusConflict, ErrorMessage: strPtr(fmt.Sprintf("while comparing provisioning parameters %v: %v", req.Parameters, err))}
@@ -62,7 +62,7 @@ func (svc *provisionService) Provision(ctx context.Context, osbCtx OsbContext, r
 
 	switch opIDInProgress, inProgress, err := svc.instanceStateGetter.IsProvisioningInProgress(iID); true {
 	case err != nil:
-		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusBadRequest, ErrorMessage: strPtr(fmt.Sprintf("while checking if instance is being provisioned: %v", err))}
+		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusInternalServerError, ErrorMessage: strPtr(fmt.Sprintf("while checking if instance is being provisioned: %v", err))}
 	case inProgress:
 		if err := svc.compareProvisioningParameters(iID, paramHash); err != nil {
 			return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusConflict, ErrorMessage: strPtr(fmt.Sprintf("while comparing provisioning parameters %v: %v", req.Parameters, err))}
@@ -80,23 +80,29 @@ func (svc *provisionService) Provision(ctx context.Context, osbCtx OsbContext, r
 	svcID := internal.ServiceID(req.ServiceID)
 	addonID := internal.AddonID(svcID)
 	addon, err := svc.addonIDGetter.GetByID(osbCtx.BrokerNamespace, addonID)
-	if err != nil {
+	switch {
+	case IsNotFoundError(err):
 		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusBadRequest, ErrorMessage: strPtr(fmt.Sprintf("while getting addon: %v", err))}
+	case err != nil:
+		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusInternalServerError, ErrorMessage: strPtr(fmt.Sprintf("while getting addon: %v", err))}
 	}
+
 	instances, err := svc.instanceGetter.GetAll()
-	if err != nil {
+	switch {
+	case IsNotFoundError(err):
 		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusBadRequest, ErrorMessage: strPtr(fmt.Sprintf("while getting instance collection: %v", err))}
+	case err != nil:
+		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusInternalServerError, ErrorMessage: strPtr(fmt.Sprintf("while getting instance collection: %v", err))}
 	}
 	if !addon.IsProvisioningAllowed(namespace, instances) {
 		svc.log.Infof("addon with name: %q (id: %s) and flag 'provisionOnlyOnce' in namespace %q will be not provisioned because his instance already exist", addon.Name, addon.ID, namespace)
 		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusBadRequest, ErrorMessage: strPtr(fmt.Sprintf("addon with name: %q (id: %s) and flag 'provisionOnlyOnce' in namespace %q will be not provisioned because his instance already exist", addon.Name, addon.ID, namespace))}
 	}
 
-	id, err := svc.operationIDProvider()
+	opID, err := svc.operationIDProvider()
 	if err != nil {
-		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusBadRequest, ErrorMessage: strPtr(fmt.Sprintf("while generating ID for operation: %v", err))}
+		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusInternalServerError, ErrorMessage: strPtr(fmt.Sprintf("while generating operation ID: %v", err))}
 	}
-	opID := internal.OperationID(id)
 
 	op := internal.InstanceOperation{
 		InstanceID:  iID,
@@ -127,10 +133,15 @@ func (svc *provisionService) Provision(ctx context.Context, osbCtx OsbContext, r
 		ServicePlanID: svcPlanID,
 		ReleaseName:   releaseName,
 		ParamsHash:    paramHash,
+		ReleaseInfo:   internal.ReleaseInfo{},
 	}
 
-	if err = svc.instanceInserter.Insert(&i); err != nil {
-		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusConflict, ErrorMessage: strPtr(fmt.Sprintf("while inserting instance to storage: %v", err))}
+	exist, err := svc.instanceInserter.Upsert(&i)
+	if err != nil {
+		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusBadRequest, ErrorMessage: strPtr(fmt.Sprintf("while inserting instance to storage: %v", err))}
+	}
+	if exist {
+		svc.log.Infof("Instance %s already existed in storage, instance was replaced", i.ID)
 	}
 
 	chartOverrides := internal.ChartValues(req.Parameters)
@@ -145,7 +156,9 @@ func (svc *provisionService) Provision(ctx context.Context, osbCtx OsbContext, r
 		isAddonBindable:     addon.Bindable,
 		addonsRepositoryURL: addon.RepositoryURL,
 		chartOverrides:      chartOverrides,
+		instanceToUpdate:    &i,
 	}
+
 	svc.doAsync(ctx, provisionInput)
 
 	opKey := osb.OperationKey(op.OperationID)
@@ -168,6 +181,7 @@ type provisioningInput struct {
 	isAddonBindable     bool
 	chartOverrides      internal.ChartValues
 	addonsRepositoryURL string
+	instanceToUpdate    *internal.Instance
 }
 
 func (svc *provisionService) doAsync(ctx context.Context, input provisioningInput) {
@@ -180,15 +194,16 @@ func (svc *provisionService) doAsync(ctx context.Context, input provisioningInpu
 // do is called asynchronously
 func (svc *provisionService) do(ctx context.Context, input provisioningInput) {
 
-	fDo := func() (*rls.InstallReleaseResponse, error) {
+	fDo := func() error {
+
 		c, err := svc.chartGetter.Get(input.brokerNamespace, input.addonPlan.ChartRef.Name, input.addonPlan.ChartRef.Version)
 		if err != nil {
-			return nil, errors.Wrap(err, "while getting chart from storage")
+			return errors.Wrap(err, "while getting chart from storage")
 		}
 
 		out, err := deepCopy(input.addonPlan.ChartValues)
 		if err != nil {
-			return nil, errors.Wrap(err, "while coping plan values")
+			return errors.Wrap(err, "while coping plan values")
 		}
 
 		out = mergeValues(out, input.chartOverrides)
@@ -200,58 +215,46 @@ func (svc *provisionService) do(ctx context.Context, input provisioningInput) {
 
 		resp, err := svc.helmInstaller.Install(c, internal.ChartValues(out), input.releaseName, input.namespace)
 		if err != nil {
-			return nil, errors.Wrap(err, "while installing helm release")
+			return errors.Wrap(err, "while installing helm release")
 		}
 
-		return resp, nil
+		relInfo := internal.ReleaseInfo{
+			Time:     resp.GetRelease().GetInfo().GetLastDeployed(),
+			Revision: int(resp.GetRelease().GetVersion()),
+			Config:   resp.GetRelease().GetConfig(),
+		}
+
+		updatedInstance := input.instanceToUpdate
+		updatedInstance.ReleaseInfo = relInfo
+
+		exist, err := svc.instanceInserter.Upsert(updatedInstance)
+		if err != nil {
+			return &osb.HTTPStatusCodeError{StatusCode: http.StatusConflict, ErrorMessage: strPtr(fmt.Sprintf("while updating instance in storage: %v", err))}
+		}
+		if exist {
+			svc.log.Infof("Instance %s already existed in storage, instance was replaced on update", updatedInstance.ID)
+		}
+		isRespValid := validateInstallReleaseResponse(resp)
+		if isRespValid != nil {
+			return errors.Wrap(err, "while validating input")
+		}
+
+		return nil
 	}
 
 	opState := internal.OperationStateSucceeded
 	opDesc := "provisioning succeeded"
 
-	resp, err := fDo()
+	err := fDo()
+
 	if err != nil {
 		opState = internal.OperationStateFailed
 		opDesc = fmt.Sprintf("provisioning failed on error: %s", err.Error())
 	}
 
-	if err == nil && svc.isBindable(input.addonPlan, input.isAddonBindable) {
-		if resolveErr := svc.resolveAndSaveBindData(input.instanceID, input.namespace, input.addonPlan, resp); resolveErr != nil {
-			opState = internal.OperationStateFailed
-			opDesc = fmt.Sprintf("resolving bind data failed with error: %s", resolveErr.Error())
-		}
-	}
-
 	if err := svc.operationUpdater.UpdateStateDesc(input.instanceID, input.operationID, opState, &opDesc); err != nil {
 		svc.log.Errorf("State description was not updated, got error: %v", err)
 	}
-}
-
-func (*provisionService) isBindable(plan internal.AddonPlan, isAddonBindable bool) bool {
-	return (plan.Bindable != nil && *plan.Bindable) || // if bindable field is set on plan it's override bindalbe field on addon
-		(plan.Bindable == nil && isAddonBindable) // if bindable field is NOT set on plan that bindable field on addon is important
-}
-
-func (svc *provisionService) resolveAndSaveBindData(iID internal.InstanceID, namespace internal.Namespace, addonPlan internal.AddonPlan, resp *rls.InstallReleaseResponse) error {
-	rendered, err := svc.bindTemplateRenderer.Render(addonPlan.BindTemplate, resp)
-	if err != nil {
-		return errors.Wrap(err, "while rendering bind yaml template")
-	}
-
-	out, err := svc.bindTemplateResolver.Resolve(rendered, namespace)
-	if err != nil {
-		return errors.Wrap(err, "while resolving bind yaml values")
-	}
-
-	in := internal.InstanceBindData{
-		InstanceID:  iID,
-		Credentials: out.Credentials,
-	}
-	if err := svc.instanceBindDataInserter.Insert(&in); err != nil {
-		return errors.Wrap(err, "while inserting instance bind data into storage")
-	}
-
-	return nil
 }
 
 func (svc *provisionService) compareProvisioningParameters(iID internal.InstanceID, newHash string) error {
@@ -272,7 +275,11 @@ func (svc *provisionService) compareProvisioningParameters(iID internal.Instance
 }
 
 func getNamespaceFromContext(contextProfile map[string]interface{}) (internal.Namespace, error) {
-	return internal.Namespace(contextProfile["namespace"].(string)), nil
+	ns, ok := contextProfile["namespace"]
+	if !ok {
+		return internal.Namespace(""), errors.New("namespace does not exists in given context")
+	}
+	return internal.Namespace(ns.(string)), nil
 }
 
 func createReleaseName(name internal.AddonName, planName internal.AddonPlanName, iID internal.InstanceID) internal.ReleaseName {
@@ -315,6 +322,27 @@ func mergeValues(dest map[string]interface{}, src map[string]interface{}) map[st
 		dest[k] = mergeValues(destMap, nextMap)
 	}
 	return dest
+}
+
+func validateInstallReleaseResponse(resp *rls.InstallReleaseResponse) error {
+	if resp == nil {
+		return fmt.Errorf("input parameter 'InstallReleaseResponse' cannot be nil")
+	}
+
+	if resp.Release == nil {
+		return fmt.Errorf("'Release' filed from 'InstallReleaseResponse' is missing")
+	}
+
+	if resp.Release.Info == nil {
+		return fmt.Errorf("'Info' filed from 'InstallReleaseResponse' is missing")
+	}
+
+	ch := resp.Release.Chart
+	if ch.Metadata.Engine != "" && ch.Metadata.Engine != goTplEngine {
+		return fmt.Errorf("chart %q requested non-existent template engine %q", ch.Metadata.Name, ch.Metadata.Engine)
+	}
+
+	return nil
 }
 
 func deepCopy(in map[string]interface{}) (map[string]interface{}, error) {

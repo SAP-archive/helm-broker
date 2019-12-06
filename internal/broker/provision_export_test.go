@@ -7,7 +7,6 @@ import (
 )
 
 func NewProvisionService(bg addonIDGetter, cg chartGetter, is instanceStorage, isg instanceStateGetter, oi operationInserter, ou operationUpdater,
-	ibd instanceBindDataInserter, bindTmplRenderer bindTemplateRenderer, bindTmplResolver bindTemplateResolver,
 	hi helmInstaller, oIDProv func() (internal.OperationID, error), log *logrus.Entry) *provisionService {
 	return &provisionService{
 		addonIDGetter:            bg,
@@ -20,9 +19,6 @@ func NewProvisionService(bg addonIDGetter, cg chartGetter, is instanceStorage, i
 		operationIDProvider:      oIDProv,
 		helmInstaller:            hi,
 		log:                      log,
-		instanceBindDataInserter: ibd,
-		bindTemplateRenderer:     bindTmplRenderer,
-		bindTemplateResolver:     bindTmplResolver,
 	}
 }
 

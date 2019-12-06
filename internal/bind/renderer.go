@@ -3,18 +3,15 @@ package bind
 import (
 	"fmt"
 
+	"github.com/kyma-project/helm-broker/internal"
 	"github.com/pkg/errors"
 	"k8s.io/helm/pkg/chartutil"
 	"k8s.io/helm/pkg/engine"
 	"k8s.io/helm/pkg/proto/hapi/chart"
-	rls "k8s.io/helm/pkg/proto/hapi/services"
-
-	"github.com/kyma-project/helm-broker/internal"
 )
 
 const (
-	goTplEngine = "gotpl"
-	bindFile    = "bindTmpl"
+	bindFile = "bindTmpl"
 )
 
 //go:generate mockery -name=chartGoTemplateRenderer -output=automock -outpkg=automock -case=underscore
@@ -39,16 +36,12 @@ func NewRenderer() *Renderer {
 }
 
 // Render renders given bindTemplate in context of helm Chart by e.g. replacing directives like: {{ .Release.Namespace }}
-func (r *Renderer) Render(bindTemplate internal.AddonPlanBindTemplate, resp *rls.InstallReleaseResponse) (RenderedBindYAML, error) {
-	if err := r.validateInstallReleaseResponse(resp); err != nil {
-		return nil, errors.Wrap(err, "while validating input")
-	}
+func (r *Renderer) Render(bindTemplate internal.AddonPlanBindTemplate, instance *internal.Instance, ch *chart.Chart) (RenderedBindYAML, error) {
 
-	ch := resp.Release.Chart
-	options := r.createReleaseOptions(resp)
+	options := r.createReleaseOptions(instance)
 	chartCap := &chartutil.Capabilities{}
 
-	valsToRender, err := r.toRenderValuesCaps(ch, resp.Release.Config, options, chartCap)
+	valsToRender, err := r.toRenderValuesCaps(ch, instance.ReleaseInfo.Config, options, chartCap)
 	if err != nil {
 		return nil, errors.Wrap(err, "while merging values to render")
 	}
@@ -68,33 +61,12 @@ func (r *Renderer) Render(bindTemplate internal.AddonPlanBindTemplate, resp *rls
 	return RenderedBindYAML(rendered), nil
 }
 
-func (*Renderer) validateInstallReleaseResponse(resp *rls.InstallReleaseResponse) error {
-	if resp == nil {
-		return fmt.Errorf("input parameter 'InstallReleaseResponse' cannot be nil")
-	}
-
-	if resp.Release == nil {
-		return fmt.Errorf("'Release' filed from 'InstallReleaseResponse' is missing")
-	}
-
-	if resp.Release.Info == nil {
-		return fmt.Errorf("'Info' filed from 'InstallReleaseResponse' is missing")
-	}
-
-	ch := resp.Release.Chart
-	if ch.Metadata.Engine != "" && ch.Metadata.Engine != goTplEngine {
-		return fmt.Errorf("chart %q requested non-existent template engine %q", ch.Metadata.Name, ch.Metadata.Engine)
-	}
-
-	return nil
-}
-
-func (*Renderer) createReleaseOptions(resp *rls.InstallReleaseResponse) chartutil.ReleaseOptions {
+func (*Renderer) createReleaseOptions(instance *internal.Instance) chartutil.ReleaseOptions {
 	return chartutil.ReleaseOptions{
-		Name:      resp.Release.Name,
-		Time:      resp.Release.Info.LastDeployed,
-		Namespace: resp.Release.Namespace,
-		Revision:  int(resp.Release.Version),
+		Name:      string(instance.ReleaseName),
+		Time:      instance.ReleaseInfo.Time,
+		Namespace: string(instance.Namespace),
+		Revision:  instance.ReleaseInfo.Revision,
 		IsInstall: true,
 	}
 }

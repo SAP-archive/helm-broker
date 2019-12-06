@@ -71,7 +71,7 @@ func (f *addonToServiceConverter) Convert(addon *internal.Addon) (osb.Service, e
 		Name:                string(addon.Name),
 		Description:         addon.Description,
 		Bindable:            addon.Bindable,
-		BindingsRetrievable: addon.BindingsRetrievable,
+		BindingsRetrievable: true, // FYI: needed for  async binding
 		Requires:            addon.Requires,
 		PlanUpdatable:       addon.PlanUpdatable,
 		Plans:               sPlans,

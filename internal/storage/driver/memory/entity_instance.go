@@ -19,6 +19,32 @@ type Instance struct {
 	storage map[internal.InstanceID]*internal.Instance
 }
 
+// Upsert persists Instance in memory.
+//
+// If instance already exists in storage then full replace is performed.
+//
+// Replace is set to true if instance already existed in storage and was replaced.
+func (s *Instance) Upsert(i *internal.Instance) (replaced bool, err error) {
+	defer unlock(s.lockW())
+
+	if i == nil {
+		return false, errors.New("entity may not be nil")
+	}
+
+	if i.ID.IsZero() {
+		return false, errors.New("instance id must be set")
+	}
+
+	if _, found := s.storage[i.ID]; found {
+		s.storage[i.ID] = i
+		return true, nil
+	}
+
+	s.storage[i.ID] = i
+
+	return false, nil
+}
+
 // Insert inserts object to storage.
 func (s *Instance) Insert(i *internal.Instance) error {
 	defer unlock(s.lockW())

@@ -8,6 +8,7 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/alecthomas/jsonschema"
 	"github.com/fatih/structs"
+	google_protobuf "github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
 	cms "github.com/kyma-project/kyma/components/cms-controller-manager/pkg/apis/cms/v1alpha1"
 	"github.com/pkg/errors"
@@ -271,7 +272,7 @@ type OperationID string
 // IsZero checks if OperationID equals zero
 func (id OperationID) IsZero() bool { return id == OperationID("") }
 
-// InstanceOperation represents single operation.
+// InstanceOperation represents single provisioning operation.
 type InstanceOperation struct {
 	InstanceID       InstanceID
 	OperationID      OperationID
@@ -295,8 +296,14 @@ type ReleaseName string
 // ServiceID is an ID of the Service exposed via Service Catalog.
 type ServiceID string
 
+// IsZero checks if ServiceID equals zero
+func (id ServiceID) IsZero() bool { return id == ServiceID("") }
+
 // ServicePlanID is an ID of the Plan of Service exposed via Service Catalog.
 type ServicePlanID string
+
+// IsZero checks if ServicePlanID equals zero
+func (id ServicePlanID) IsZero() bool { return id == ServicePlanID("") }
 
 // Namespace is the name of namespace in k8s
 type Namespace string
@@ -314,15 +321,48 @@ type Instance struct {
 	ReleaseName   ReleaseName
 	Namespace     Namespace
 	ParamsHash    string
+	ReleaseInfo   ReleaseInfo
 }
 
 // InstanceCredentials are created when we bind a service instance.
 type InstanceCredentials map[string]string
 
+// BindingID is used as Service Binding identifier
+type BindingID string
+
+// IsZero checks if BindingID equals zero
+func (id BindingID) IsZero() bool { return id == BindingID("") }
+
+// BindOperation represents single service binding operation.
+type BindOperation struct {
+	InstanceID       InstanceID
+	BindingID        BindingID
+	OperationID      OperationID
+	Type             OperationType
+	State            OperationState
+	StateDescription *string
+
+	// ParamsHash is an immutable hash for operation parameters
+	// used to match requests.
+	ParamsHash string
+
+	// CreatedAt points to creation time of the operation.
+	// Field should be treated as immutable and is responsibility of storage implementation.
+	// It should be set by storage InsertBindOperation method.
+	CreatedAt time.Time
+}
+
 // InstanceBindData contains data about service instance and it's credentials.
 type InstanceBindData struct {
 	InstanceID  InstanceID
 	Credentials InstanceCredentials
+}
+
+// ReleaseInfo contains additional data about release installed on instance provisioning.
+type ReleaseInfo struct {
+	Time     *google_protobuf.Timestamp
+	Revision int
+	Config   *chart.Config
 }
 
 // OperationState defines the possible states of an asynchronous request to a broker.

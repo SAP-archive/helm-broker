@@ -14,7 +14,6 @@ import (
 	rls "k8s.io/helm/pkg/proto/hapi/services"
 
 	"github.com/kyma-project/helm-broker/internal"
-	"github.com/kyma-project/helm-broker/internal/bind"
 	"github.com/kyma-project/helm-broker/internal/broker"
 	"github.com/kyma-project/helm-broker/internal/broker/automock"
 	"github.com/kyma-project/helm-broker/internal/platform/logger/spy"
@@ -92,7 +91,7 @@ func TestProvisionServiceProvisionSuccessAsyncInstall(t *testing.T) {
 	params := jsonhash.HashS(ts.FixProvisionRequest().Parameters)
 	expInstance.ParamsHash = params
 	expInstanceCollection := ts.FixInstanceCollection()
-	iiMock.On("Insert", &expInstance).Return(nil).Once()
+	iiMock.On("Upsert", &expInstance).Return(true, nil)
 	iiMock.On("GetAll").Return(expInstanceCollection, nil)
 
 	ioMock := &automock.OperationStorage{}
@@ -112,32 +111,13 @@ func TestProvisionServiceProvisionSuccessAsyncInstall(t *testing.T) {
 	}
 	hiMock.On("Install", &expChart, expChartOverrides, ts.Exp.ReleaseName, ts.Exp.Namespace).Return(releaseResp, nil).Once()
 
-	renderedYAML := bind.RenderedBindYAML(`rendered-template`)
-	rendererMock := &automock.BindTemplateRenderer{}
-	defer rendererMock.AssertExpectations(t)
-	rendererMock.On("Render", ts.Exp.AddonPlan.BindTemplate, releaseResp).Return(renderedYAML, nil)
-
-	expCreds := internal.InstanceCredentials{
-		"test-param": "test-value",
-	}
-	resolverMock := &automock.BindTemplateResolver{}
-	defer resolverMock.AssertExpectations(t)
-	resolverMock.On("Resolve", renderedYAML, ts.Exp.Namespace).Return(&bind.ResolveOutput{
-		Credentials: expCreds,
-	}, nil)
-
-	expInsert := internal.InstanceBindData{InstanceID: ts.Exp.InstanceID, Credentials: expCreds}
-	ibdMock := &automock.InstanceBindDataInserter{}
-	defer ibdMock.AssertExpectations(t)
-	ibdMock.On("Insert", &expInsert).Return(nil)
-
 	oipFake := func() (internal.OperationID, error) {
 		return ts.Exp.OperationID, nil
 	}
 
 	testHookCalled := make(chan struct{})
 
-	svc := broker.NewProvisionService(bgMock, cgMock, iiMock, isgMock, ioMock, ioMock, ibdMock, rendererMock, resolverMock, hiMock, oipFake, spy.NewLogDummy()).
+	svc := broker.NewProvisionService(bgMock, cgMock, iiMock, isgMock, ioMock, ioMock, hiMock, oipFake, spy.NewLogDummy()).
 		WithTestHookOnAsyncCalled(func(opID internal.OperationID) {
 			assert.Equal(t, ts.Exp.OperationID, opID)
 			close(testHookCalled)
@@ -188,7 +168,7 @@ func TestProvisionServiceProvisionFailureAsync(t *testing.T) {
 	params := jsonhash.HashS(ts.FixProvisionRequest().Parameters)
 	expInstance.ParamsHash = params
 	expInstanceCollection := ts.FixInstanceCollection()
-	iiMock.On("Insert", &expInstance).Return(nil).Once()
+	iiMock.On("Upsert", &expInstance).Return(true, nil)
 	iiMock.On("GetAll").Return(expInstanceCollection, nil)
 
 	ioMock := &automock.OperationStorage{}
@@ -215,7 +195,7 @@ func TestProvisionServiceProvisionFailureAsync(t *testing.T) {
 
 	testHookCalled := make(chan struct{})
 
-	svc := broker.NewProvisionService(bgMock, cgMock, iiMock, isgMock, ioMock, ioMock, nil, nil, nil, hiMock, oipFake, spy.NewLogDummy()).
+	svc := broker.NewProvisionService(bgMock, cgMock, iiMock, isgMock, ioMock, ioMock, hiMock, oipFake, spy.NewLogDummy()).
 		WithTestHookOnAsyncCalled(func(opID internal.OperationID) {
 			assert.Equal(t, ts.Exp.OperationID, opID)
 			close(testHookCalled)
@@ -280,7 +260,7 @@ func TestProvisionServiceProvisionSuccessRepeatedOnAlreadyFullyProvisionedInstan
 
 	testHookCalled := make(chan struct{})
 
-	svc := broker.NewProvisionService(bgMock, cgMock, iiMock, isgMock, ioMock, ioMock, nil, nil, nil, hiMock, oipFake, spy.NewLogDummy()).
+	svc := broker.NewProvisionService(bgMock, cgMock, iiMock, isgMock, ioMock, ioMock, hiMock, oipFake, spy.NewLogDummy()).
 		WithTestHookOnAsyncCalled(func(internal.OperationID) { close(testHookCalled) })
 
 	ctx := context.Background()
@@ -338,7 +318,7 @@ func TestProvisionServiceProvisionSuccessRepeatedOnProvisioningInProgress(t *tes
 
 	testHookCalled := make(chan struct{})
 
-	svc := broker.NewProvisionService(bgMock, cgMock, iiMock, isgMock, ioMock, ioMock, nil, nil, nil, hiMock, oipFake, spy.NewLogDummy()).
+	svc := broker.NewProvisionService(bgMock, cgMock, iiMock, isgMock, ioMock, ioMock, hiMock, oipFake, spy.NewLogDummy()).
 		WithTestHookOnAsyncCalled(func(internal.OperationID) { close(testHookCalled) })
 
 	ctx := context.Background()

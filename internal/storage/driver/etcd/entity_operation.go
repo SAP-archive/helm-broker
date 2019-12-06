@@ -58,7 +58,7 @@ func (s *InstanceOperation) Insert(io *internal.InstanceOperation) error {
 
 	respGet, err := s.kv.Get(context.TODO(), opKey)
 	if err != nil {
-		return errors.Wrap(err, "while calling database on get")
+		return s.handleGetError(err)
 	}
 	if respGet.Count > 0 {
 		return alreadyExistsError{}
