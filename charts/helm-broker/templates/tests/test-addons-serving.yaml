@@ -6,7 +6,7 @@ metadata:
     "helm.sh/hook": test-success
 spec:
   serviceAccountName: {{ .Chart.Name }}-tests
-  {{- with .Values.securityContext }}
+  {{- with .Values.tests.securityContext }}
   securityContext:
 {{ toYaml . | indent 8 }}
   {{- end }}
