@@ -32,7 +32,7 @@ The repository has the following structure:
   │
   ├── internal                  # Private application and library code
   │    ├── addon                    # Package that provides logic for fetching addons from different remote repositories
-  │    ├── assetstore               # Client for the upload service which allows the Helm Broker to upload documentation
+  │    ├── rafter                   # Client for the upload service which allows the Helm Broker to upload documentation
   │    ├── bind                     # Logic that renders the binding data
   │    ├── broker                   # Implementation of the OSB API contract
   │    ├── config                   # Configurations structs for both Controller and Broker

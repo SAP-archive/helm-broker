@@ -173,9 +173,9 @@ func newTestSuite(t *testing.T, docsEnabled, httpBasicAuth bool) *testSuite {
 func (ts *testSuite) StartControllers(docsEnabled bool) {
 	uploadClient := &automock.Client{}
 	if docsEnabled {
-		uploadClient.On("Upload", mock.AnythingOfType("string"), mock.Anything).Return(assetstore.UploadedFile{}, nil)
+		uploadClient.On("Upload", mock.AnythingOfType("string"), mock.Anything).Return(rafter.UploadedFile{}, nil)
 	} else {
-		uploadClient.On("Upload", mock.AnythingOfType("string"), mock.Anything).Return(assetstore.UploadedFile{}, errors.New("Upload must not be called, the service does not exists"))
+		uploadClient.On("Upload", mock.AnythingOfType("string"), mock.Anything).Return(rafter.UploadedFile{}, errors.New("Upload must not be called, the service does not exists"))
 	}
 
 	mgr := controller.SetupAndStartController(ts.restConfig, &config.ControllerConfig{
