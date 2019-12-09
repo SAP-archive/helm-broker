@@ -15,6 +15,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+const (
+	probeName      = "liveness-probe"
+	probeNamespace = "kyma-system"
+)
+
 // ControllerHealth holds logic for controller's probes
 type ControllerHealth struct {
 	port    string
@@ -66,9 +71,6 @@ func (c *ControllerHealth) runFullControllersCycle(client client.Client, lg *log
 }
 
 func (c *ControllerHealth) runAddonsConfigurationControllerCycle(req *http.Request, client client.Client, lg *logrus.Entry) error {
-	probeName := "liveness-probe"
-	probeNamespace := "default"
-
 	addonsConfiguration := &v1alpha1.AddonsConfiguration{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      probeName,
@@ -135,8 +137,6 @@ func (c *ControllerHealth) runAddonsConfigurationControllerCycle(req *http.Reque
 }
 
 func (c *ControllerHealth) runClusterAddonsConfigurationControllerCycle(req *http.Request, client client.Client, lg *logrus.Entry) error {
-	probeName := "liveness-probe"
-
 	clusterAddonsConfiguration := &v1alpha1.ClusterAddonsConfiguration{
 		ObjectMeta: v1.ObjectMeta{
 			Name: probeName,
