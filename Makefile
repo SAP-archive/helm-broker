@@ -53,7 +53,7 @@ release: tar-chart append-changelog release-branch
 	./hack/release/push_release.sh $(GIT_TAG) $(GIT_REPO)
 
 .PHONY: latest-release
-latest-release: set-latest-tag tag-chart-images tar-chart append-changelog update-release-docs
+latest-release: set-latest-tag tag-chart-images tar-chart update-release-docs append-changelog
 	./hack/release/create_latest_tag.sh $(GIT_REPO)
 	./hack/release/remove_latest_tag.sh $(GIT_REPO)
 	./hack/release/push_release.sh $(GIT_TAG) $(GIT_REPO)

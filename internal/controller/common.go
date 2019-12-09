@@ -181,13 +181,15 @@ func (c *common) OnAdd(addon *internal.CommonAddon, lastStatus v1alpha1.CommonAd
 			}
 		}
 	}
-	if saved || len(deletedAddonsIDs) > 0 {
+	removed := len(deletedAddonsIDs) > 0
+
+	if saved || removed {
 		if err = c.ensureBroker(); err != nil {
 			return errors.Wrap(err, "while ensuring broker")
 		}
 	}
 
-	if len(deletedAddonsIDs) > 0 {
+	if removed {
 		if err := c.reprocessConfigurationsInConflict(deletedAddonsIDs, list); err != nil {
 			return errors.Wrap(err, "while reprocessing configurations in conflict")
 		}

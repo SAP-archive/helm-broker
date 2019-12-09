@@ -42,6 +42,8 @@ func main() {
 	// TODO: switch to native implementation after merge: https://github.com/kubernetes-sigs/controller-runtime/pull/419
 	go health.NewControllerProbes(fmt.Sprintf(":%d", ctrCfg.StatusPort), storageConfig.ExtractEtcdURL(), mgr.GetClient()).Handle()
 
+	fatalOnError(storageConfig.WaitForEtcdReadiness(), "while waiting for etcd to be ready")
+
 	lg.Info("Starting the Controller.")
 	err = mgr.Start(signals.SetupSignalHandler())
 	fatalOnError(err, "unable to run the manager")

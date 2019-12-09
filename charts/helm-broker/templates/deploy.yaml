@@ -23,32 +23,11 @@ spec:
         heritage: "{{ .Release.Service }}"
     spec:
       serviceAccountName: {{ template "fullname" . }}
-
-      initContainers:
-      - name: "init-{{ .Chart.Name }}"
-        image: "{{ .Values.global.alpine_kubectl.image }}:{{ .Values.global.alpine_kubectl.version }}"
-        imagePullPolicy: {{ .Values.global.initImage.pullPolicy }}
-        command:
-          - "sh"
-          - "-c"
-          - |
-            URL=http://{{ .Release.Name }}-etcd-stateful-client.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.global.etcdClientPort }}/health
-            until $(curl --output /dev/null --silent --fail $URL); do
-              echo waiting for etcd service at $URL; sleep 1;
-            done;
-            TILLER=$(kubectl get pod -l app=helm,name=tiller --all-namespaces --field-selector status.phase=Running -o name)
-            if [ -z "$TILLER" ]; then
-              echo "Tiller Pod for helm does not exist"
-              exit 1
-            fi
-
       containers:
       - name: broker
         image: "{{ .Values.global.containerRegistry.path }}{{ .Values.global.helm_broker.dir }}/{{ .Values.global.helm_broker.image }}:{{ .Values.global.helm_broker.version }}"
         imagePullPolicy: {{ .Values.global.image.pullPolicy }}
         env:
-          - name: APP_TMP_DIR
-            value: /tmp
           - name: APP_PORT
             value: "{{ .Values.broker.internalPort }}"
           - name: APP_STATUS_PORT
@@ -71,25 +50,20 @@ spec:
           readOnly: true
         ports:
         - containerPort: {{ .Values.broker.internalPort }}
-        # Temporary solution for readiness probe
-        # Ref: https://github.com/istio/istio/issues/2628
         readinessProbe:
-          exec:
-            command:
-              - curl
-              - localhost:{{ .Values.broker.statusPort }}/ready
-          failureThreshold: 3
+          httpGet:
+            path: /ready
+            port: {{ .Values.broker.statusPort }}
           periodSeconds: 3
-          successThreshold: 1
           timeoutSeconds: 2
+          initialDelaySeconds: 10
         livenessProbe:
-          exec:
-            command:
-              - curl
-              - localhost:{{ .Values.broker.statusPort }}/live
+          httpGet:
+            path: /live
+            port: {{ .Values.broker.statusPort }}
           periodSeconds: 10
           timeoutSeconds: 2
-          successThreshold: 1
+          initialDelaySeconds: 10
 
       - name: ctrl
         image: "{{ .Values.global.containerRegistry.path }}{{ .Values.global.helm_controller.dir }}/{{ .Values.global.helm_controller.image }}:{{ .Values.global.helm_controller.version }}"
@@ -124,25 +98,20 @@ spec:
           readOnly: true
         ports:
         - containerPort: {{ .Values.ctrl.internalPort }}
-        # Temporary solution for readiness probe
-        # Ref: https://github.com/istio/istio/issues/2628
         readinessProbe:
-          exec:
-            command:
-              - curl
-              - localhost:{{ .Values.ctrl.statusPort }}/ready
-          failureThreshold: 3
+          httpGet:
+            path: /ready
+            port: {{ .Values.ctrl.statusPort }}
           periodSeconds: 3
-          successThreshold: 1
           timeoutSeconds: 2
+          initialDelaySeconds: 10
         livenessProbe:
-          exec:
-            command:
-              - curl
-              - localhost:{{ .Values.ctrl.statusPort }}/live
+          httpGet:
+            path: /live
+            port: {{ .Values.ctrl.statusPort }}
           periodSeconds: 60
           timeoutSeconds: 30
-          successThreshold: 1
+          initialDelaySeconds: 10
 
       volumes:
       - name: tmp-empty-dir

@@ -1,4 +1,4 @@
-FROM alpine:3.10
+FROM alpine:latest
 
 RUN apk --no-cache add ca-certificates
 RUN apk add --no-cache curl git openssh mercurial
