@@ -4,6 +4,10 @@
 
 package v1beta1
 
+//Copied from https://github.com/kyma-project/rafter/tree/9c356a443bda8b324ad4cefbf16cf449985c880a/pkg/apis/rafter/v1beta1
+//Because of conflicts of the dependencies (especially api-machinery)
+//Could be removed after update helm-brokers api-machinery version to >=0.2.0
+
 import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
