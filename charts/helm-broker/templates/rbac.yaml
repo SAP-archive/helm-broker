@@ -18,7 +18,7 @@ rules:
   resources: ["servicebrokers", "clusterservicebrokers"]
   verbs: ["create","delete","list","get","update", "watch"]
 - apiGroups: ["rafter.kyma-project.io"]
-  resources: ["clusterassetgroup", "assetgroup"]
+  resources: ["clusterassetgroups", "assetgroups"]
   verbs: ["get", "create", "update", "delete", "list", "watch"]
 - apiGroups: ["addons.kyma-project.io"]
   resources: ["addonsconfigurations", "clusteraddonsconfigurations", "addonsconfigurations/status", "clusteraddonsconfigurations/status", "addonsconfigurations/finalizers", "clusteraddonsconfigurations/finalizers"]
