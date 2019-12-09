@@ -1,6 +1,8 @@
-FROM alpine:3.10 as builder
+FROM alpine:latest as builder
 RUN apk --no-cache add ca-certificates
 
+# creates a non-root user to give him write permissions to tmp folder
+# needs for logger which saves logs under tmp dir
 RUN mkdir /user && \
     echo 'appuser:x:2000:2000:appuser:/:' > /user/passwd && \
     echo 'appuser:x:2000:' > /user/group

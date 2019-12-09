@@ -1,4 +1,4 @@
-FROM alpine:3.10 as certs
+FROM alpine:latest as certs
 RUN apk --no-cache add ca-certificates
 
 FROM scratch
