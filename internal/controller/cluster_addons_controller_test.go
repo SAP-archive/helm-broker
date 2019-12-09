@@ -46,7 +46,7 @@ func TestReconcileClusterAddonsConfiguration_AddAddonsProcess(t *testing.T) {
 
 					ts.addonGetter.On("GetCompleteAddon", e).
 						Return(completeAddon, nil)
-					ts.docsProvider.On("EnsureDocsTopic", completeAddon.Addon).Return(nil)
+					ts.docsProvider.On("EnsureAssetGroup", completeAddon.Addon).Return(nil)
 
 				}
 			}
