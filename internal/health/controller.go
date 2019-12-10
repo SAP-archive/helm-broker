@@ -60,10 +60,6 @@ func (c *ControllerHealth) runFullControllersCycle(client client.Client, lg *log
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		if err := c.runClusterAddonsConfigurationControllerCycle(req, client, lg); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
 
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprint(w, "OK")
@@ -133,70 +129,5 @@ func (c *ControllerHealth) runAddonsConfigurationControllerCycle(req *http.Reque
 	}
 
 	lg.Info("[liveness-probe] AddonsConfiguration controller is live")
-	return nil
-}
-
-func (c *ControllerHealth) runClusterAddonsConfigurationControllerCycle(req *http.Request, client client.Client, lg *logrus.Entry) error {
-	clusterAddonsConfiguration := &v1alpha1.ClusterAddonsConfiguration{
-		ObjectMeta: v1.ObjectMeta{
-			Name: probeName,
-		},
-		Spec: v1alpha1.ClusterAddonsConfigurationSpec{
-			CommonAddonsConfigurationSpec: v1alpha1.CommonAddonsConfigurationSpec{
-				Repositories: []v1alpha1.SpecRepository{{URL: ""}},
-			},
-		},
-	}
-
-	lg.Info("[liveness-probe] Creating liveness probe clusterAddonsConfiguration")
-	err := client.Create(req.Context(), clusterAddonsConfiguration)
-	if err != nil && !apierrors.IsAlreadyExists(err) {
-		lg.Errorf("[liveness-probe] Cannot create liveness probe clusterAddonsConfiguration: %s", err)
-		return err
-	}
-
-	lg.Info("[liveness-probe] Waiting for liveness probe clusterAddonsConfiguration desirable status")
-	err = wait.Poll(1*time.Second, 10*time.Second, func() (done bool, err error) {
-		key := types.NamespacedName{Name: probeName}
-		err = client.Get(req.Context(), key, clusterAddonsConfiguration)
-		if apierrors.IsNotFound(err) {
-			lg.Info("[liveness-probe] Liveness probe clusterAddonsConfiguration not found")
-			return false, nil
-		}
-		if err != nil {
-			lg.Errorf("[liveness-probe] Cannot get probe clusterAddonsConfiguration: %s", err)
-			return false, nil
-		}
-
-		if len(clusterAddonsConfiguration.Status.Repositories) != 1 {
-			lg.Info("[liveness-probe] Liveness probe addonsConfiguration repositories status not set")
-			return false, nil
-		}
-
-		status := clusterAddonsConfiguration.Status.Repositories[0].Status
-		reason := clusterAddonsConfiguration.Status.Repositories[0].Reason
-		if status == v1alpha1.RepositoryStatusFailed {
-			if reason == v1alpha1.RepositoryURLFetchingError {
-				lg.Info("[liveness-probe] Liveness probe clusterAddonsConfiguration has achieved the desired status")
-				return true, nil
-			}
-		}
-
-		lg.Infof("[liveness-probe] Liveness probe clusterAddonsConfiguration current status: %s: %s", status, reason)
-		return false, nil
-	})
-	if err != nil {
-		lg.Errorf("[liveness-probe] Waiting for liveness probe clusterAddonsConfiguration failed: %s", err)
-		return err
-	}
-
-	lg.Info("[liveness-probe] Removing liveness probe clusterAddonsConfiguration")
-	err = client.Delete(req.Context(), clusterAddonsConfiguration)
-	if err != nil {
-		lg.Errorf("[liveness-probe] Cannot delete liveness probe clusterAddonsConfiguration: %s", err)
-		return err
-	}
-
-	lg.Info("[liveness-probe] ClusterAddonsConfiguration controller is live")
 	return nil
 }
