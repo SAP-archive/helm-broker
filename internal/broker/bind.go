@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"sync"
 
-	jsonhash "github.com/komkom/go-jsonhash"
 	"github.com/pkg/errors"
 	osb "github.com/pmorie/go-open-service-broker-client/v2"
 	"github.com/sirupsen/logrus"
@@ -53,8 +52,6 @@ func (svc *bindService) Bind(ctx context.Context, osbCtx OsbContext, req *osb.Bi
 		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusBadRequest, ErrorMessage: strPtr(fmt.Sprintf("while validating bind request: %v", err))}
 	}
 
-	paramHash := jsonhash.HashS(req.Parameters)
-
 	switch opIDInProgress, inProgress, err := svc.bindStateGetter.IsBindingInProgress(iID, bID); true {
 	case err != nil:
 		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusInternalServerError, ErrorMessage: strPtr(fmt.Sprintf("while checking if service binding is being created: %v", err))}
@@ -68,7 +65,7 @@ func (svc *bindService) Bind(ctx context.Context, osbCtx OsbContext, req *osb.Bi
 		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusInternalServerError, ErrorMessage: strPtr(fmt.Sprintf("while checking if service binding for service instance already exists: %v", err))}
 	case state:
 		opID := bindOp.OperationID
-		bindInput, err := svc.prepareBindInput(osbCtx, iID, bID, svcID, svcPlanID, opID, paramHash)
+		bindInput, err := svc.prepareBindInput(osbCtx, iID, bID, svcID, svcPlanID, opID)
 		if err != nil {
 			return nil, err
 		}
@@ -91,7 +88,7 @@ func (svc *bindService) Bind(ctx context.Context, osbCtx OsbContext, req *osb.Bi
 		}, nil
 	}
 
-	op, err := svc.prepareBindOperation(iID, bID, paramHash)
+	op, err := svc.prepareBindOperation(iID, bID)
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +99,7 @@ func (svc *bindService) Bind(ctx context.Context, osbCtx OsbContext, req *osb.Bi
 
 	opID := op.OperationID
 
-	bindInput, err := svc.prepareBindInput(osbCtx, iID, bID, svcID, svcPlanID, opID, paramHash)
+	bindInput, err := svc.prepareBindInput(osbCtx, iID, bID, svcID, svcPlanID, opID)
 	if err != nil {
 		return nil, err
 	}
@@ -207,7 +204,7 @@ type bindingInput struct {
 	isAddonBindable bool
 }
 
-func (svc *bindService) prepareBindInput(osbCtx OsbContext, iID internal.InstanceID, bID internal.BindingID, svcID internal.ServiceID, svcPlanID internal.ServicePlanID, opID internal.OperationID, paramHash string) (bindingInput, *osb.HTTPStatusCodeError) {
+func (svc *bindService) prepareBindInput(osbCtx OsbContext, iID internal.InstanceID, bID internal.BindingID, svcID internal.ServiceID, svcPlanID internal.ServicePlanID, opID internal.OperationID) (bindingInput, *osb.HTTPStatusCodeError) {
 	instance, err := svc.instanceGetter.Get(iID)
 	switch {
 	case IsNotFoundError(err):
@@ -244,7 +241,7 @@ func (svc *bindService) prepareBindInput(osbCtx OsbContext, iID internal.Instanc
 	return bindInput, nil
 }
 
-func (svc *bindService) prepareBindOperation(iID internal.InstanceID, bID internal.BindingID, paramHash string) (internal.BindOperation, *osb.HTTPStatusCodeError) {
+func (svc *bindService) prepareBindOperation(iID internal.InstanceID, bID internal.BindingID) (internal.BindOperation, *osb.HTTPStatusCodeError) {
 	opID, err := svc.operationIDProvider()
 	if err != nil {
 		return internal.BindOperation{}, &osb.HTTPStatusCodeError{StatusCode: http.StatusInternalServerError, ErrorMessage: strPtr(fmt.Sprintf("while preparing bind operation: %v", err))}
@@ -256,7 +253,6 @@ func (svc *bindService) prepareBindOperation(iID internal.InstanceID, bID intern
 		OperationID: opID,
 		Type:        internal.OperationTypeCreate,
 		State:       internal.OperationStateInProgress,
-		ParamsHash:  paramHash,
 	}
 
 	return op, nil

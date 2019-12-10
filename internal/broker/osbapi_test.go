@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	jsonhash "github.com/komkom/go-jsonhash"
 	"github.com/pborman/uuid"
 	osb "github.com/pmorie/go-open-service-broker-client/v2"
 	"github.com/stretchr/testify/assert"
@@ -264,7 +263,6 @@ func TestOSBAPIProvisionRepeatedOnAlreadyFullyProvisionedInstance(t *testing.T) 
 	ts := newOSBAPITestSuite(t)
 
 	fixInstance := ts.Exp.NewInstance()
-	fixInstance.ParamsHash = jsonhash.HashS(map[string]interface{}{})
 	ts.StorageFactory.Instance().Insert(fixInstance)
 
 	fixOperation := ts.Exp.NewInstanceOperation(internal.OperationTypeCreate, internal.OperationStateSucceeded)
@@ -285,6 +283,7 @@ func TestOSBAPIProvisionRepeatedOnAlreadyFullyProvisionedInstance(t *testing.T) 
 		OrganizationGUID:    nsUID,
 		SpaceGUID:           nsUID,
 		OriginatingIdentity: &osb.OriginatingIdentity{Platform: osb.PlatformKubernetes, Value: "{}"},
+		Parameters:          ts.Exp.ProvisioningParameters.Data,
 	}
 
 	// WHEN
@@ -305,7 +304,6 @@ func TestOSBAPIProvisionRepeatedOnProvisioningInProgress(t *testing.T) {
 	ts := newOSBAPITestSuite(t)
 
 	fixInstance := ts.Exp.NewInstance()
-	fixInstance.ParamsHash = jsonhash.HashS(map[string]interface{}{})
 	ts.StorageFactory.Instance().Insert(fixInstance)
 
 	fixOperation := ts.Exp.NewInstanceOperation(internal.OperationTypeCreate, internal.OperationStateInProgress)
@@ -368,6 +366,7 @@ func TestOSBAPIProvisionConflictErrorOnAlreadyFullyProvisionedInstance(t *testin
 		OrganizationGUID:    nsUID,
 		SpaceGUID:           nsUID,
 		OriginatingIdentity: &osb.OriginatingIdentity{Platform: osb.PlatformKubernetes, Value: "{}"},
+		Parameters:          ts.Exp.RequestProvisioningParameters,
 	}
 
 	// WHEN
@@ -375,47 +374,7 @@ func TestOSBAPIProvisionConflictErrorOnAlreadyFullyProvisionedInstance(t *testin
 
 	// THEN
 	assert.Nil(t, resp)
-	assert.Equal(t, osb.HTTPStatusCodeError{StatusCode: http.StatusConflict, ErrorMessage: ptrStr(fmt.Sprintf("while comparing provisioning parameters map[]: provisioning parameters hash differs - new hqB_njX1ZeC2Y0XVG9_uBw==, old TODO, for instance fix-I-ID")), Description: ptrStr("")}, err)
-
-	// No activity on tiller should happen
-	defer ts.HelmClient.AssertExpectations(t)
-}
-
-func TestOSBAPIProvisionConflictErrorOnProvisioningInProgress(t *testing.T) {
-	// GIVEN
-	ts := newOSBAPITestSuite(t)
-
-	fixInstance := ts.Exp.NewInstance()
-	ts.StorageFactory.Instance().Insert(fixInstance)
-
-	fixOperation := ts.Exp.NewInstanceOperation(internal.OperationTypeCreate, internal.OperationStateInProgress)
-	expOpID := internal.OperationID("fix-op-id")
-	fixOperation.OperationID = expOpID
-	ts.StorageFactory.InstanceOperation().Insert(fixOperation)
-
-	ts.ServerRun()
-	defer ts.ServerShutdown()
-
-	nsUID := uuid.NewRandom().String()
-	req := &osb.ProvisionRequest{
-		AcceptsIncomplete: true,
-		InstanceID:        string(ts.Exp.InstanceID),
-		ServiceID:         string(ts.Exp.Service.ID),
-		PlanID:            string(ts.Exp.ServicePlan.ID),
-		Context: map[string]interface{}{
-			"namespace": string(ts.Exp.Namespace),
-		},
-		OrganizationGUID:    nsUID,
-		SpaceGUID:           nsUID,
-		OriginatingIdentity: &osb.OriginatingIdentity{Platform: osb.PlatformKubernetes, Value: "{}"},
-	}
-
-	// WHEN
-	resp, err := ts.OSBClient().ProvisionInstance(req)
-
-	// THEN
-	assert.Nil(t, resp)
-	assert.Equal(t, osb.HTTPStatusCodeError{StatusCode: http.StatusConflict, ErrorMessage: ptrStr(fmt.Sprintf("while comparing provisioning parameters map[]: provisioning parameters hash differs - new hqB_njX1ZeC2Y0XVG9_uBw==, old TODO, for instance fix-I-ID")), Description: ptrStr("")}, err)
+	assert.Equal(t, osb.HTTPStatusCodeError{StatusCode: http.StatusConflict, ErrorMessage: ptrStr(fmt.Sprintf("service instance exists with different parameters: %v", ts.Exp.RequestProvisioningParameters)), Description: ptrStr("")}, err)
 
 	// No activity on tiller should happen
 	defer ts.HelmClient.AssertExpectations(t)
@@ -680,7 +639,6 @@ func TestOSBAPIBindRepeatedOnAlreadyExistingBinding(t *testing.T) {
 	ts := newOSBAPITestSuite(t)
 
 	fixInstance := ts.Exp.NewInstance()
-	fixInstance.ParamsHash = jsonhash.HashS(map[string]interface{}{})
 	ts.StorageFactory.Instance().Upsert(fixInstance)
 
 	fixAddon := ts.Exp.NewAddon()
@@ -729,7 +687,6 @@ func TestOSBAPIBindRepeatedOnBindingInProgress(t *testing.T) {
 	ts := newOSBAPITestSuite(t)
 
 	fixInstance := ts.Exp.NewInstance()
-	fixInstance.ParamsHash = jsonhash.HashS(map[string]interface{}{})
 	ts.StorageFactory.Instance().Insert(fixInstance)
 
 	fixOperation := ts.Exp.NewBindOperation(internal.OperationTypeCreate, internal.OperationStateInProgress)
@@ -890,6 +847,7 @@ func TestOSBAPIProvisionSuccessNS(t *testing.T) {
 		OrganizationGUID:    nsUID,
 		SpaceGUID:           nsUID,
 		OriginatingIdentity: &osb.OriginatingIdentity{Platform: osb.PlatformKubernetes, Value: "{}"},
+		Parameters:          ts.Exp.ProvisioningParameters.Data,
 	}
 
 	// WHEN
@@ -909,7 +867,6 @@ func TestOSBAPIProvisionRepeatedOnAlreadyFullyProvisionedInstanceNS(t *testing.T
 	ts := newOSBAPITestSuite(t)
 
 	fixInstance := ts.Exp.NewInstance()
-	fixInstance.ParamsHash = jsonhash.HashS(map[string]interface{}{})
 	ts.StorageFactory.Instance().Insert(fixInstance)
 
 	fixOperation := ts.Exp.NewInstanceOperation(internal.OperationTypeCreate, internal.OperationStateSucceeded)
@@ -930,6 +887,7 @@ func TestOSBAPIProvisionRepeatedOnAlreadyFullyProvisionedInstanceNS(t *testing.T
 		OrganizationGUID:    nsUID,
 		SpaceGUID:           nsUID,
 		OriginatingIdentity: &osb.OriginatingIdentity{Platform: osb.PlatformKubernetes, Value: "{}"},
+		Parameters:          ts.Exp.ProvisioningParameters.Data,
 	}
 
 	// WHEN
@@ -950,7 +908,6 @@ func TestOSBAPIProvisionRepeatedOnProvisioningInProgressNS(t *testing.T) {
 	ts := newOSBAPITestSuite(t)
 
 	fixInstance := ts.Exp.NewInstance()
-	fixInstance.ParamsHash = jsonhash.HashS(map[string]interface{}{})
 	ts.StorageFactory.Instance().Insert(fixInstance)
 
 	fixOperation := ts.Exp.NewInstanceOperation(internal.OperationTypeCreate, internal.OperationStateInProgress)
@@ -973,6 +930,9 @@ func TestOSBAPIProvisionRepeatedOnProvisioningInProgressNS(t *testing.T) {
 		OrganizationGUID:    nsUID,
 		SpaceGUID:           nsUID,
 		OriginatingIdentity: &osb.OriginatingIdentity{Platform: osb.PlatformKubernetes, Value: "{}"},
+		Parameters: map[string]interface{}{
+			"sample-parameter": "sample-value",
+		},
 	}
 
 	// WHEN
@@ -1013,6 +973,7 @@ func TestOSBAPIProvisionConflictErrorOnAlreadyFullyProvisionedInstanceNS(t *test
 		OrganizationGUID:    nsUID,
 		SpaceGUID:           nsUID,
 		OriginatingIdentity: &osb.OriginatingIdentity{Platform: osb.PlatformKubernetes, Value: "{}"},
+		Parameters:          ts.Exp.RequestProvisioningParameters,
 	}
 
 	// WHEN
@@ -1020,47 +981,7 @@ func TestOSBAPIProvisionConflictErrorOnAlreadyFullyProvisionedInstanceNS(t *test
 
 	// THEN
 	assert.Nil(t, resp)
-	assert.Equal(t, osb.HTTPStatusCodeError{StatusCode: http.StatusConflict, ErrorMessage: ptrStr(fmt.Sprintf("while comparing provisioning parameters map[]: provisioning parameters hash differs - new hqB_njX1ZeC2Y0XVG9_uBw==, old TODO, for instance fix-I-ID")), Description: ptrStr("")}, err)
-
-	// No activity on tiller should happen
-	defer ts.HelmClient.AssertExpectations(t)
-}
-
-func TestOSBAPIProvisionConflictErrorOnProvisioningInProgressNS(t *testing.T) {
-	// GIVEN
-	ts := newOSBAPITestSuite(t)
-
-	fixInstance := ts.Exp.NewInstance()
-	ts.StorageFactory.Instance().Insert(fixInstance)
-
-	fixOperation := ts.Exp.NewInstanceOperation(internal.OperationTypeCreate, internal.OperationStateInProgress)
-	expOpID := internal.OperationID("fix-op-id")
-	fixOperation.OperationID = expOpID
-	ts.StorageFactory.InstanceOperation().Insert(fixOperation)
-
-	ts.ServerRun()
-	defer ts.ServerShutdown()
-
-	nsUID := uuid.NewRandom().String()
-	req := &osb.ProvisionRequest{
-		AcceptsIncomplete: true,
-		InstanceID:        string(ts.Exp.InstanceID),
-		ServiceID:         string(ts.Exp.Service.ID),
-		PlanID:            string(ts.Exp.ServicePlan.ID),
-		Context: map[string]interface{}{
-			"namespace": string(ts.Exp.Namespace),
-		},
-		OrganizationGUID:    nsUID,
-		SpaceGUID:           nsUID,
-		OriginatingIdentity: &osb.OriginatingIdentity{Platform: osb.PlatformKubernetes, Value: "{}"},
-	}
-
-	// WHEN
-	resp, err := ts.OSBClientNS().ProvisionInstance(req)
-
-	// THEN
-	assert.Nil(t, resp)
-	assert.Equal(t, osb.HTTPStatusCodeError{StatusCode: http.StatusConflict, ErrorMessage: ptrStr(fmt.Sprintf("while comparing provisioning parameters map[]: provisioning parameters hash differs - new hqB_njX1ZeC2Y0XVG9_uBw==, old TODO, for instance fix-I-ID")), Description: ptrStr("")}, err)
+	assert.Equal(t, osb.HTTPStatusCodeError{StatusCode: http.StatusConflict, ErrorMessage: ptrStr(fmt.Sprintf("service instance exists with different parameters: %v", ts.Exp.RequestProvisioningParameters)), Description: ptrStr("")}, err)
 
 	// No activity on tiller should happen
 	defer ts.HelmClient.AssertExpectations(t)
@@ -1295,7 +1216,6 @@ func TestOSBAPIBindRepeatedOnAlreadyExistingBindingNS(t *testing.T) {
 	ts := newOSBAPITestSuite(t)
 
 	fixInstance := ts.Exp.NewInstance()
-	fixInstance.ParamsHash = jsonhash.HashS(map[string]interface{}{})
 	ts.StorageFactory.Instance().Insert(fixInstance)
 
 	fixAddon := ts.Exp.NewAddon()
@@ -1344,7 +1264,6 @@ func TestOSBAPIBindRepeatedOnBindingInProgressNS(t *testing.T) {
 	ts := newOSBAPITestSuite(t)
 
 	fixInstance := ts.Exp.NewInstance()
-	fixInstance.ParamsHash = jsonhash.HashS(map[string]interface{}{})
 	ts.StorageFactory.Instance().Insert(fixInstance)
 
 	fixOperation := ts.Exp.NewBindOperation(internal.OperationTypeCreate, internal.OperationStateInProgress)

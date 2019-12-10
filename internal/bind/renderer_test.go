@@ -162,7 +162,6 @@ func fixInstance() internal.Instance {
 		ServicePlanID: "test-service-plan-id",
 		ReleaseName:   "test-release",
 		Namespace:     "test-ns",
-		ParamsHash:    "test-hash",
 		ReleaseInfo: internal.ReleaseInfo{
 			Time: &google_protobuf.Timestamp{
 				Seconds: 123123123,
@@ -171,6 +170,11 @@ func fixInstance() internal.Instance {
 			Revision: 123,
 			Config: &chart.Config{
 				Raw: "raw-config",
+			},
+		},
+		ProvisioningParameters: &internal.RequestParameters{
+			Data: map[string]interface{}{
+				"sample-parameter": "sample-value",
 			},
 		},
 	}

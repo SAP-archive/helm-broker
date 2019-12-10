@@ -78,15 +78,14 @@ func (svc *deprovisionService) Deprovision(ctx context.Context, osbCtx OsbContex
 	//svcID := internal.ServiceID(req.ServiceID)
 	//svcPlanID := internal.ServicePlanID(req.PlanID)
 
-	// TODO: add support for calculating ParamHash
-	paramHash := "TODO"
-
 	op := internal.InstanceOperation{
 		InstanceID:  iID,
 		OperationID: opID,
 		Type:        internal.OperationTypeRemove,
 		State:       internal.OperationStateInProgress,
-		ParamsHash:  paramHash,
+		ProvisioningParameters: &internal.RequestParameters{
+			Data: make(map[string]interface{}),
+		},
 	}
 
 	if err := svc.operationInserter.Insert(&op); err != nil {

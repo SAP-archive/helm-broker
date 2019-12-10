@@ -163,6 +163,7 @@ func (*InstanceOperation) handleGetError(errIn error) error {
 func (s *InstanceOperation) encodeDMToDSO(dm *internal.InstanceOperation) (string, error) {
 	buf := bytes.Buffer{}
 	enc := gob.NewEncoder(&buf)
+	gob.Register(map[string]interface{}{})
 	if err := enc.Encode(dm); err != nil {
 		return "", errors.Wrap(err, "while encoding entity")
 	}

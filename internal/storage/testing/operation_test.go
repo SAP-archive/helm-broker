@@ -340,16 +340,17 @@ type operationTestSuite struct {
 
 func (ts *operationTestSuite) generateFixtures() {
 	for _, ft := range []struct {
-		sym          string
-		iID, opID    string
-		opType       internal.OperationType
-		opState      internal.OperationState
-		sDesc, pHash string
+		sym       string
+		iID, opID string
+		opType    internal.OperationType
+		opState   internal.OperationState
+		sDesc     string
+		params    map[string]interface{}
 	}{
 		// Order is important as storage will reject insert if there is in ptogress operation for given instance.
-		{"i01/o01/Create/h1/InProgress", "iID-001", "oID-001-001", internal.OperationTypeCreate, internal.OperationStateInProgress, "state desc 001", "pHash-001"},
-		{"i02/o02/Create/h2/Succeeded", "iID-002", "oID-002-002", internal.OperationTypeCreate, internal.OperationStateSucceeded, "state desc 002", "pHash-002"},
-		{"i02/o03/Remove/h3/InProgress", "iID-002", "oID-002-003", internal.OperationTypeRemove, internal.OperationStateInProgress, "state desc 003", "pHash-003"},
+		{"i01/o01/Create/h1/InProgress", "iID-001", "oID-001-001", internal.OperationTypeCreate, internal.OperationStateInProgress, "state desc 001", map[string]interface{}{"param-001": "value-001"}},
+		{"i02/o02/Create/h2/Succeeded", "iID-002", "oID-002-002", internal.OperationTypeCreate, internal.OperationStateSucceeded, "state desc 002", map[string]interface{}{"param-002": "value-002"}},
+		{"i02/o03/Remove/h3/InProgress", "iID-002", "oID-002-003", internal.OperationTypeRemove, internal.OperationStateInProgress, "state desc 003", map[string]interface{}{"param-003": "value-003"}},
 	} {
 		iID := internal.InstanceID(ft.iID)
 		opID := internal.OperationID(ft.opID)
@@ -360,12 +361,12 @@ func (ts *operationTestSuite) generateFixtures() {
 		}
 
 		io := internal.InstanceOperation{
-			InstanceID:       iID,
-			OperationID:      opID,
-			Type:             ft.opType,
-			State:            ft.opState,
-			StateDescription: &ft.sDesc,
-			ParamsHash:       ft.pHash,
+			InstanceID:             iID,
+			OperationID:            opID,
+			Type:                   ft.opType,
+			State:                  ft.opState,
+			StateDescription:       &ft.sDesc,
+			ProvisioningParameters: &internal.RequestParameters{Data: ft.params},
 		}
 
 		ts.fixtures[ir] = &io
@@ -400,12 +401,12 @@ func (ts *operationTestSuite) MustGetFixture(sym string) *internal.InstanceOpera
 
 func (ts *operationTestSuite) MustCopyFixture(in *internal.InstanceOperation) *internal.InstanceOperation {
 	out := internal.InstanceOperation{
-		InstanceID:  in.InstanceID,
-		OperationID: in.OperationID,
-		Type:        in.Type,
-		State:       in.State,
-		ParamsHash:  in.ParamsHash,
-		CreatedAt:   in.CreatedAt,
+		InstanceID:             in.InstanceID,
+		OperationID:            in.OperationID,
+		Type:                   in.Type,
+		State:                  in.State,
+		CreatedAt:              in.CreatedAt,
+		ProvisioningParameters: in.ProvisioningParameters,
 	}
 
 	if in.StateDescription != nil {
