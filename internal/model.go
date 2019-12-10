@@ -279,7 +279,7 @@ type InstanceOperation struct {
 	Type                   OperationType
 	State                  OperationState
 	StateDescription       *string
-	ProvisioningParameters *ProvisioningParameters
+	ProvisioningParameters *RequestParameters
 
 	// CreatedAt points to creation time of the operation.
 	// Field should be treated as immutable and is responsibility of storage implementation.
@@ -312,8 +312,8 @@ type ReleaseInfo struct {
 	Config   *chart.Config
 }
 
-// ProvisioningParameters wraps a map containing provided YAML with provisioning parameters
-type ProvisioningParameters struct {
+// RequestParameters wraps a map containing provided YAML with parameters from request
+type RequestParameters struct {
 	Data map[string]interface{}
 }
 
@@ -330,7 +330,7 @@ type Instance struct {
 	ReleaseName            ReleaseName
 	Namespace              Namespace
 	ReleaseInfo            ReleaseInfo
-	ProvisioningParameters *ProvisioningParameters
+	ProvisioningParameters *RequestParameters
 }
 
 // InstanceCredentials are created when we bind a service instance.

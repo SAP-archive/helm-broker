@@ -142,7 +142,7 @@ func (ts *instanceTestSuite) generateFixtures() {
 			ServiceID:              internal.ServiceID(ft.sID),
 			ServicePlanID:          internal.ServicePlanID(ft.spID),
 			ReleaseName:            internal.ReleaseName(ft.rName),
-			ProvisioningParameters: &internal.ProvisioningParameters{Data: ft.params},
+			ProvisioningParameters: &internal.RequestParameters{Data: ft.params},
 		}
 
 		ts.fixtures[i.ID] = i

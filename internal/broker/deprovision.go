@@ -83,7 +83,7 @@ func (svc *deprovisionService) Deprovision(ctx context.Context, osbCtx OsbContex
 		OperationID: opID,
 		Type:        internal.OperationTypeRemove,
 		State:       internal.OperationStateInProgress,
-		ProvisioningParameters: &internal.ProvisioningParameters{
+		ProvisioningParameters: &internal.RequestParameters{
 			Data: make(map[string]interface{}),
 		},
 	}

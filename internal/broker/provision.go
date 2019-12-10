@@ -48,7 +48,7 @@ func (svc *provisionService) Provision(ctx context.Context, osbCtx OsbContext, r
 	defer svc.mu.Unlock()
 
 	iID := internal.InstanceID(req.InstanceID)
-	requestedProvisioningParameters := internal.ProvisioningParameters{
+	requestedProvisioningParameters := internal.RequestParameters{
 		Data: req.Parameters,
 	}
 
@@ -67,7 +67,7 @@ func (svc *provisionService) Provision(ctx context.Context, osbCtx OsbContext, r
 
 	switch opIDInProgress, inProgress, err := svc.instanceStateGetter.IsProvisioningInProgress(iID); {
 	case err != nil:
-		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusInternalServerError, ErrorMessage: strPtr(fmt.Sprintf("service instance exists with different parameters: %v", req.Parameters))}
+		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusInternalServerError, ErrorMessage: strPtr(fmt.Sprintf("while checking if instance provisioning is in progress: %v", err))}
 	case inProgress:
 		opKeyInProgress := osb.OperationKey(opIDInProgress)
 		return &osb.ProvisionResponse{Async: true, OperationKey: &opKeyInProgress}, nil
@@ -259,7 +259,7 @@ func (svc *provisionService) do(ctx context.Context, input provisioningInput) {
 	}
 }
 
-func (svc *provisionService) requestedParametersAreDifferent(iID internal.InstanceID, requestedParams internal.ProvisioningParameters) (bool, error) {
+func (svc *provisionService) requestedParametersAreDifferent(iID internal.InstanceID, requestedParams internal.RequestParameters) (bool, error) {
 	instance, err := svc.instanceGetter.Get(iID)
 	if err != nil {
 		return false, errors.Wrapf(err, "while getting instance %s from storage", iID)

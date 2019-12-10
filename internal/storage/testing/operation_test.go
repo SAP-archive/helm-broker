@@ -366,7 +366,7 @@ func (ts *operationTestSuite) generateFixtures() {
 			Type:                   ft.opType,
 			State:                  ft.opState,
 			StateDescription:       &ft.sDesc,
-			ProvisioningParameters: &internal.ProvisioningParameters{Data: ft.params},
+			ProvisioningParameters: &internal.RequestParameters{Data: ft.params},
 		}
 
 		ts.fixtures[ir] = &io

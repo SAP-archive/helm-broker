@@ -44,7 +44,7 @@ type expAll struct {
 		Revision int
 		Config   *chart.Config
 	}
-	ProvisioningParameters        *internal.ProvisioningParameters
+	ProvisioningParameters        *internal.RequestParameters
 	RequestProvisioningParameters map[string]interface{}
 }
 
@@ -80,7 +80,7 @@ func (exp *expAll) Populate() {
 	exp.ReleaseInfo.Config = &chart.Config{
 		Raw: "raw-config",
 	}
-	exp.ProvisioningParameters = &internal.ProvisioningParameters{
+	exp.ProvisioningParameters = &internal.RequestParameters{
 		Data: map[string]interface{}{
 			"addonsRepositoryURL": exp.Addon.RepositoryURL,
 		},
@@ -201,7 +201,7 @@ func (exp *expAll) NewInstanceOperationWithEmptyParams(tpe internal.OperationTyp
 		OperationID:            exp.OperationID,
 		Type:                   tpe,
 		State:                  state,
-		ProvisioningParameters: &internal.ProvisioningParameters{Data: make(map[string]interface{})},
+		ProvisioningParameters: &internal.RequestParameters{Data: make(map[string]interface{})},
 	}
 }
 

@@ -172,7 +172,7 @@ func fixInstance() internal.Instance {
 				Raw: "raw-config",
 			},
 		},
-		ProvisioningParameters: &internal.ProvisioningParameters{
+		ProvisioningParameters: &internal.RequestParameters{
 			Data: map[string]interface{}{
 				"sample-parameter": "sample-value",
 			},
