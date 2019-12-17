@@ -265,6 +265,15 @@ func (svc *provisionService) requestedParametersAreDifferent(iID internal.Instan
 		return false, errors.Wrapf(err, "while getting instance %s from storage", iID)
 	}
 
+	if instance.ParamsHash != "" {
+		instance.ParamsHash = ""
+		instance.ProvisioningParameters = &requestedParams
+		if _, err := svc.instanceInserter.Upsert(instance); err != nil {
+			return false, errors.Wrapf(err, "while saving instance %s to storage", iID)
+		}
+		return false, nil
+	}
+
 	if instance.ProvisioningParameters == nil && len(requestedParams.Data) == 0 { // instance with given ID has empty parameters and request parameters are also empty
 		return false, nil
 	}
