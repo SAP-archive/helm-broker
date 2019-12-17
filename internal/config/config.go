@@ -65,7 +65,7 @@ func Load(verbose bool) (*Config, error) {
 		return nil, errors.Wrap(err, "while reading configuration from environment variables")
 	}
 
-	if err := mergo.MergeWithOverwrite(&outCfg, &envConf); err != nil {
+	if err := mergo.Merge(&outCfg, &envConf, mergo.WithOverride); err != nil {
 		return nil, errors.Wrap(err, "while merging config from environment variables")
 	}
 	if verbose {
