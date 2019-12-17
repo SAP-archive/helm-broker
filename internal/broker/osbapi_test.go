@@ -372,9 +372,32 @@ func TestOSBAPIProvisionConflictErrorOnAlreadyFullyProvisionedInstance(t *testin
 	// WHEN
 	resp, err := ts.OSBClient().ProvisionInstance(req)
 
+	//THEN
+	require.NoError(t, err)
+	assert.NotNil(t, resp)
+	assert.False(t, resp.Async)
+
+	//GIVEN Instance with conflict
+	req = &osb.ProvisionRequest{
+		AcceptsIncomplete: true,
+		InstanceID:        string(ts.Exp.InstanceID),
+		ServiceID:         string(ts.Exp.Service.ID),
+		PlanID:            string(ts.Exp.ServicePlan.ID),
+		Context: map[string]interface{}{
+			"namespace": string(ts.Exp.Namespace),
+		},
+		OrganizationGUID:    nsUID,
+		SpaceGUID:           nsUID,
+		OriginatingIdentity: &osb.OriginatingIdentity{Platform: osb.PlatformKubernetes, Value: "{}"},
+		Parameters:          ts.Exp.ProvisioningParameters.Data,
+	}
+
+	// WHEN
+	resp, err = ts.OSBClient().ProvisionInstance(req)
+
 	// THEN
 	assert.Nil(t, resp)
-	assert.Equal(t, osb.HTTPStatusCodeError{StatusCode: http.StatusConflict, ErrorMessage: ptrStr(fmt.Sprintf("service instance exists with different parameters: %v", ts.Exp.RequestProvisioningParameters)), Description: ptrStr("")}, err)
+	assert.Equal(t, osb.HTTPStatusCodeError{StatusCode: http.StatusConflict, ErrorMessage: ptrStr(fmt.Sprintf("service instance exists with different parameters: %v", ts.Exp.ProvisioningParameters.Data)), Description: ptrStr("")}, err)
 
 	// No activity on tiller should happen
 	defer ts.HelmClient.AssertExpectations(t)
@@ -980,8 +1003,27 @@ func TestOSBAPIProvisionConflictErrorOnAlreadyFullyProvisionedInstanceNS(t *test
 	resp, err := ts.OSBClientNS().ProvisionInstance(req)
 
 	// THEN
-	assert.Nil(t, resp)
-	assert.Equal(t, osb.HTTPStatusCodeError{StatusCode: http.StatusConflict, ErrorMessage: ptrStr(fmt.Sprintf("service instance exists with different parameters: %v", ts.Exp.RequestProvisioningParameters)), Description: ptrStr("")}, err)
+	require.NoError(t, err)
+	assert.NotNil(t, resp)
+	assert.False(t, resp.Async)
+
+	//GIVEN Instance with conflict
+	req = &osb.ProvisionRequest{
+		AcceptsIncomplete: true,
+		InstanceID:        string(ts.Exp.InstanceID),
+		ServiceID:         string(ts.Exp.Service.ID),
+		PlanID:            string(ts.Exp.ServicePlan.ID),
+		Context: map[string]interface{}{
+			"namespace": string(ts.Exp.Namespace),
+		},
+		OrganizationGUID:    nsUID,
+		SpaceGUID:           nsUID,
+		OriginatingIdentity: &osb.OriginatingIdentity{Platform: osb.PlatformKubernetes, Value: "{}"},
+		Parameters:          ts.Exp.ProvisioningParameters.Data,
+	}
+
+	// WHEN
+	resp, err = ts.OSBClient().ProvisionInstance(req)
 
 	// No activity on tiller should happen
 	defer ts.HelmClient.AssertExpectations(t)

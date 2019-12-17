@@ -87,6 +87,7 @@ func TestProvisionServiceProvisionSuccessAsyncInstall(t *testing.T) {
 	iiMock := &automock.InstanceStorage{}
 	defer iiMock.AssertExpectations(t)
 	expInstance := ts.FixInstance()
+	expInstance.ParamsHash = ""
 	expInstanceCollection := ts.FixInstanceCollection()
 	iiMock.On("Upsert", &expInstance).Return(true, nil)
 	iiMock.On("GetAll").Return(expInstanceCollection, nil)
@@ -161,6 +162,7 @@ func TestProvisionServiceProvisionFailureAsync(t *testing.T) {
 	iiMock := &automock.InstanceStorage{}
 	defer iiMock.AssertExpectations(t)
 	expInstance := ts.FixInstance()
+	expInstance.ParamsHash = ""
 	expInstanceCollection := ts.FixInstanceCollection()
 	iiMock.On("Upsert", &expInstance).Return(true, nil)
 	iiMock.On("GetAll").Return(expInstanceCollection, nil)
@@ -236,7 +238,68 @@ func TestProvisionServiceProvisionSuccessRepeatedOnAlreadyFullyProvisionedInstan
 
 	iiMock := &automock.InstanceStorage{}
 	fixInstance := ts.FixInstance()
-	iiMock.On("Get", fixInstance.ID).Return(&fixInstance, nil)
+	fixInstance.ParamsHash = ""
+	iiMock.On("Get", fixInstance.ID).Return(&fixInstance, nil).Once()
+	defer iiMock.AssertExpectations(t)
+
+	ioMock := &automock.OperationStorage{}
+	defer ioMock.AssertExpectations(t)
+
+	hiMock := &automock.HelmClient{}
+	defer hiMock.AssertExpectations(t)
+
+	oipFake := func() (internal.OperationID, error) {
+		t.Error("operation ID provider called when it should not be")
+		return ts.Exp.OperationID, nil
+	}
+
+	testHookCalled := make(chan struct{})
+
+	svc := broker.NewProvisionService(bgMock, cgMock, iiMock, isgMock, ioMock, ioMock, hiMock, oipFake, spy.NewLogDummy()).
+		WithTestHookOnAsyncCalled(func(internal.OperationID) { close(testHookCalled) })
+
+	ctx := context.Background()
+	osbCtx := *broker.NewOSBContext("", "v1")
+	req := ts.FixProvisionRequest()
+
+	// WHEN
+	resp, err := svc.Provision(ctx, osbCtx, &req)
+
+	// THEN
+	assert.Nil(t, err)
+	assert.False(t, resp.Async)
+	assert.Nil(t, resp.OperationKey)
+
+	select {
+	case <-testHookCalled:
+		t.Fatal("async test hook called")
+	default:
+	}
+}
+
+func TestProvisionServiceProvisionSuccessRepeatedOnAlreadyFullyProvisionedInstanceWhenOldParamsHashExist(t *testing.T) {
+	// GIVEN
+	ts := newProvisionServiceTestSuite(t)
+	ts.SetUp()
+
+	isgMock := &automock.InstanceStateGetter{}
+	defer isgMock.AssertExpectations(t)
+	isgMock.On("IsProvisioned", ts.Exp.InstanceID).Return(true, nil).Once()
+
+	bgMock := &automock.AddonStorage{}
+	defer bgMock.AssertExpectations(t)
+
+	cgMock := &automock.ChartGetter{}
+	defer cgMock.AssertExpectations(t)
+
+	iiMock := &automock.InstanceStorage{}
+	fixInstance := ts.FixInstance()
+	iiMock.On("Get", fixInstance.ID).Return(&fixInstance, nil).Once()
+
+	fixInstanceAfterSoftMigration := fixInstance
+	fixInstanceAfterSoftMigration.ParamsHash = ""
+	iiMock.On("Upsert", &fixInstanceAfterSoftMigration).Return(true, nil).Once()
+
 	defer iiMock.AssertExpectations(t)
 
 	ioMock := &automock.OperationStorage{}

@@ -45,6 +45,7 @@ type expAll struct {
 		Config   *chart.Config
 	}
 	ProvisioningParameters        *internal.RequestParameters
+	ParamsHash                    string
 	RequestProvisioningParameters map[string]interface{}
 }
 
@@ -85,6 +86,7 @@ func (exp *expAll) Populate() {
 			"addonsRepositoryURL": exp.Addon.RepositoryURL,
 		},
 	}
+	exp.ParamsHash = "just-regular-hashed-string-b64"
 	exp.RequestProvisioningParameters = map[string]interface{}{
 		"addonsRepositoryURL": "different-fix-url",
 	}
@@ -148,6 +150,7 @@ func (exp *expAll) NewInstance() *internal.Instance {
 		ReleaseName:            exp.ReleaseName,
 		Namespace:              exp.Namespace,
 		ProvisioningParameters: exp.ProvisioningParameters,
+		ParamsHash:             exp.ParamsHash,
 	}
 }
 

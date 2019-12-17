@@ -331,6 +331,7 @@ type Instance struct {
 	Namespace              Namespace
 	ReleaseInfo            ReleaseInfo
 	ProvisioningParameters *RequestParameters
+	ParamsHash             string
 }
 
 // InstanceCredentials are created when we bind a service instance.
