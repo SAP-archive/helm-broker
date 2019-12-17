@@ -16,25 +16,26 @@ import (
 )
 
 const (
-	probeName      = "liveness-probe"
-	probeNamespace = "kyma-system"
+	probeName = "liveness-probe"
 )
 
 // ControllerHealth holds logic for controller's probes
 type ControllerHealth struct {
-	port    string
-	etcdURL string
-	client  client.Client
-	lg      *logrus.Entry
+	port                   string
+	etcdURL                string
+	client                 client.Client
+	livenessProbeNamespace string
+	lg                     *logrus.Entry
 }
 
 // NewControllerProbes creates a ControllerHealth
-func NewControllerProbes(port string, etcdURL string, client client.Client) *ControllerHealth {
+func NewControllerProbes(port string, etcdURL string, client client.Client, livenessProbeNamespace string) *ControllerHealth {
 	return &ControllerHealth{
-		port:    port,
-		etcdURL: etcdURL,
-		client:  client,
-		lg:      logrus.WithField("health", "controller"),
+		port:                   port,
+		etcdURL:                etcdURL,
+		client:                 client,
+		livenessProbeNamespace: livenessProbeNamespace,
+		lg:                     logrus.WithField("health", "controller"),
 	}
 }
 
@@ -70,7 +71,7 @@ func (c *ControllerHealth) runAddonsConfigurationControllerCycle(req *http.Reque
 	addonsConfiguration := &v1alpha1.AddonsConfiguration{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      probeName,
-			Namespace: probeNamespace,
+			Namespace: c.livenessProbeNamespace,
 		},
 		Spec: v1alpha1.AddonsConfigurationSpec{
 			CommonAddonsConfigurationSpec: v1alpha1.CommonAddonsConfigurationSpec{
@@ -79,7 +80,7 @@ func (c *ControllerHealth) runAddonsConfigurationControllerCycle(req *http.Reque
 		},
 	}
 
-	lg.Infof("[liveness-probe] Creating liveness probe addonsConfiguration in %q namespace", probeNamespace)
+	lg.Infof("[liveness-probe] Creating liveness probe addonsConfiguration in %q namespace", c.livenessProbeNamespace)
 	err := client.Create(req.Context(), addonsConfiguration)
 	if err != nil && !apierrors.IsAlreadyExists(err) {
 		lg.Errorf("[liveness-probe] Cannot create liveness probe addonsConfiguration: %s", err)
@@ -88,7 +89,7 @@ func (c *ControllerHealth) runAddonsConfigurationControllerCycle(req *http.Reque
 
 	lg.Info("[liveness-probe] Waiting for liveness probe addonsConfiguration desirable status")
 	err = wait.Poll(1*time.Second, 10*time.Second, func() (done bool, err error) {
-		key := types.NamespacedName{Name: probeName, Namespace: probeNamespace}
+		key := types.NamespacedName{Name: probeName, Namespace: c.livenessProbeNamespace}
 		err = client.Get(req.Context(), key, addonsConfiguration)
 		if apierrors.IsNotFound(err) {
 			lg.Info("[liveness-probe] Liveness probe addonsConfiguration not found")

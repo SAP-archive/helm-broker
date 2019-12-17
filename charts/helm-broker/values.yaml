@@ -13,11 +13,11 @@ global:
   helm_broker:
     image: helm-broker
     dir: /pr
-    version: PR-52
+    version: PR-71
   helm_controller:
     image: helm-controller
     dir: /pr
-    version: PR-52
+    version: PR-71
   # helm broker service parameters
   service:
     type: NodePort
@@ -42,6 +42,6 @@ ctrl:
 tests:
   image: helm-broker-tests
   dir: /pr
-  tag: PR-52
+  tag: PR-71
   securityContext:
     runAsUser: 2000
