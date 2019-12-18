@@ -52,12 +52,6 @@ client:
 release: tar-chart append-changelog release-branch
 	./hack/release/push_release.sh $(GIT_TAG) $(GIT_REPO)
 
-.PHONY: latest-release
-latest-release: set-latest-tag tar-chart update-release-docs append-changelog
-	./hack/release/create_latest_tag.sh $(GIT_REPO)
-	./hack/release/remove_latest_tag.sh $(GIT_REPO)
-	./hack/release/push_release.sh $(GIT_TAG) $(GIT_REPO)
-
 .PHONY: generate-changelog
 generate-changelog:
 	./hack/release/generate_changelog.sh $(GIT_TAG) $(REPO_NAME) $(REPO_OWNER)
@@ -70,12 +64,6 @@ append-changelog: generate-changelog
 release-branch:
 # release branch named `release-x.y` will be created if the GIT_TAG matches the `x.y.0` version pattern.
 	./hack/release/create_release_branch.sh $(GIT_TAG) $(GIT_REPO)
-
-.PHONY: set-latest-tag
-set-latest-tag:
-	$(eval GIT_TAG=latest)
-	$(eval TAG=latest)
-	$(eval VERSION=latest)
 
 .PHONY: tar-chart
 tar-chart: create-release-dir
@@ -135,7 +123,7 @@ push-image:
 ci-pr: build integration-test build-image push-image
 
 .PHONY: ci-master
-ci-master: build integration-test build-image push-image latest-release push-image
+ci-master: build integration-test build-image push-image
 
 .PHONY: ci-release
 ci-release: build integration-test build-image push-image charts-test release
