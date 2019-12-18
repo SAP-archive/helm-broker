@@ -6,7 +6,8 @@ import (
 	rls "k8s.io/helm/pkg/proto/hapi/services"
 )
 
-type helmDeleteInstaller interface {
+// DeleteInstaller defines necessary methods for communications with Tiller
+type DeleteInstaller interface {
 	InstallReleaseFromChart(chart *chart.Chart, ns string, opts ...helm.InstallOption) (*rls.InstallReleaseResponse, error)
 	DeleteRelease(rlsName string, opts ...helm.DeleteOption) (*rls.UninstallReleaseResponse, error)
 }

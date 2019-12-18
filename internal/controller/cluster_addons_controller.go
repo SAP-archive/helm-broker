@@ -27,7 +27,9 @@ type ReconcileClusterAddonsConfiguration struct {
 }
 
 // NewReconcileClusterAddonsConfiguration returns a new reconcile.Reconciler
-func NewReconcileClusterAddonsConfiguration(mgr manager.Manager, addonGetterFactory addonGetterFactory, chartStorage chartStorage, addonStorage addonStorage, brokerFacade brokerFacade, docsProvider docsProvider, brokerSyncer brokerSyncer, templateService templateService, tmpDir string, log logrus.FieldLogger) reconcile.Reconciler {
+func NewReconcileClusterAddonsConfiguration(mgr manager.Manager, addonGetterFactory addonGetterFactory, chartStorage chartStorage,
+	addonStorage addonStorage, brokerFacade brokerFacade, docsProvider docsProvider, brokerSyncer brokerSyncer,
+	templateService templateService, tmpDir string, log logrus.FieldLogger) reconcile.Reconciler {
 	return &ReconcileClusterAddonsConfiguration{
 		log:    log.WithField("controller", "cluster-addons"),
 		Client: mgr.GetClient(),

@@ -10,6 +10,7 @@ import (
 	"github.com/kyma-project/helm-broker/internal/config"
 	"github.com/kyma-project/helm-broker/internal/controller/broker"
 	"github.com/kyma-project/helm-broker/internal/controller/docs"
+	"github.com/kyma-project/helm-broker/internal/controller/instance"
 	"github.com/kyma-project/helm-broker/internal/controller/repository"
 	"github.com/kyma-project/helm-broker/internal/rafter"
 	"github.com/kyma-project/helm-broker/internal/storage"
@@ -82,6 +83,8 @@ func SetupAndStartController(cfg *rest.Config, ctrCfg *config.ControllerConfig, 
 	addonGetterFactory, err := provider.NewClientFactory(allowedGetters, addon.NewLoader(ctrCfg.TmpDir, lg), ctrCfg.DocumentationEnabled, lg)
 	fatalOnError(err, "cannot setup addon getter")
 
+	instChecker := instance.New(mgr.GetClient(), ctrCfg.ClusterServiceBrokerName)
+
 	// Creating controllers
 	lg.Info("Setting up controller")
 	acReconcile := NewReconcileAddonsConfiguration(mgr, addonGetterFactory, sFact.Chart(), sFact.Addon(), sbFacade, dtProvider, sbSyncer, templateService, ctrCfg.TmpDir, lg)
@@ -93,6 +96,22 @@ func SetupAndStartController(cfg *rest.Config, ctrCfg *config.ControllerConfig, 
 	cacController := NewClusterAddonsConfigurationController(cacReconcile)
 	err = cacController.Start(mgr)
 	fatalOnError(err, "unable to start ClusterAddonsConfigurationController")
+
+	bController := BrokerController{
+		cli:                    mgr.GetClient(),
+		instanceChecker:        instChecker,
+		namespacedBrokerFacade: broker.NewBrokersFacade(mgr.GetClient(), ctrCfg.Namespace, ctrCfg.ServiceName, lg),
+	}
+	err = bController.Start(mgr)
+	fatalOnError(err, "unable to start BrokerController")
+
+	cbController := ClusterBrokerController{
+		cli:                 mgr.GetClient(),
+		instanceChecker:     instChecker,
+		clusterBrokerFacade: csbFacade,
+	}
+	err = cbController.Start(mgr)
+	fatalOnError(err, "unable to start BrokerController")
 
 	return mgr
 }

@@ -81,3 +81,8 @@ type commonReconciler interface {
 	Reconcile(addon *internal.CommonAddon, trace string) (reconcile.Result, error)
 	SetWorkingNamespace(namespace string)
 }
+
+type instanceChecker interface {
+	AnyServiceInstanceExistsForNamespacedServiceBroker(namespace string) (bool, error)
+	AnyServiceInstanceExistsForClusterServiceBroker(namespace string) (bool, error)
+}

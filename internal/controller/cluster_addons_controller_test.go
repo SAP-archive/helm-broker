@@ -10,6 +10,7 @@ import (
 
 	"github.com/kubernetes-incubator/service-catalog/pkg/apis/servicecatalog/v1beta1"
 	"github.com/kyma-project/helm-broker/internal/controller/automock"
+	"github.com/kyma-project/helm-broker/internal/controller/instance"
 	"github.com/kyma-project/helm-broker/internal/controller/repository"
 	"github.com/kyma-project/helm-broker/internal/platform/logger/spy"
 	"github.com/kyma-project/helm-broker/internal/storage"
@@ -21,6 +22,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -51,12 +53,13 @@ func TestReconcileClusterAddonsConfiguration_AddAddonsProcess(t *testing.T) {
 				}
 			}
 			ts.brokerFacade.On("Exist").Return(false, nil).Once()
-			ts.brokerFacade.On("Create").Return(nil).Once()
+			//ts.brokerFacade.On("Create").Return(nil).Once()
 			ts.addonGetterFactory.On("NewGetter", fixAddonsCfg.Spec.Repositories[0].URL, path.Join(tmpDir, "cluster-addon-loader-dst")).Return(ts.addonGetter, nil).Once()
 			defer ts.assertExpectations()
 
 			// WHEN
-			reconciler := NewReconcileClusterAddonsConfiguration(ts.mgr, ts.addonGetterFactory, ts.chartStorage, ts.addonStorage, ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, ts.templateService, os.TempDir(), spy.NewLogDummy())
+			reconciler := NewReconcileClusterAddonsConfiguration(ts.mgr, ts.addonGetterFactory, ts.chartStorage, ts.addonStorage,
+				ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, ts.templateService, os.TempDir(), spy.NewLogDummy())
 
 			// THEN
 			result, err := reconciler.Reconcile(reconcile.Request{NamespacedName: types.NamespacedName{Name: fixAddonsCfg.Name}})
@@ -71,6 +74,13 @@ func TestReconcileClusterAddonsConfiguration_AddAddonsProcess(t *testing.T) {
 		})
 	}
 
+}
+
+// newEmptyInstanceChecker returns instanceChecker which behaves like there is no any service instances in the cluster.
+func newEmptyInstanceChecker(t *testing.T) instanceChecker {
+	require.NoError(t, v1beta1.AddToScheme(scheme.Scheme))
+	cli := fake.NewFakeClientWithScheme(scheme.Scheme)
+	return instance.New(cli, "helm-broker")
 }
 
 func TestReconcileClusterAddonsConfiguration_AddAddonsProcess_Error(t *testing.T) {
@@ -96,7 +106,8 @@ func TestReconcileClusterAddonsConfiguration_AddAddonsProcess_Error(t *testing.T
 	defer ts.assertExpectations()
 
 	// WHEN
-	reconciler := NewReconcileClusterAddonsConfiguration(ts.mgr, ts.addonGetterFactory, ts.chartStorage, ts.addonStorage, ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, ts.templateService, os.TempDir(), spy.NewLogDummy())
+	reconciler := NewReconcileClusterAddonsConfiguration(ts.mgr, ts.addonGetterFactory, ts.chartStorage, ts.addonStorage,
+		ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, ts.templateService, os.TempDir(), spy.NewLogDummy())
 
 	// THEN
 	result, err := reconciler.Reconcile(reconcile.Request{NamespacedName: types.NamespacedName{Name: fixAddonsCfg.Name}})
@@ -131,12 +142,13 @@ func TestReconcileClusterAddonsConfiguration_UpdateAddonsProcess(t *testing.T) {
 
 	}
 	ts.brokerFacade.On("Exist").Return(false, nil).Once()
-	ts.brokerFacade.On("Create").Return(nil).Once()
+	//ts.brokerFacade.On("Create").Return(nil).Once()
 	ts.addonGetterFactory.On("NewGetter", fixAddonsCfg.Spec.Repositories[0].URL, path.Join(tmpDir, "cluster-addon-loader-dst")).Return(ts.addonGetter, nil).Once()
 	defer ts.assertExpectations()
 
 	// WHEN
-	reconciler := NewReconcileClusterAddonsConfiguration(ts.mgr, ts.addonGetterFactory, ts.chartStorage, ts.addonStorage, ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, ts.templateService, os.TempDir(), spy.NewLogDummy())
+	reconciler := NewReconcileClusterAddonsConfiguration(ts.mgr, ts.addonGetterFactory, ts.chartStorage, ts.addonStorage,
+		ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, ts.templateService, os.TempDir(), spy.NewLogDummy())
 
 	// THEN
 	result, err := reconciler.Reconcile(reconcile.Request{NamespacedName: types.NamespacedName{Name: fixAddonsCfg.Name}})
@@ -170,7 +182,8 @@ func TestReconcileClusterAddonsConfiguration_UpdateAddonsProcess_ConflictingAddo
 	defer ts.assertExpectations()
 
 	// WHEN
-	reconciler := NewReconcileClusterAddonsConfiguration(ts.mgr, ts.addonGetterFactory, ts.chartStorage, ts.addonStorage, ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, ts.templateService, os.TempDir(), spy.NewLogDummy())
+	reconciler := NewReconcileClusterAddonsConfiguration(ts.mgr, ts.addonGetterFactory, ts.chartStorage,
+		ts.addonStorage, ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, ts.templateService, os.TempDir(), spy.NewLogDummy())
 
 	// THEN
 	result, err := reconciler.Reconcile(reconcile.Request{NamespacedName: types.NamespacedName{Name: fixAddonsCfg.Name}})
@@ -189,11 +202,12 @@ func TestReconcileClusterAddonsConfiguration_DeleteAddonsProcess(t *testing.T) {
 	fixAddonsCfg := fixDeletedClusterAddonsConfiguration()
 	ts := getClusterTestSuite(t, fixAddonsCfg)
 
-	ts.brokerFacade.On("Delete").Return(nil).Once()
-	defer ts.assertExpectations()
+	//ts.brokerFacade.On("Delete").Return(nil).Once()
+	//defer ts.assertExpectations()
 
 	// WHEN
-	reconciler := NewReconcileClusterAddonsConfiguration(ts.mgr, ts.addonGetterFactory, ts.chartStorage, ts.addonStorage, ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, ts.templateService, os.TempDir(), spy.NewLogDummy())
+	reconciler := NewReconcileClusterAddonsConfiguration(ts.mgr, ts.addonGetterFactory, ts.chartStorage, ts.addonStorage,
+		ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, ts.templateService, os.TempDir(), spy.NewLogDummy())
 
 	// THEN
 	result, err := reconciler.Reconcile(reconcile.Request{NamespacedName: types.NamespacedName{Name: fixAddonsCfg.Name}})
@@ -212,11 +226,12 @@ func TestReconcileClusterAddonsConfiguration_DeleteAddonsProcess_ReconcileOtherA
 	fixAddonsCfg := fixDeletedClusterAddonsConfiguration()
 	ts := getClusterTestSuite(t, fixAddonsCfg, failedAddCfg)
 
-	ts.brokerFacade.On("Delete").Return(nil).Once()
-	defer ts.assertExpectations()
+	//ts.brokerFacade.On("Delete").Return(nil).Once()
+	//defer ts.assertExpectations()
 
 	// WHEN
-	reconciler := NewReconcileClusterAddonsConfiguration(ts.mgr, ts.addonGetterFactory, ts.chartStorage, ts.addonStorage, ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, ts.templateService, os.TempDir(), spy.NewLogDummy())
+	reconciler := NewReconcileClusterAddonsConfiguration(ts.mgr, ts.addonGetterFactory, ts.chartStorage, ts.addonStorage,
+		ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, ts.templateService, os.TempDir(), spy.NewLogDummy())
 
 	// THEN
 	result, err := reconciler.Reconcile(reconcile.Request{NamespacedName: types.NamespacedName{Name: fixAddonsCfg.Name}})
@@ -232,29 +247,6 @@ func TestReconcileClusterAddonsConfiguration_DeleteAddonsProcess_ReconcileOtherA
 	err = ts.mgr.GetClient().Get(context.Background(), types.NamespacedName{Name: fixAddonsCfg.Name}, &res)
 	assert.NoError(t, err)
 	assert.NotContains(t, res.Finalizers, v1alpha1.FinalizerAddonsConfiguration)
-}
-
-func TestReconcileClusterAddonsConfiguration_DeleteAddonsProcess_Error(t *testing.T) {
-	// GIVEN
-	fixAddonsCfg := fixDeletedClusterAddonsConfiguration()
-	ts := getClusterTestSuite(t, fixAddonsCfg)
-
-	ts.brokerFacade.On("Delete").Return(errors.New("")).Once()
-	defer ts.assertExpectations()
-
-	// WHEN
-	reconciler := NewReconcileClusterAddonsConfiguration(ts.mgr, ts.addonGetterFactory, ts.chartStorage, ts.addonStorage, ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, ts.templateService, os.TempDir(), spy.NewLogDummy())
-
-	// THEN
-	result, err := reconciler.Reconcile(reconcile.Request{NamespacedName: types.NamespacedName{Name: fixAddonsCfg.Name}})
-	assert.Error(t, err)
-	assert.False(t, result.Requeue)
-	assert.Equal(t, result.RequeueAfter, time.Second*15)
-
-	res := v1alpha1.ClusterAddonsConfiguration{}
-	err = ts.mgr.GetClient().Get(context.Background(), types.NamespacedName{Name: fixAddonsCfg.Name}, &res)
-	assert.NoError(t, err)
-	assert.Contains(t, res.Finalizers, v1alpha1.FinalizerAddonsConfiguration)
 }
 
 type clusterTestSuite struct {

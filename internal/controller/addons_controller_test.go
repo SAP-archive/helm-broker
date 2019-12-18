@@ -61,12 +61,12 @@ func TestReconcileAddonsConfiguration_AddAddonsProcess(t *testing.T) {
 				}
 			}
 			ts.brokerFacade.On("Exist").Return(false, nil).Once()
-			ts.brokerFacade.On("Create").Return(nil).Once()
 			ts.addonGetterFactory.On("NewGetter", fixAddonsCfg.Spec.Repositories[0].URL, path.Join(tmpDir, "addon-loader-dst")).Return(ts.addonGetter, nil).Once()
 			defer ts.assertExpectations()
 
 			// WHEN
-			reconciler := NewReconcileAddonsConfiguration(ts.mgr, ts.addonGetterFactory, ts.chartStorage, ts.addonStorage, ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, ts.templateService, tmpDir, spy.NewLogDummy())
+			reconciler := NewReconcileAddonsConfiguration(ts.mgr, ts.addonGetterFactory, ts.chartStorage, ts.addonStorage,
+				ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, ts.templateService, tmpDir, spy.NewLogDummy())
 
 			// THEN
 			result, err := reconciler.Reconcile(reconcile.Request{NamespacedName: types.NamespacedName{Namespace: fixAddonsCfg.Namespace, Name: fixAddonsCfg.Name}})
@@ -105,7 +105,8 @@ func TestReconcileAddonsConfiguration_AddAddonsProcess_ErrorIfBrokerExist(t *tes
 	defer ts.assertExpectations()
 
 	// WHEN
-	reconciler := NewReconcileAddonsConfiguration(ts.mgr, ts.addonGetterFactory, ts.chartStorage, ts.addonStorage, ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, ts.templateService, tmpDir, spy.NewLogDummy())
+	reconciler := NewReconcileAddonsConfiguration(ts.mgr, ts.addonGetterFactory, ts.chartStorage, ts.addonStorage,
+		ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, ts.templateService, tmpDir, spy.NewLogDummy())
 
 	// THEN
 	result, err := reconciler.Reconcile(reconcile.Request{NamespacedName: types.NamespacedName{Namespace: fixAddonsCfg.Namespace, Name: fixAddonsCfg.Name}})
@@ -139,12 +140,12 @@ func TestReconcileAddonsConfiguration_UpdateAddonsProcess(t *testing.T) {
 		}
 	}
 	ts.brokerFacade.On("Exist").Return(false, nil).Once()
-	ts.brokerFacade.On("Create").Return(nil).Once()
 	ts.addonGetterFactory.On("NewGetter", fixAddonsCfg.Spec.Repositories[0].URL, path.Join(tmpDir, "addon-loader-dst")).Return(ts.addonGetter, nil).Once()
 	defer ts.assertExpectations()
 
 	// WHEN
-	reconciler := NewReconcileAddonsConfiguration(ts.mgr, ts.addonGetterFactory, ts.chartStorage, ts.addonStorage, ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, ts.templateService, tmpDir, spy.NewLogDummy())
+	reconciler := NewReconcileAddonsConfiguration(ts.mgr, ts.addonGetterFactory, ts.chartStorage, ts.addonStorage,
+		ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, ts.templateService, tmpDir, spy.NewLogDummy())
 
 	// THEN
 	result, err := reconciler.Reconcile(reconcile.Request{NamespacedName: types.NamespacedName{Namespace: fixAddonsCfg.Namespace, Name: fixAddonsCfg.Name}})
@@ -175,7 +176,8 @@ func TestReconcileAddonsConfiguration_UpdateAddonsProcess_ConflictingAddons(t *t
 	defer ts.assertExpectations()
 
 	// WHEN
-	reconciler := NewReconcileAddonsConfiguration(ts.mgr, ts.addonGetterFactory, ts.chartStorage, ts.addonStorage, ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, ts.templateService, tmpDir, spy.NewLogDummy())
+	reconciler := NewReconcileAddonsConfiguration(ts.mgr, ts.addonGetterFactory, ts.chartStorage, ts.addonStorage,
+		ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, ts.templateService, tmpDir, spy.NewLogDummy())
 
 	// THEN
 	result, err := reconciler.Reconcile(reconcile.Request{NamespacedName: types.NamespacedName{Namespace: fixAddonsCfg.Namespace, Name: fixAddonsCfg.Name}})
@@ -195,11 +197,11 @@ func TestReconcileAddonsConfiguration_DeleteAddonsProcess(t *testing.T) {
 	ts := getTestSuite(t, fixAddonsCfg)
 	tmpDir := os.TempDir()
 
-	ts.brokerFacade.On("Delete").Return(nil).Once()
 	defer ts.assertExpectations()
 
 	// WHEN
-	reconciler := NewReconcileAddonsConfiguration(ts.mgr, ts.addonGetterFactory, ts.chartStorage, ts.addonStorage, ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, ts.templateService, tmpDir, spy.NewLogDummy())
+	reconciler := NewReconcileAddonsConfiguration(ts.mgr, ts.addonGetterFactory, ts.chartStorage, ts.addonStorage,
+		ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, ts.templateService, tmpDir, spy.NewLogDummy())
 
 	// THEN
 	result, err := reconciler.Reconcile(reconcile.Request{NamespacedName: types.NamespacedName{Namespace: fixAddonsCfg.Namespace, Name: fixAddonsCfg.Name}})
@@ -219,11 +221,11 @@ func TestReconcileAddonsConfiguration_DeleteAddonsProcess_ReconcileOtherAddons(t
 	ts := getTestSuite(t, fixAddonsCfg, failedAddCfg)
 	tmpDir := os.TempDir()
 
-	ts.brokerFacade.On("Delete").Return(nil).Once()
 	defer ts.assertExpectations()
 
 	// WHEN
-	reconciler := NewReconcileAddonsConfiguration(ts.mgr, ts.addonGetterFactory, ts.chartStorage, ts.addonStorage, ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, ts.templateService, tmpDir, spy.NewLogDummy())
+	reconciler := NewReconcileAddonsConfiguration(ts.mgr, ts.addonGetterFactory, ts.chartStorage, ts.addonStorage,
+		ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, ts.templateService, tmpDir, spy.NewLogDummy())
 
 	// THEN
 	result, err := reconciler.Reconcile(reconcile.Request{NamespacedName: types.NamespacedName{Namespace: fixAddonsCfg.Namespace, Name: fixAddonsCfg.Name}})
@@ -239,30 +241,6 @@ func TestReconcileAddonsConfiguration_DeleteAddonsProcess_ReconcileOtherAddons(t
 	err = ts.mgr.GetClient().Get(context.Background(), types.NamespacedName{Namespace: fixAddonsCfg.Namespace, Name: fixAddonsCfg.Name}, &res)
 	assert.NoError(t, err)
 	assert.NotContains(t, res.Finalizers, v1alpha1.FinalizerAddonsConfiguration)
-}
-
-func TestReconcileAddonsConfiguration_DeleteAddonsProcess_Error(t *testing.T) {
-	// GIVEN
-	fixAddonsCfg := fixDeletedAddonsConfiguration()
-	ts := getTestSuite(t, fixAddonsCfg)
-	tmpDir := os.TempDir()
-
-	ts.brokerFacade.On("Delete").Return(errors.New("")).Once()
-	defer ts.assertExpectations()
-
-	// WHEN
-	reconciler := NewReconcileAddonsConfiguration(ts.mgr, ts.addonGetterFactory, ts.chartStorage, ts.addonStorage, ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, ts.templateService, tmpDir, spy.NewLogDummy())
-
-	// THEN
-	result, err := reconciler.Reconcile(reconcile.Request{NamespacedName: types.NamespacedName{Namespace: fixAddonsCfg.Namespace, Name: fixAddonsCfg.Name}})
-	assert.Error(t, err)
-	assert.False(t, result.Requeue)
-	assert.Equal(t, result.RequeueAfter, time.Second*15)
-
-	res := v1alpha1.AddonsConfiguration{}
-	err = ts.mgr.GetClient().Get(context.Background(), types.NamespacedName{Namespace: fixAddonsCfg.Namespace, Name: fixAddonsCfg.Name}, &res)
-	assert.NoError(t, err)
-	assert.Contains(t, res.Finalizers, v1alpha1.FinalizerAddonsConfiguration)
 }
 
 func fixRepositories() []v1alpha1.StatusRepository {
