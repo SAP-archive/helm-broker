@@ -9,8 +9,8 @@ type DocsProvider struct {
 	mock.Mock
 }
 
-// EnsureDocsTopic provides a mock function with given fields: addon
-func (_m *DocsProvider) EnsureDocsTopic(addon *internal.Addon) error {
+// EnsureAssetGroup provides a mock function with given fields: addon
+func (_m *DocsProvider) EnsureAssetGroup(addon *internal.Addon) error {
 	ret := _m.Called(addon)
 
 	var r0 error
@@ -23,8 +23,8 @@ func (_m *DocsProvider) EnsureDocsTopic(addon *internal.Addon) error {
 	return r0
 }
 
-// EnsureDocsTopicRemoved provides a mock function with given fields: id
-func (_m *DocsProvider) EnsureDocsTopicRemoved(id string) error {
+// EnsureAssetGroupRemoved provides a mock function with given fields: id
+func (_m *DocsProvider) EnsureAssetGroupRemoved(id string) error {
 	ret := _m.Called(id)
 
 	var r0 error

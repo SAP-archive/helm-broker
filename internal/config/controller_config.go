@@ -34,7 +34,7 @@ type ControllerConfig struct {
 	ClusterServiceBrokerName string
 	Storage                  []storage.Config `valid:"required"`
 	DevelopMode              bool
-	UploadServiceURL         string `default:"http://assetstore-asset-upload-service.kyma-system.svc.cluster.local:3000"`
+	UploadServiceURL         string `default:"http://rafter-upload-service.kyma-system.svc.cluster.local:3000"`
 	DocumentationEnabled     bool
 }
 

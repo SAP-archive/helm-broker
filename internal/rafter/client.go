@@ -1,4 +1,4 @@
-package assetstore
+package rafter
 
 // Copied from https://github.com/kyma-project/kyma/tree/3640406442780b8f13c1b0c40de450256ac9be01/components/application-registry/internal/metadata/specification/assetstore/upload
 

@@ -6,13 +6,13 @@ import "github.com/kyma-project/helm-broker/internal"
 type DummyProvider struct {
 }
 
-// EnsureDocsTopic fulfills the docsFacade interface
-func (s *DummyProvider) EnsureDocsTopic(addon *internal.Addon) error {
+// EnsureAssetGroup fulfills the docsFacade interface
+func (s *DummyProvider) EnsureAssetGroup(addon *internal.Addon) error {
 	return nil
 }
 
-// EnsureDocsTopicRemoved fulfills the docsFacade interface
-func (*DummyProvider) EnsureDocsTopicRemoved(id string) error {
+// EnsureAssetGroupRemoved fulfills the docsFacade interface
+func (*DummyProvider) EnsureAssetGroupRemoved(id string) error {
 	return nil
 }
 

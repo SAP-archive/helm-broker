@@ -2,12 +2,12 @@ package provider
 
 import (
 	getter "github.com/hashicorp/go-getter"
-	"github.com/kyma-project/helm-broker/internal/assetstore"
+	"github.com/kyma-project/helm-broker/internal/rafter"
 )
 
 // S3GetterCreator provides functionality for loading addon from any S3 repository.
 type S3GetterCreator struct {
-	Cli    assetstore.Client
+	Cli    rafter.Client
 	TmpDir string
 }
 

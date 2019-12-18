@@ -4,11 +4,11 @@ import (
 	"flag"
 	"fmt"
 
-	"github.com/kyma-project/helm-broker/internal/assetstore"
 	envs "github.com/kyma-project/helm-broker/internal/config"
 	"github.com/kyma-project/helm-broker/internal/controller"
 	"github.com/kyma-project/helm-broker/internal/health"
 	"github.com/kyma-project/helm-broker/internal/platform/logger"
+	"github.com/kyma-project/helm-broker/internal/rafter"
 	"github.com/kyma-project/helm-broker/internal/storage"
 
 	"github.com/sirupsen/logrus"
@@ -36,7 +36,7 @@ func main() {
 	cfg, err := config.GetConfig()
 	fatalOnError(err, "while setting up a client")
 
-	uploadClient := assetstore.NewClient(ctrCfg.UploadServiceURL, lg)
+	uploadClient := rafter.NewClient(ctrCfg.UploadServiceURL, lg)
 	mgr := controller.SetupAndStartController(cfg, ctrCfg, metricsAddr, sFact, uploadClient, lg)
 
 	// TODO: switch to native implementation after merge: https://github.com/kubernetes-sigs/controller-runtime/pull/419

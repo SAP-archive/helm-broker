@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/kyma-project/helm-broker/internal"
-	"github.com/kyma-project/kyma/components/cms-controller-manager/pkg/apis/cms/v1alpha1"
+	"github.com/kyma-project/helm-broker/pkg/apis/rafter/v1beta1"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,9 +16,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
-func TestProvider_EnsureClusterDocsTopic(t *testing.T) {
+func TestProvider_EnsureClusterAssetGroup(t *testing.T) {
 	// given
-	err := v1alpha1.AddToScheme(scheme.Scheme)
+	err := v1beta1.AddToScheme(scheme.Scheme)
 	require.NoError(t, err)
 	const id = "123"
 
@@ -30,28 +30,28 @@ func TestProvider_EnsureClusterDocsTopic(t *testing.T) {
 	} {
 		t.Run(tn, func(t *testing.T) {
 			c := fake.NewFakeClient()
-			cdt := fixClusterDocsTopic(id)
+			cdt := fixClusterAssetGroup(id)
 			docsProvider := NewClusterProvider(c, logrus.New())
 
 			// when
-			err = docsProvider.EnsureDocsTopic(tc.givenAddon.Addon)
+			err = docsProvider.EnsureAssetGroup(tc.givenAddon.Addon)
 			require.NoError(t, err)
 
 			// then
 			err = c.Get(context.Background(), client.ObjectKey{Name: cdt.Name}, cdt)
 			require.NoError(t, err)
-			assert.Equal(t, tc.givenAddon.Addon.Docs[0].Template, cdt.Spec.CommonDocsTopicSpec)
+			assert.Equal(t, tc.givenAddon.Addon.Docs[0].Template, cdt.Spec.CommonAssetGroupSpec)
 		})
 	}
 }
 
-func TestProvider_EnsureClusterDocsTopic_UpdateIfExist(t *testing.T) {
+func TestProvider_EnsureClusterAssetGroup_UpdateIfExist(t *testing.T) {
 	// given
-	err := v1alpha1.AddToScheme(scheme.Scheme)
+	err := v1beta1.AddToScheme(scheme.Scheme)
 	require.NoError(t, err)
 
 	const id = "123"
-	cdt := fixClusterDocsTopic(id)
+	cdt := fixClusterAssetGroup(id)
 	addonWithEmptyDocsURL := fixAddonWithEmptyDocs(id, "test", "url")
 	addonWithEmptyDocsURL.Addon.Docs[0].Template.Description = "new description"
 
@@ -59,27 +59,27 @@ func TestProvider_EnsureClusterDocsTopic_UpdateIfExist(t *testing.T) {
 	docsProvider := NewClusterProvider(c, logrus.New())
 
 	// when
-	err = docsProvider.EnsureDocsTopic(addonWithEmptyDocsURL.Addon)
+	err = docsProvider.EnsureAssetGroup(addonWithEmptyDocsURL.Addon)
 	require.NoError(t, err)
 
 	// then
 	err = c.Get(context.Background(), client.ObjectKey{Name: cdt.Name}, cdt)
 	require.NoError(t, err)
-	assert.Equal(t, addonWithEmptyDocsURL.Addon.Docs[0].Template, cdt.Spec.CommonDocsTopicSpec)
+	assert.Equal(t, addonWithEmptyDocsURL.Addon.Docs[0].Template, cdt.Spec.CommonAssetGroupSpec)
 }
 
-func TestDocsProvider_EnsureClusterDocsTopicRemoved(t *testing.T) {
+func TestDocsProvider_EnsureClusterAssetGroupRemoved(t *testing.T) {
 	// given
-	err := v1alpha1.AddToScheme(scheme.Scheme)
+	err := v1beta1.AddToScheme(scheme.Scheme)
 	require.NoError(t, err)
 
 	const id = "123"
-	cdt := fixClusterDocsTopic(id)
+	cdt := fixClusterAssetGroup(id)
 	c := fake.NewFakeClient(cdt)
 	docsProvider := NewClusterProvider(c, logrus.New())
 
 	// when
-	err = docsProvider.EnsureDocsTopicRemoved(id)
+	err = docsProvider.EnsureAssetGroupRemoved(id)
 	require.NoError(t, err)
 
 	// then
@@ -87,18 +87,18 @@ func TestDocsProvider_EnsureClusterDocsTopicRemoved(t *testing.T) {
 	assert.True(t, errors.IsNotFound(err))
 }
 
-func TestDocsProvider_EnsureClusterDocsTopicRemoved_NotExists(t *testing.T) {
+func TestDocsProvider_EnsureClusterAssetGroupRemoved_NotExists(t *testing.T) {
 	// given
-	err := v1alpha1.AddToScheme(scheme.Scheme)
+	err := v1beta1.AddToScheme(scheme.Scheme)
 	require.NoError(t, err)
 
 	const id = "123"
-	cdt := fixClusterDocsTopic(id)
+	cdt := fixClusterAssetGroup(id)
 	c := fake.NewFakeClient()
 	docsProvider := NewClusterProvider(c, logrus.New())
 
 	// when
-	err = docsProvider.EnsureDocsTopicRemoved(id)
+	err = docsProvider.EnsureAssetGroupRemoved(id)
 	require.NoError(t, err)
 
 	// then
@@ -106,8 +106,8 @@ func TestDocsProvider_EnsureClusterDocsTopicRemoved_NotExists(t *testing.T) {
 	assert.True(t, errors.IsNotFound(err))
 }
 
-func fixClusterDocsTopic(id string) *v1alpha1.ClusterDocsTopic {
-	return &v1alpha1.ClusterDocsTopic{
+func fixClusterAssetGroup(id string) *v1beta1.ClusterAssetGroup {
+	return &v1beta1.ClusterAssetGroup{
 		ObjectMeta: v1.ObjectMeta{
 			Name: id,
 		},

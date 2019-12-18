@@ -1,4 +1,4 @@
-package assetstore
+package rafter
 
 import (
 	"bytes"

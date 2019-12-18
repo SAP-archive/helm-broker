@@ -46,7 +46,7 @@ func TestReconcileClusterAddonsConfiguration_AddAddonsProcess(t *testing.T) {
 
 					ts.addonGetter.On("GetCompleteAddon", e).
 						Return(completeAddon, nil)
-					ts.docsProvider.On("EnsureDocsTopic", completeAddon.Addon).Return(nil)
+					ts.docsProvider.On("EnsureAssetGroup", completeAddon.Addon).Return(nil)
 
 				}
 			}
@@ -88,7 +88,7 @@ func TestReconcileClusterAddonsConfiguration_AddAddonsProcess_Error(t *testing.T
 
 			ts.addonGetter.On("GetCompleteAddon", e).
 				Return(completeAddon, nil)
-			ts.docsProvider.On("EnsureDocsTopic", completeAddon.Addon).Return(nil)
+			ts.docsProvider.On("EnsureAssetGroup", completeAddon.Addon).Return(nil)
 		}
 	}
 	ts.brokerFacade.On("Exist").Return(false, errors.New("")).Once()
@@ -126,7 +126,7 @@ func TestReconcileClusterAddonsConfiguration_UpdateAddonsProcess(t *testing.T) {
 			completeAddon := fixAddonWithDocsURL(string(e.Name), string(e.Name), "example.com", "example.com")
 
 			ts.addonGetter.On("GetCompleteAddon", e).Return(completeAddon, nil)
-			ts.docsProvider.On("EnsureDocsTopic", completeAddon.Addon).Return(nil)
+			ts.docsProvider.On("EnsureAssetGroup", completeAddon.Addon).Return(nil)
 		}
 
 	}
