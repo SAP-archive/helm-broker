@@ -225,7 +225,7 @@ func (c *common) OnDelete(addon *internal.CommonAddon) error {
 		addonRemoved := false
 		for _, repo := range addon.Status.Repositories {
 			for _, ad := range repo.Addons {
-				_, err := c.removeAddon(ad)
+				addonRemoved, err = c.removeAddon(ad)
 				if err != nil && !storage.IsNotFoundError(err) {
 					return errors.Wrapf(err, "while deleting addon with charts for addon %s", ad.Name)
 				}
