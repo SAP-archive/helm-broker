@@ -209,16 +209,12 @@ func (c *common) OnDelete(addon *internal.CommonAddon) error {
 			return errors.Wrap(err, "while listing addons configurations")
 		}
 
-		anyAddonReady := false
 		for _, ad := range adds {
 			if ad.Status.Phase != v1alpha1.AddonsConfigurationReady {
 				c.log.Infof("- reprocessing unblocked conflicting configuration `%s`", ad.Meta.Name)
 				if err := c.commonClient.ReprocessRequest(ad.Meta.Name); err != nil {
 					return errors.Wrapf(err, "while requesting reprocess addons configuration %s", ad.Meta.Name)
 				}
-			} else {
-				// if other addon is ready, let's sync the broker
-				anyAddonReady = true
 			}
 		}
 
@@ -231,7 +227,7 @@ func (c *common) OnDelete(addon *internal.CommonAddon) error {
 				}
 			}
 		}
-		if anyAddonReady && addonRemoved {
+		if addonRemoved {
 			if err := c.brokerSyncer.Sync(); err != nil {
 				return errors.Wrapf(err, "while syncing broker for addon %s", addon.Meta.Name)
 			}
