@@ -8,19 +8,20 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/event"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-// ClusterBrokerController is a controller which reacts on service instance deletion and delete (cluster)service broker if necessary
+// ClusterBrokerController is a controller which reacts on ServiceInstance, ClusterServiceBroker and ClusterAddonsConfiguration.
+// Only this controller should create/delete ClusterServiceBroker
 type ClusterBrokerController struct {
 	instanceChecker instanceChecker
 	cli             client.Client
 
 	clusterBrokerFacade brokerFacade
+	clusterBrokerName   string
 }
 
 // Start starts the controller
@@ -32,23 +33,20 @@ func (sbc *ClusterBrokerController) Start(mgr manager.Manager) error {
 	}
 
 	// Watch for changes to ServiceInstance, ClusterAddonsConfiguration, ClusterServiceBroker
-	err = c.Watch(&source.Kind{Type: &v1beta1.ServiceInstance{}}, &handler.EnqueueRequestForObject{})
+	err = c.Watch(&source.Kind{Type: &v1beta1.ServiceInstance{}}, eventHandler, createUpdatePredicate)
 	if err != nil {
 		return err
 	}
 
-	err = c.Watch(&source.Kind{Type: &v1alpha1.ClusterAddonsConfiguration{}}, &handler.EnqueueRequestForObject{}, predicate.Funcs{
-		CreateFunc: func(_ event.CreateEvent) bool { return true },
-		DeleteFunc: func(_ event.DeleteEvent) bool { return true },
-		UpdateFunc: func(_ event.UpdateEvent) bool { return false },
-	})
+	err = c.Watch(&source.Kind{Type: &v1alpha1.ClusterAddonsConfiguration{}}, eventHandler, createUpdatePredicate)
 	if err != nil {
 		return err
 	}
 
-	err = c.Watch(&source.Kind{Type: &v1beta1.ClusterServiceBroker{}}, &handler.EnqueueRequestForObject{}, predicate.Funcs{
-		CreateFunc: func(_ event.CreateEvent) bool { return true },
-		DeleteFunc: func(_ event.DeleteEvent) bool { return true },
+	err = c.Watch(&source.Kind{Type: &v1beta1.ClusterServiceBroker{}}, eventHandler, predicate.Funcs{
+		// filter out all other ClusterServiceBroker, only Helm-Broker is interesting for us
+		CreateFunc: func(e event.CreateEvent) bool { return e.Meta.GetName() == sbc.clusterBrokerName },
+		DeleteFunc: func(e event.DeleteEvent) bool { return e.Meta.GetName() == sbc.clusterBrokerName },
 		UpdateFunc: func(_ event.UpdateEvent) bool { return false },
 	})
 	if err != nil {
@@ -82,8 +80,6 @@ func (sbc *ClusterBrokerController) Reconcile(request reconcile.Request) (reconc
 	}
 	if !csbExists && (anyClusterAddonsConfigExists || instanceExists) {
 		sbc.clusterBrokerFacade.Create()
-
-		// todo: Sync()
 	}
 
 	return reconcile.Result{}, nil
