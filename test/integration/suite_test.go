@@ -36,16 +36,15 @@ import (
 	"github.com/kyma-project/helm-broker/internal/broker"
 	"github.com/kyma-project/helm-broker/internal/config"
 	"github.com/kyma-project/helm-broker/internal/controller"
-	"github.com/kyma-project/helm-broker/internal/rafter"
-	"github.com/kyma-project/helm-broker/internal/rafter/automock"
 	broker2 "github.com/kyma-project/helm-broker/internal/controller/broker"
 	"github.com/kyma-project/helm-broker/internal/helm"
+	"github.com/kyma-project/helm-broker/internal/rafter"
+	"github.com/kyma-project/helm-broker/internal/rafter/automock"
 	"github.com/kyma-project/helm-broker/internal/storage"
 	"github.com/kyma-project/helm-broker/internal/storage/testdata"
 	"github.com/kyma-project/helm-broker/pkg/apis"
 	"github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
 	dtv1beta1 "github.com/kyma-project/helm-broker/pkg/apis/rafter/v1beta1"
-	"github.com/kyma-project/helm-broker/internal/helm"
 	helm2 "k8s.io/helm/pkg/helm"
 )
 
