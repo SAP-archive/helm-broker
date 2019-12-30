@@ -218,16 +218,18 @@ func (c *common) OnDelete(addon *internal.CommonAddon) error {
 			}
 		}
 
-		addonRemoved := false
+		anyAddonRemoved := false
 		for _, repo := range addon.Status.Repositories {
 			for _, ad := range repo.Addons {
-				addonRemoved, err = c.removeAddon(ad)
+				removed, err := c.removeAddon(ad)
+				anyAddonRemoved = anyAddonRemoved || removed
 				if err != nil && !storage.IsNotFoundError(err) {
 					return errors.Wrapf(err, "while deleting addon with charts for addon %s", ad.Name)
 				}
 			}
 		}
-		if addonRemoved {
+		// if there was any removal processed - resync broker
+		if anyAddonRemoved {
 			if err := c.brokerSyncer.Sync(); err != nil {
 				return errors.Wrapf(err, "while syncing broker for addon %s", addon.Meta.Name)
 			}

@@ -26,8 +26,8 @@ type BrokerController struct {
 	namespacedBrokerFacade brokerFacade
 }
 
-var createUpdatePredicate = predicate.Funcs{
-	CreateFunc: func(e event.CreateEvent) bool { return true },
+var createDeletePredicate = predicate.Funcs{
+	CreateFunc: func(_ event.CreateEvent) bool { return true },
 	DeleteFunc: func(_ event.DeleteEvent) bool { return true },
 	UpdateFunc: func(_ event.UpdateEvent) bool { return false },
 }
@@ -48,12 +48,12 @@ func (sbc *BrokerController) Start(mgr manager.Manager) error {
 	}
 
 	// Watch for changes to ServiceInstance
-	err = c.Watch(&source.Kind{Type: &v1beta1.ServiceInstance{}}, eventHandler, createUpdatePredicate)
+	err = c.Watch(&source.Kind{Type: &v1beta1.ServiceInstance{}}, eventHandler, createDeletePredicate)
 	if err != nil {
 		return err
 	}
 
-	err = c.Watch(&source.Kind{Type: &v1alpha1.AddonsConfiguration{}}, eventHandler, createUpdatePredicate)
+	err = c.Watch(&source.Kind{Type: &v1alpha1.AddonsConfiguration{}}, eventHandler, createDeletePredicate)
 	if err != nil {
 		return err
 	}

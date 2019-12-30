@@ -33,12 +33,12 @@ func (sbc *ClusterBrokerController) Start(mgr manager.Manager) error {
 	}
 
 	// Watch for changes to ServiceInstance, ClusterAddonsConfiguration, ClusterServiceBroker
-	err = c.Watch(&source.Kind{Type: &v1beta1.ServiceInstance{}}, eventHandler, createUpdatePredicate)
+	err = c.Watch(&source.Kind{Type: &v1beta1.ServiceInstance{}}, eventHandler, createDeletePredicate)
 	if err != nil {
 		return err
 	}
 
-	err = c.Watch(&source.Kind{Type: &v1alpha1.ClusterAddonsConfiguration{}}, eventHandler, createUpdatePredicate)
+	err = c.Watch(&source.Kind{Type: &v1alpha1.ClusterAddonsConfiguration{}}, eventHandler, createDeletePredicate)
 	if err != nil {
 		return err
 	}
