@@ -53,7 +53,6 @@ func TestReconcileClusterAddonsConfiguration_AddAddonsProcess(t *testing.T) {
 				}
 			}
 			ts.brokerFacade.On("Exist").Return(false, nil).Once()
-			//ts.brokerFacade.On("Create").Return(nil).Once()
 			ts.addonGetterFactory.On("NewGetter", fixAddonsCfg.Spec.Repositories[0].URL, path.Join(tmpDir, "cluster-addon-loader-dst")).Return(ts.addonGetter, nil).Once()
 			defer ts.assertExpectations()
 
@@ -142,7 +141,6 @@ func TestReconcileClusterAddonsConfiguration_UpdateAddonsProcess(t *testing.T) {
 
 	}
 	ts.brokerFacade.On("Exist").Return(false, nil).Once()
-	//ts.brokerFacade.On("Create").Return(nil).Once()
 	ts.addonGetterFactory.On("NewGetter", fixAddonsCfg.Spec.Repositories[0].URL, path.Join(tmpDir, "cluster-addon-loader-dst")).Return(ts.addonGetter, nil).Once()
 	defer ts.assertExpectations()
 
@@ -202,9 +200,6 @@ func TestReconcileClusterAddonsConfiguration_DeleteAddonsProcess(t *testing.T) {
 	fixAddonsCfg := fixDeletedClusterAddonsConfiguration()
 	ts := getClusterTestSuite(t, fixAddonsCfg)
 
-	//ts.brokerFacade.On("Delete").Return(nil).Once()
-	//defer ts.assertExpectations()
-
 	// WHEN
 	reconciler := NewReconcileClusterAddonsConfiguration(ts.mgr, ts.addonGetterFactory, ts.chartStorage, ts.addonStorage,
 		ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, ts.templateService, os.TempDir(), spy.NewLogDummy())
@@ -225,9 +220,6 @@ func TestReconcileClusterAddonsConfiguration_DeleteAddonsProcess_ReconcileOtherA
 	failedAddCfg := fixFailedClusterAddonsConfiguration()
 	fixAddonsCfg := fixDeletedClusterAddonsConfiguration()
 	ts := getClusterTestSuite(t, fixAddonsCfg, failedAddCfg)
-
-	//ts.brokerFacade.On("Delete").Return(nil).Once()
-	//defer ts.assertExpectations()
 
 	// WHEN
 	reconciler := NewReconcileClusterAddonsConfiguration(ts.mgr, ts.addonGetterFactory, ts.chartStorage, ts.addonStorage,

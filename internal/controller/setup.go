@@ -97,20 +97,11 @@ func SetupAndStartController(cfg *rest.Config, ctrCfg *config.ControllerConfig, 
 	err = cacController.Start(mgr)
 	fatalOnError(err, "unable to start ClusterAddonsConfigurationController")
 
-	bController := BrokerController{
-		cli:                    mgr.GetClient(),
-		instanceChecker:        instChecker,
-		namespacedBrokerFacade: broker.NewBrokersFacade(mgr.GetClient(), ctrCfg.Namespace, ctrCfg.ServiceName, lg),
-	}
+	bController := NewBrokerController(instChecker, mgr.GetClient(), broker.NewBrokersFacade(mgr.GetClient(), ctrCfg.Namespace, ctrCfg.ServiceName, lg))
 	err = bController.Start(mgr)
 	fatalOnError(err, "unable to start BrokerController")
 
-	cbController := ClusterBrokerController{
-		cli:                 mgr.GetClient(),
-		instanceChecker:     instChecker,
-		clusterBrokerFacade: csbFacade,
-		clusterBrokerName:   ctrCfg.ClusterServiceBrokerName,
-	}
+	cbController := NewClusterBrokerController(instChecker, mgr.GetClient(), csbFacade, ctrCfg.ClusterServiceBrokerName)
 	err = cbController.Start(mgr)
 	fatalOnError(err, "unable to start BrokerController")
 

@@ -24,7 +24,6 @@ type common struct {
 
 	addonStorage addonStorage
 	chartStorage chartStorage
-	instStorage  storage.Instance
 
 	brokerSyncer brokerSyncer
 	brokerFacade brokerFacade

@@ -5,8 +5,6 @@ package integration_test
 import (
 	"testing"
 
-	"time"
-
 	"github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
 )
 
@@ -237,6 +235,7 @@ func TestUnregisteringClusterServiceBroker(t *testing.T) {
 
 	suite.createClusterAddonsConfiguration(addonsConfigName, []string{redisRepo}, sourceHTTP)
 	suite.waitForClusterServiceBrokerRegistered()
+	suite.waitForServicesInCatalogEndpoint("cluster", []string{redisAddonID})
 
 	// when
 	suite.provisionInstanceFromClusterServiceClass("cluster", "stage")
@@ -247,14 +246,13 @@ func TestUnregisteringClusterServiceBroker(t *testing.T) {
 	// when
 	suite.deleteClusterAddonsConfiguration(addonsConfigName)
 
-	time.Sleep(time.Second)
-
 	// then
+	suite.waitForServicesInCatalogEndpoint("cluster", []string{})
+	// CSB still is registered because of the existing instance
 	suite.waitForClusterServiceBrokerRegistered()
 
 	// when
 	suite.deprovisionInstance("cluster", "stage")
-	time.Sleep(time.Second)
 
 	// then
 	suite.waitForClusterServiceBrokerNotRegistered()
