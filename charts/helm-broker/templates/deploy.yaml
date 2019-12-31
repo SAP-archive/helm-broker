@@ -32,6 +32,8 @@ spec:
             value: "{{ .Values.broker.internalPort }}"
           - name: APP_STATUS_PORT
             value: "{{ .Values.broker.statusPort }}"
+          - name: APP_METRICS_PORT
+            value: "{{ .Values.broker.metricsPort }}"
           - name: APP_CONFIG_FILE_NAME
             value: /etc/config/helm-broker/config.yaml
           - name: APP_HELM_TILLER_HOST

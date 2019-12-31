@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -11,12 +12,14 @@ import (
 	"github.com/kyma-project/helm-broker/internal/bind"
 	"github.com/kyma-project/helm-broker/internal/broker"
 	"github.com/kyma-project/helm-broker/internal/config"
+	"github.com/kyma-project/helm-broker/internal/health"
 	"github.com/kyma-project/helm-broker/internal/helm"
 	"github.com/kyma-project/helm-broker/internal/platform/logger"
 	"github.com/kyma-project/helm-broker/internal/storage"
-	"github.com/sirupsen/logrus"
 
-	"github.com/kyma-project/helm-broker/internal/health"
+	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/sirupsen/logrus"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -48,6 +51,7 @@ func main() {
 		bind.NewRenderer(), bind.NewResolver(clientset.CoreV1()), helmClient, log)
 
 	go health.NewBrokerProbes(fmt.Sprintf(":%d", cfg.StatusPort), storageConfig.ExtractEtcdURL()).Handle()
+	go runMetricsServer(fmt.Sprintf(":%d", cfg.MetricsPort))
 
 	startedCh := make(chan struct{})
 
@@ -64,6 +68,19 @@ func main() {
 func fatalOnError(err error) {
 	if err != nil {
 		logrus.Fatal(err.Error())
+	}
+}
+
+// runMetricsServer lunches a separate server for metrics
+func runMetricsServer(port string) {
+	logrus.Infof("Start metrics server on %s port", port)
+
+	var m = mux.NewRouter()
+	m.Handle("/metrics", promhttp.Handler())
+
+	srv := &http.Server{Addr: port, Handler: m}
+	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
+		logrus.Errorf("Cannot run HTTP metrics server: %v", err)
 	}
 }
 

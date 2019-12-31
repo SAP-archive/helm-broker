@@ -32,6 +32,7 @@ broker:
   externalPort: 80
   internalPort: 8070
   statusPort: 8071
+  metricsPort: 8072
 
 ctrl:
   # enable/disable docs topics support for helm controller

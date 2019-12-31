@@ -11,7 +11,6 @@ import (
 	"github.com/gorilla/mux"
 	negronilogrus "github.com/meatballhat/negroni-logrus"
 	"github.com/pkg/errors"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/negroni"
 
@@ -125,8 +124,6 @@ func (srv *Server) run(ctx context.Context, addr string, listenAndServe func(srv
 // CreateHandler creates an http handler
 func (srv *Server) CreateHandler() http.Handler {
 	var rtr = mux.NewRouter()
-
-	rtr.Handle("/metrics", promhttp.Handler())
 
 	srv.handleRouter(rtr.PathPrefix("/cluster").Subrouter())
 	srv.handleRouter(rtr.PathPrefix("/ns/{namespace}").Subrouter())
