@@ -17,8 +17,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-// BrokerController is a controller which reacts on ServiceInstance, ServiceBroker and AddonsConfiguration.
-// Only this controller should create/delete ServiceBroker
+// BrokerController is a controller which reacts on changes for ServiceInstance, ServiceBroker and AddonsConfiguration.
+// Only this controller should create/delete ServiceBroker.
 type BrokerController struct {
 	instanceChecker instanceChecker
 	cli             client.Client
@@ -38,6 +38,15 @@ var eventHandler = &handler.EnqueueRequestsFromMapFunc{
 			return []reconcile.Request{{NamespacedName: types.NamespacedName{Namespace: mp.Meta.GetNamespace()}}}
 		},
 	)}
+
+// NewBrokerController creates BrokerController instance.
+func NewBrokerController(checker instanceChecker, cli client.Client, bFacade brokerFacade) *BrokerController {
+	return &BrokerController{
+		instanceChecker:        checker,
+		cli:                    cli,
+		namespacedBrokerFacade: bFacade,
+	}
+}
 
 // Start starts the controller
 func (sbc *BrokerController) Start(mgr manager.Manager) error {
@@ -70,11 +79,10 @@ func (sbc *BrokerController) Start(mgr manager.Manager) error {
 	return nil
 }
 
-// Reconcile checks if the (clsuter) service broker must be removed
+// Reconcile checks if the (cluster) service broker must be removed
 func (sbc *BrokerController) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	currentNamespace := request.Namespace
 
-	// namespaced check
 	sbc.namespacedBrokerFacade.SetNamespace(request.Namespace)
 	sbExists, err := sbc.namespacedBrokerFacade.Exist()
 	if err != nil {
