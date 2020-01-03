@@ -59,7 +59,7 @@ func (f *Facade) AnyServiceInstanceExistsForNamespacedServiceBroker(namespace st
 }
 
 // AnyServiceInstanceExistsForClusterServiceBroker checks whether there is at least one service instance created with helm broker cluster service class.
-func (f *Facade) AnyServiceInstanceExistsForClusterServiceBroker(namespace string) (bool, error) {
+func (f *Facade) AnyServiceInstanceExistsForClusterServiceBroker() (bool, error) {
 	instanceList := &v1beta1.ServiceInstanceList{}
 	err := f.client.List(context.TODO(), &client.ListOptions{}, instanceList)
 	if err != nil {

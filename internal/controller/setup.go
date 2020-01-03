@@ -103,7 +103,7 @@ func SetupAndStartController(cfg *rest.Config, ctrCfg *config.ControllerConfig, 
 
 	cbController := NewClusterBrokerController(instChecker, mgr.GetClient(), csbFacade, ctrCfg.ClusterServiceBrokerName)
 	err = cbController.Start(mgr)
-	fatalOnError(err, "unable to start BrokerController")
+	fatalOnError(err, "unable to start ClusterBrokerController")
 
 	return mgr
 }

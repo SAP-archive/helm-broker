@@ -75,13 +75,6 @@ func TestReconcileClusterAddonsConfiguration_AddAddonsProcess(t *testing.T) {
 
 }
 
-// newEmptyInstanceChecker returns instanceChecker which behaves like there is no any service instances in the cluster.
-func newEmptyInstanceChecker(t *testing.T) instanceChecker {
-	require.NoError(t, v1beta1.AddToScheme(scheme.Scheme))
-	cli := fake.NewFakeClientWithScheme(scheme.Scheme)
-	return instance.New(cli, "helm-broker")
-}
-
 func TestReconcileClusterAddonsConfiguration_AddAddonsProcess_Error(t *testing.T) {
 	// GIVEN
 	fixAddonsCfg := fixClusterAddonsConfiguration()

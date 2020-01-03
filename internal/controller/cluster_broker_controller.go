@@ -68,8 +68,6 @@ func (sbc *ClusterBrokerController) Start(mgr manager.Manager) error {
 
 // Reconcile checks if the cluster service broker must be removed
 func (sbc *ClusterBrokerController) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	currentNamespace := request.Namespace
-
 	csbExists, err := sbc.clusterBrokerFacade.Exist()
 	if err != nil {
 		return reconcile.Result{}, err
@@ -80,7 +78,7 @@ func (sbc *ClusterBrokerController) Reconcile(request reconcile.Request) (reconc
 		return reconcile.Result{}, err
 	}
 	anyClusterAddonsConfigExists := len(cacList.Items) > 0
-	instanceExists, err := sbc.instanceChecker.AnyServiceInstanceExistsForClusterServiceBroker(currentNamespace)
+	instanceExists, err := sbc.instanceChecker.AnyServiceInstanceExistsForClusterServiceBroker()
 	if err != nil {
 		return reconcile.Result{}, err
 	}
