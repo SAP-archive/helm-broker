@@ -10,7 +10,6 @@ import (
 
 	"github.com/kubernetes-incubator/service-catalog/pkg/apis/servicecatalog/v1beta1"
 	"github.com/kyma-project/helm-broker/internal/controller/automock"
-	"github.com/kyma-project/helm-broker/internal/controller/instance"
 	"github.com/kyma-project/helm-broker/internal/controller/repository"
 	"github.com/kyma-project/helm-broker/internal/platform/logger/spy"
 	"github.com/kyma-project/helm-broker/internal/storage"
@@ -22,7 +21,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"

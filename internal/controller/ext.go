@@ -84,5 +84,5 @@ type commonReconciler interface {
 
 type instanceChecker interface {
 	AnyServiceInstanceExistsForNamespacedServiceBroker(namespace string) (bool, error)
-	AnyServiceInstanceExistsForClusterServiceBroker(namespace string) (bool, error)
+	AnyServiceInstanceExistsForClusterServiceBroker() (bool, error)
 }
