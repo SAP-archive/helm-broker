@@ -51,7 +51,6 @@ func TestCommon_OnAdd(t *testing.T) {
 				ts.docsProvider, ts.brokerSyncer, ts.brokerFacade, ts.templateService, "", logrus.New())
 
 			ts.brokerFacade.On("Exist").Return(false, nil)
-			ts.brokerFacade.On("Create").Return(nil).Once()
 
 			err := common.OnAdd(tc.addon, tc.lastStatus)
 			require.NoError(t, err)
@@ -111,8 +110,6 @@ func TestCommon_OnDelete(t *testing.T) {
 			common := newControllerCommon(ts.mgr.GetClient(), ts.addonGetterFactory, ts.addonStorage, ts.chartStorage,
 				ts.docsProvider, ts.brokerSyncer, ts.brokerFacade, ts.templateService, "", logrus.New())
 
-			ts.brokerFacade.On("Delete").Return(nil).Once()
-
 			err := common.OnDelete(tc.addon)
 			require.NoError(t, err)
 		})
@@ -155,7 +152,6 @@ func TestCommon_OnAdd_NamespaceScoped(t *testing.T) {
 				ts.docsProvider, ts.brokerSyncer, ts.brokerFacade, ts.templateService, "", logrus.New())
 
 			ts.brokerFacade.On("Exist").Return(false, nil)
-			ts.brokerFacade.On("Create").Return(nil).Once()
 
 			common.SetWorkingNamespace(tc.addon.Meta.Namespace)
 
@@ -219,8 +215,6 @@ func TestCommon_OnDelete_NamespaceScoped(t *testing.T) {
 			common := newControllerCommon(ts.mgr.GetClient(), ts.addonGetterFactory, ts.addonStorage, ts.chartStorage,
 				ts.docsProvider, ts.brokerSyncer, ts.brokerFacade, ts.templateService, "", logrus.New())
 
-			ts.brokerFacade.On("Delete").Return(nil).Once()
-
 			common.SetWorkingNamespace(tc.addon.Meta.Namespace)
 
 			err := common.OnDelete(tc.addon)
@@ -244,8 +238,6 @@ func TestCommon_PrepareForProcessing(t *testing.T) {
 			common := newControllerCommon(ts.mgr.GetClient(), ts.addonGetterFactory, ts.addonStorage, ts.chartStorage,
 				ts.docsProvider, ts.brokerSyncer, ts.brokerFacade, ts.templateService, "", logrus.New())
 
-			ts.brokerFacade.On("Delete").Return(nil).Once()
-
 			err := common.PrepareForProcessing(tc.addon)
 			require.NoError(t, err)
 		})
@@ -266,8 +258,6 @@ func TestCommon_PrepareForProcessing_NamespaceScoped(t *testing.T) {
 			ts := getTestSuite(t, tc.obj...)
 			common := newControllerCommon(ts.mgr.GetClient(), ts.addonGetterFactory, ts.addonStorage, ts.chartStorage,
 				ts.docsProvider, ts.brokerSyncer, ts.brokerFacade, ts.templateService, "", logrus.New())
-
-			ts.brokerFacade.On("Delete").Return(nil).Once()
 
 			common.SetWorkingNamespace(tc.addon.Meta.Namespace)
 

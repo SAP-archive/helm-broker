@@ -126,6 +126,7 @@ func TestGetCatalogHappyPath(t *testing.T) {
 			suite.createAddonsConfiguration("prod", c.addonName, []string{redisAndAccTestRepo}, c.kind)
 			suite.waitForAddonsConfigurationPhase("prod", c.addonName, v1alpha1.AddonsConfigurationReady)
 			suite.waitForServicesInCatalogEndpoint("ns/prod", []string{c.redisID, c.testID})
+			suite.waitForServiceBrokerRegistered("prod")
 
 			// when
 			suite.updateAddonsConfigurationRepositories("stage", c.addonName, []string{}, c.kind)
@@ -181,6 +182,80 @@ func TestGetCatalogHappyPath(t *testing.T) {
 			suite.waitForEmptyCatalogResponse("cluster")
 		})
 	}
+}
+
+func TestProvisioning(t *testing.T) {
+	// given
+	suite := newTestSuiteAndStartControllers(t, false, false)
+	defer suite.tearDown()
+
+	suite.createAddonsConfiguration("stage", addonsConfigName, []string{redisRepo}, sourceHTTP)
+	suite.waitForServicesInCatalogEndpoint("ns/stage", []string{redisAddonID})
+	suite.waitForNumberOfReleases(0)
+
+	// when
+	suite.provisionInstanceFromServiceClass("ns/stage", "stage")
+
+	// then
+	suite.waitForNumberOfReleases(1)
+}
+
+func TestUnregisteringServiceBroker(t *testing.T) {
+	// given
+	suite := newTestSuiteAndStartControllers(t, false, false)
+	defer suite.tearDown()
+
+	suite.createAddonsConfiguration("stage", addonsConfigName, []string{redisRepo}, sourceHTTP)
+	suite.waitForServiceBrokerRegistered("stage")
+	suite.waitForServicesInCatalogEndpoint("ns/stage", []string{redisAddonID})
+
+	// when
+	suite.provisionInstanceFromServiceClass("ns/stage", "stage")
+
+	// then
+	suite.waitForNumberOfReleases(1)
+
+	// when
+	suite.deleteAddonsConfiguration("stage", addonsConfigName)
+
+	// then
+	suite.waitForServiceBrokerRegistered("stage")
+
+	// when
+	suite.deprovisionInstance("ns/stage", "stage")
+
+	// then
+	suite.waitForServiceBrokerNotRegistered("stage")
+}
+
+func TestUnregisteringClusterServiceBroker(t *testing.T) {
+	// given
+	suite := newTestSuiteAndStartControllers(t, false, false)
+	defer suite.tearDown()
+
+	suite.createClusterAddonsConfiguration(addonsConfigName, []string{redisRepo}, sourceHTTP)
+	suite.waitForClusterServiceBrokerRegistered()
+	suite.waitForServicesInCatalogEndpoint("cluster", []string{redisAddonID})
+
+	// when
+	suite.provisionInstanceFromClusterServiceClass("cluster", "stage")
+
+	// then
+	suite.waitForNumberOfReleases(1)
+
+	// when
+	suite.deleteClusterAddonsConfiguration(addonsConfigName)
+
+	// then
+	suite.waitForServicesInCatalogEndpoint("cluster", []string{})
+	// CSB still is registered because of the existing instance
+	suite.waitForClusterServiceBrokerRegistered()
+
+	// when
+	suite.deprovisionInstance("cluster", "stage")
+
+	// then
+	suite.waitForClusterServiceBrokerNotRegistered()
 }
 
 // TestAddonsConflicts check Helm Broker contract with conflicts on Addons.

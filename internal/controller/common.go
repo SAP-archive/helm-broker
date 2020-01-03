@@ -42,7 +42,9 @@ type common struct {
 	trace string
 }
 
-func newControllerCommon(client client.Client, addonGetterFactory addonGetterFactory, addonStorage addonStorage, chartStorage chartStorage, docsProvider docsProvider, brokerSyncer brokerSyncer, brokerFacade brokerFacade, templateService templateService, dstPath string, log logrus.FieldLogger) *common {
+func newControllerCommon(client client.Client, addonGetterFactory addonGetterFactory, addonStorage addonStorage,
+	chartStorage chartStorage, docsProvider docsProvider, brokerSyncer brokerSyncer, brokerFacade brokerFacade,
+	templateService templateService, dstPath string, log logrus.FieldLogger) *common {
 	return &common{
 		addonGetterFactory: addonGetterFactory,
 
@@ -68,7 +70,7 @@ func newControllerCommon(client client.Client, addonGetterFactory addonGetterFac
 func (c *common) SetWorkingNamespace(namespace string) {
 	c.namespace = internal.Namespace(namespace)
 	for _, svc := range []NamespacedService{
-		c.brokerSyncer, c.brokerFacade, c.docsProvider, c.commonClient, c.templateService,
+		c.brokerFacade, c.brokerSyncer, c.docsProvider, c.commonClient, c.templateService,
 	} {
 		svc.SetNamespace(namespace)
 	}
@@ -206,33 +208,27 @@ func (c *common) OnDelete(addon *internal.CommonAddon) error {
 			return errors.Wrap(err, "while listing addons configurations")
 		}
 
-		deleteBroker := true
 		for _, ad := range adds {
 			if ad.Status.Phase != v1alpha1.AddonsConfigurationReady {
 				c.log.Infof("- reprocessing unblocked conflicting configuration `%s`", ad.Meta.Name)
 				if err := c.commonClient.ReprocessRequest(ad.Meta.Name); err != nil {
 					return errors.Wrapf(err, "while requesting reprocess addons configuration %s", ad.Meta.Name)
 				}
-			} else {
-				deleteBroker = false
-			}
-		}
-		if deleteBroker {
-			if err := c.brokerFacade.Delete(); err != nil {
-				return errors.Wrap(err, "while deleting broker")
 			}
 		}
 
-		addonRemoved := false
+		anyAddonRemoved := false
 		for _, repo := range addon.Status.Repositories {
 			for _, ad := range repo.Addons {
-				addonRemoved, err = c.removeAddon(ad)
+				removed, err := c.removeAddon(ad)
+				anyAddonRemoved = anyAddonRemoved || removed
 				if err != nil && !storage.IsNotFoundError(err) {
 					return errors.Wrapf(err, "while deleting addon with charts for addon %s", ad.Name)
 				}
 			}
 		}
-		if !deleteBroker && addonRemoved {
+		// if there was any removal processed - resync broker
+		if anyAddonRemoved {
 			if err := c.brokerSyncer.Sync(); err != nil {
 				return errors.Wrapf(err, "while syncing broker for addon %s", addon.Meta.Name)
 			}
@@ -426,11 +422,7 @@ func (c *common) ensureBroker() error {
 	if err != nil {
 		return errors.Wrap(err, "while checking if Broker exist")
 	}
-	if !exist {
-		if err := c.brokerFacade.Create(); err != nil {
-			return errors.Wrap(err, "while creating Broker")
-		}
-	} else {
+	if exist {
 		if err := c.brokerSyncer.Sync(); err != nil {
 			return errors.Wrap(err, "while syncing Broker")
 		}

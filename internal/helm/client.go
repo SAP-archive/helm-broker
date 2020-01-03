@@ -42,6 +42,8 @@ func NewClient(cfg Config, log *logrus.Entry) *Client {
 		client.tlscfg = tlscfg
 	}
 
+	client.helmClientFactory = client.helmClient
+
 	return client
 }
 
@@ -52,6 +54,8 @@ type Client struct {
 	tlscfg            *tls.Config
 	tlsEnabled        bool
 	log               *logrus.Entry
+
+	helmClientFactory func() DeleteInstaller
 }
 
 // Install is installing chart release
@@ -62,7 +66,7 @@ func (cli *Client) Install(c *chart.Chart, values internal.ChartValues, releaseN
 	if err != nil {
 		return nil, errors.Wrapf(err, "while marshalling chart values: [%v]", values)
 	}
-	resp, err := cli.helmClient().InstallReleaseFromChart(c, string(namespace),
+	resp, err := cli.helmClientFactory().InstallReleaseFromChart(c, string(namespace),
 		helm.InstallWait(true),
 		helm.InstallTimeout(int64(installTimeout.Seconds())),
 		helm.ValueOverrides(byteValues),
@@ -76,13 +80,13 @@ func (cli *Client) Install(c *chart.Chart, values internal.ChartValues, releaseN
 // Delete is deleting release of the chart
 func (cli *Client) Delete(releaseName internal.ReleaseName) error {
 	cli.log.WithField("purge", deleteWithPurge).Infof("Deleting chart with release name [%s]", releaseName)
-	if _, err := cli.helmClient().DeleteRelease(string(releaseName), helm.DeletePurge(deleteWithPurge)); err != nil {
+	if _, err := cli.helmClientFactory().DeleteRelease(string(releaseName), helm.DeletePurge(deleteWithPurge)); err != nil {
 		return errors.Wrapf(err, "while deleting release name: [%s]", releaseName)
 	}
 	return nil
 }
 
-func (cli *Client) helmClient() helmDeleteInstaller {
+func (cli *Client) helmClient() DeleteInstaller {
 	// helm client is not thread safe -
 	//
 	// helm.ConnectTimeout option is REQUIRED, because of this issue:

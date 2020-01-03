@@ -24,7 +24,7 @@ const (
 	BrokerLabelValue = "true"
 )
 
-// Facade is responsible for creation k8s objects for namespaced broker
+// Facade is responsible for creation k8s objects for namespaced broker. The Facade is not thread-safe.
 type Facade struct {
 	client          client.Client
 	systemNamespace string

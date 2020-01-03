@@ -36,6 +36,8 @@ import (
 	"github.com/kyma-project/helm-broker/internal/broker"
 	"github.com/kyma-project/helm-broker/internal/config"
 	"github.com/kyma-project/helm-broker/internal/controller"
+	broker2 "github.com/kyma-project/helm-broker/internal/controller/broker"
+	"github.com/kyma-project/helm-broker/internal/helm"
 	"github.com/kyma-project/helm-broker/internal/rafter"
 	"github.com/kyma-project/helm-broker/internal/rafter/automock"
 	"github.com/kyma-project/helm-broker/internal/storage"
@@ -43,6 +45,7 @@ import (
 	"github.com/kyma-project/helm-broker/pkg/apis"
 	"github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
 	dtv1beta1 "github.com/kyma-project/helm-broker/pkg/apis/rafter/v1beta1"
+	helm2 "k8s.io/helm/pkg/helm"
 )
 
 func init() {
@@ -81,6 +84,10 @@ const (
 
 	basicPassword = "pAssword{"
 	basicUsername = "user001"
+
+	instanceID = "instance-id-001"
+
+	clusterBrokerName = "helm-broker"
 )
 
 func newTestSuiteAndStartControllers(t *testing.T, docsEnabled, httpBasicAuth bool) *testSuite {
@@ -108,8 +115,13 @@ func newTestSuite(t *testing.T, docsEnabled, httpBasicAuth bool) *testSuite {
 	require.NoError(t, err)
 	logger := logrus.New()
 
+	fakeHelmClient := &helm2.FakeClient{}
+	helmClient := helm.NewClient(helm.Config{}, logger.WithField("service", "helmclient")).WithHelmClientFactory(func() helm.DeleteInstaller {
+		return fakeHelmClient
+	})
+
 	brokerServer := broker.New(sFact.Addon(), sFact.Chart(), sFact.InstanceOperation(), sFact.BindOperation(), sFact.Instance(), sFact.InstanceBindData(),
-		bind.NewRenderer(), bind.NewResolver(k8sClientset.CoreV1()), nil, logger.WithField("test", "int"))
+		bind.NewRenderer(), bind.NewResolver(k8sClientset.CoreV1()), helmClient, logger.WithField("test", "int"))
 
 	// OSB API Server
 	server := httptest.NewServer(brokerServer.CreateHandler())
@@ -155,10 +167,11 @@ func newTestSuite(t *testing.T, docsEnabled, httpBasicAuth bool) *testSuite {
 	return &testSuite{
 		t: t,
 
-		dynamicClient: dynamicClient,
-		repoServer:    repoServer,
-		server:        server,
-		k8sClient:     k8sClientset,
+		dynamicClient:  dynamicClient,
+		repoServer:     repoServer,
+		server:         server,
+		k8sClient:      k8sClientset,
+		fakeHelmClient: fakeHelmClient,
 
 		stopCh:         stopCh,
 		tmpDir:         cfg.TmpDir,
@@ -180,7 +193,7 @@ func (ts *testSuite) StartControllers(docsEnabled bool) {
 
 	mgr := controller.SetupAndStartController(ts.restConfig, &config.ControllerConfig{
 		DevelopMode:              true, // DevelopMode allows "http" urls
-		ClusterServiceBrokerName: "helm-broker",
+		ClusterServiceBrokerName: clusterBrokerName,
 		TmpDir:                   os.TempDir(),
 		DocumentationEnabled:     docsEnabled,
 	}, ":8001", ts.storageFactory, uploadClient, ts.logger.WithField("svc", "broker"))
@@ -206,11 +219,12 @@ func newOSBClient(url string) (osb.Client, error) {
 }
 
 type testSuite struct {
-	t             *testing.T
-	server        *httptest.Server
-	repoServer    *httptest.Server
-	gitRepository *gitRepo
-	minio         *minioServer
+	t              *testing.T
+	server         *httptest.Server
+	repoServer     *httptest.Server
+	gitRepository  *gitRepo
+	minio          *minioServer
+	fakeHelmClient *helm2.FakeClient
 
 	osbClient     osb.Client
 	dynamicClient client.Client
@@ -222,6 +236,9 @@ type testSuite struct {
 	storageFactory storage.Factory
 
 	logger logrus.FieldLogger
+
+	planID    string
+	serviceID string
 }
 
 func (ts *testSuite) tearDown() {
@@ -236,11 +253,150 @@ func (ts *testSuite) tearDown() {
 	}
 }
 
+func (ts *testSuite) waitForNumberOfReleases(n int) {
+	timeoutCh := time.After(3 * time.Second)
+	for {
+		if len(ts.fakeHelmClient.Rels) == n {
+			return
+		}
+
+		select {
+		case <-timeoutCh:
+			assert.Fail(ts.t, "The timeout exceeded while waiting for the expected number of Helm releases")
+			return
+		default:
+			time.Sleep(pollingInterval)
+		}
+	}
+}
+
+func (ts *testSuite) listReleases() {
+	for _, r := range ts.fakeHelmClient.Rels {
+		fmt.Println(r.Name)
+	}
+}
+
 func (ts *testSuite) initMinioServer() {
 	minioServer, err := runMinioServer(ts.t, ts.tmpDir)
 	require.NoError(ts.t, err)
 
 	ts.minio = minioServer
+}
+
+func (ts *testSuite) provisionInstanceFromServiceClass(prefix, namespace string) {
+	osbClient, err := newOSBClient(fmt.Sprintf("%s/%s", ts.server.URL, prefix))
+	require.NoError(ts.t, err)
+	resp, err := osbClient.GetCatalog()
+	ts.planID = resp.Services[0].Plans[0].ID
+	ts.serviceID = resp.Services[0].ID
+	require.NoError(ts.t, err)
+
+	_, err = osbClient.ProvisionInstance(&osb.ProvisionRequest{
+		PlanID:            ts.planID,
+		ServiceID:         ts.serviceID,
+		InstanceID:        instanceID,
+		OrganizationGUID:  "org-guid",
+		SpaceGUID:         "spaceGUID",
+		AcceptsIncomplete: true,
+	})
+	require.NoError(ts.t, err)
+
+	// The controller checks if there is any Service Instance (managed by Service Catalog).
+	// The following code simulates Service Catalog actions
+	err = ts.dynamicClient.Create(context.TODO(), &v1beta1.ServiceClass{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "a-class",
+			Namespace: namespace,
+		},
+		Spec: v1beta1.ServiceClassSpec{
+			ServiceBrokerName: broker2.NamespacedBrokerName,
+		},
+	})
+	require.NoError(ts.t, err)
+	err = ts.dynamicClient.Create(context.TODO(), &v1beta1.ServiceInstance{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "instance-001",
+			Namespace: namespace,
+		},
+		Spec: v1beta1.ServiceInstanceSpec{
+			ServiceClassRef: &v1beta1.LocalObjectReference{
+				Name: "a-class",
+			},
+		},
+	})
+	require.NoError(ts.t, err)
+}
+
+func (ts *testSuite) provisionInstanceFromClusterServiceClass(prefix, namespace string) {
+	osbClient, err := newOSBClient(fmt.Sprintf("%s/%s", ts.server.URL, prefix))
+	require.NoError(ts.t, err)
+	resp, err := osbClient.GetCatalog()
+	ts.planID = resp.Services[0].Plans[0].ID
+	ts.serviceID = resp.Services[0].ID
+	require.NoError(ts.t, err)
+
+	_, err = osbClient.ProvisionInstance(&osb.ProvisionRequest{
+		PlanID:            ts.planID,
+		ServiceID:         ts.serviceID,
+		InstanceID:        instanceID,
+		OrganizationGUID:  "org-guid",
+		SpaceGUID:         "spaceGUID",
+		AcceptsIncomplete: true,
+	})
+	require.NoError(ts.t, err)
+
+	// The controller checks if there is any Service Instance (managed by Service Catalog).
+	// The following code simulates Service Catalog actions
+	err = ts.dynamicClient.Create(context.TODO(), &v1beta1.ClusterServiceClass{
+		ObjectMeta: v1.ObjectMeta{
+			Name: "some-class",
+		},
+		Spec: v1beta1.ClusterServiceClassSpec{
+			ClusterServiceBrokerName: clusterBrokerName,
+		},
+	})
+	require.NoError(ts.t, err)
+	err = ts.dynamicClient.Create(context.TODO(), &v1beta1.ServiceInstance{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "instance-001",
+			Namespace: namespace,
+		},
+		Spec: v1beta1.ServiceInstanceSpec{
+			ClusterServiceClassRef: &v1beta1.ClusterObjectReference{
+				Name: "some-class",
+			},
+		},
+	})
+	require.NoError(ts.t, err)
+}
+
+func (ts *testSuite) deprovisionInstance(prefix, namespace string) {
+	osbClient, err := newOSBClient(fmt.Sprintf("%s/%s", ts.server.URL, prefix))
+	require.NoError(ts.t, err)
+	require.NoError(ts.t, err)
+
+	_, err = osbClient.DeprovisionInstance(&osb.DeprovisionRequest{
+		PlanID:            ts.planID,
+		ServiceID:         ts.serviceID,
+		InstanceID:        instanceID,
+		AcceptsIncomplete: true,
+	})
+	require.NoError(ts.t, err)
+
+	// The controller checks if there is any Service Instance (managed by Service Catalog).
+	// The following code simulates Service Catalog actions
+	err = ts.dynamicClient.Delete(context.TODO(), &v1beta1.ServiceInstance{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "instance-001",
+			Namespace: namespace,
+		},
+		Spec: v1beta1.ServiceInstanceSpec{
+			ServiceClassRef: &v1beta1.LocalObjectReference{
+				Name: "a-class",
+			},
+		},
+	})
+	require.NoError(ts.t, err)
 }
 
 func (ts *testSuite) assertNoServicesInCatalogEndpoint(prefix string) {
@@ -339,6 +495,78 @@ func (ts *testSuite) waitForPhase(obj runtime.Object, status *v1alpha1.CommonAdd
 		select {
 		case <-timeoutCh:
 			assert.Fail(ts.t, fmt.Sprintf("The timeout exceeded while waiting for the Phase %s (%q), current phase: %s", expectedPhase, nn.String(), string(status.Phase)))
+			return
+		default:
+			time.Sleep(100 * time.Millisecond)
+		}
+	}
+}
+
+func (ts *testSuite) waitForServiceBrokerRegistered(namespace string) {
+	timeoutCh := time.After(3 * time.Second)
+	for {
+		var obj v1beta1.ServiceBroker
+		err := ts.dynamicClient.Get(context.TODO(), types.NamespacedName{Namespace: namespace, Name: broker2.NamespacedBrokerName}, &obj)
+		if err == nil {
+			return
+		}
+		select {
+		case <-timeoutCh:
+			assert.Fail(ts.t, "The timeout exceeded while waiting for the ServiceBroker", err)
+			return
+		default:
+			time.Sleep(100 * time.Millisecond)
+		}
+	}
+}
+
+func (ts *testSuite) waitForClusterServiceBrokerRegistered() {
+	timeoutCh := time.After(3 * time.Second)
+	for {
+		var obj v1beta1.ClusterServiceBroker
+		err := ts.dynamicClient.Get(context.TODO(), types.NamespacedName{Name: clusterBrokerName}, &obj)
+		if err == nil {
+			return
+		}
+		select {
+		case <-timeoutCh:
+			assert.Fail(ts.t, "The timeout exceeded while waiting for the ClusterServiceBroker", err)
+			return
+		default:
+			time.Sleep(100 * time.Millisecond)
+		}
+	}
+}
+
+func (ts *testSuite) waitForServiceBrokerNotRegistered(namespace string) {
+	timeoutCh := time.After(3 * time.Second)
+	for {
+		var obj v1beta1.ServiceBroker
+		err := ts.dynamicClient.Get(context.TODO(), types.NamespacedName{Namespace: namespace, Name: broker2.NamespacedBrokerName}, &obj)
+		if apierrors.IsNotFound(err) {
+			return
+		}
+		select {
+		case <-timeoutCh:
+			assert.Fail(ts.t, "The timeout exceeded while waiting for the ServiceBroker unregistration")
+			return
+		default:
+			time.Sleep(100 * time.Millisecond)
+		}
+	}
+}
+
+func (ts *testSuite) waitForClusterServiceBrokerNotRegistered() {
+	timeoutCh := time.After(3 * time.Second)
+	for {
+		var obj v1beta1.ClusterServiceBroker
+		err := ts.dynamicClient.Get(context.TODO(), types.NamespacedName{Name: clusterBrokerName}, &obj)
+		if apierrors.IsNotFound(err) {
+			return
+		}
+		select {
+		case <-timeoutCh:
+			assert.Fail(ts.t, "The timeout exceeded while waiting for the ClusterServiceBroker", err)
 			return
 		default:
 			time.Sleep(100 * time.Millisecond)
