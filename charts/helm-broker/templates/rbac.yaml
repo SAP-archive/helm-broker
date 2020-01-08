@@ -18,7 +18,7 @@ rules:
   resources: ["servicebrokers", "clusterservicebrokers"]
   verbs: ["create","delete","list","get","update", "watch"]
 - apiGroups: ["servicecatalog.k8s.io"]
-  resources: ["serviceinstance", "serviceclass", "clusterserviceclass"]
+  resources: ["serviceinstances", "serviceclasses", "clusterserviceclasses"]
   verbs: ["list","get","update", "watch"]
 - apiGroups: ["rafter.kyma-project.io"]
   resources: ["clusterassetgroups", "assetgroups"]
