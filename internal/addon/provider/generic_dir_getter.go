@@ -110,7 +110,9 @@ func (g *ClientModeDirGetter) AddonDocURL(name internal.AddonName, version inter
 		return "", exerr.Wrap(err, "while checking if doc exists")
 	}
 
-	err = archiver.Archive([]string{pathToDocs}, pathToTgz)
+	tar := archiver.NewTarGz()
+	tar.OverwriteExisting = true
+	err = tar.Archive([]string{pathToDocs}, pathToTgz)
 	if err != nil {
 		return "", exerr.Wrapf(err, "while creating archive '%s'", pathToTgz)
 	}
