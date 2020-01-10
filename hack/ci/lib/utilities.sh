@@ -55,7 +55,7 @@ function start_docker() {
 #  - KIND_VERSION
 #  - INSTALL_DIR
 #
-# usage: env INSTALL_DIR=/tmp KIND_VERSION=v0.4.0 install::local::kind
+# usage: env INSTALL_DIR=/tmp KIND_VERSION=v0.4.0 install::kind
 install::kind() {
     mkdir -p "${INSTALL_DIR}/bin"
     export PATH="${INSTALL_DIR}/bin:${PATH}"

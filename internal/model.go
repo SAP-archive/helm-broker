@@ -10,7 +10,7 @@ import (
 	"github.com/fatih/structs"
 	google_protobuf "github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
-	rafter "github.com/kyma-project/helm-broker/pkg/apis/rafter/v1beta1"
+	rafter "github.com/kyma-project/rafter/pkg/apis/rafter/v1beta1"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"

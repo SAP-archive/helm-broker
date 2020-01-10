@@ -108,7 +108,7 @@ func (a *CommonClient) ListConfigurations() ([]internal.CommonAddon, error) {
 	if a.IsNamespaceScoped() {
 		addonsConfigurationList := &v1alpha1.AddonsConfigurationList{}
 
-		err := a.List(context.TODO(), &client.ListOptions{Namespace: a.namespace}, addonsConfigurationList)
+		err := a.List(context.TODO(), addonsConfigurationList, client.InNamespace(a.namespace))
 		if err != nil {
 			return nil, errors.Wrapf(err, "while fetching AddonConfiguration list from namespace %s", a.namespace)
 		}
@@ -123,7 +123,7 @@ func (a *CommonClient) ListConfigurations() ([]internal.CommonAddon, error) {
 	} else {
 		addonsConfigurationList := &v1alpha1.ClusterAddonsConfigurationList{}
 
-		err := a.List(context.TODO(), &client.ListOptions{}, addonsConfigurationList)
+		err := a.List(context.TODO(), addonsConfigurationList)
 		if err != nil {
 			return nil, errors.Wrap(err, "while fetching ClusterAddonConfiguration list")
 		}

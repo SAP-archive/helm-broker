@@ -9,8 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Masterminds/semver"
-	"github.com/kubernetes-incubator/service-catalog/pkg/apis/servicecatalog/v1beta1"
 	"github.com/kyma-project/helm-broker/internal"
 	"github.com/kyma-project/helm-broker/internal/controller/automock"
 	"github.com/kyma-project/helm-broker/internal/controller/repository"
@@ -18,7 +16,10 @@ import (
 	"github.com/kyma-project/helm-broker/internal/storage"
 	"github.com/kyma-project/helm-broker/pkg/apis"
 	"github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
-	rafter "github.com/kyma-project/helm-broker/pkg/apis/rafter/v1beta1"
+
+	"github.com/Masterminds/semver"
+	"github.com/kubernetes-sigs/service-catalog/pkg/apis/servicecatalog/v1beta1"
+	rafter "github.com/kyma-project/rafter/pkg/apis/rafter/v1beta1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/api/core/v1"
@@ -32,9 +33,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	runtimeTypes "sigs.k8s.io/controller-runtime/pkg/webhook/admission/types"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
 )
 
 func TestReconcileAddonsConfiguration_AddAddonsProcess(t *testing.T) {
@@ -461,18 +463,38 @@ func getTestSuite(t *testing.T, objects ...runtime.Object) *testSuite {
 	return ts
 }
 
-type fakeManager struct {
-	t      *testing.T
-	client client.Client
-	sch    *runtime.Scheme
-}
-
 func (ts *testSuite) assertExpectations() {
 	ts.addonGetter.AssertExpectations(ts.t)
 	ts.brokerFacade.AssertExpectations(ts.t)
 	ts.docsProvider.AssertExpectations(ts.t)
 	ts.brokerSyncer.AssertExpectations(ts.t)
 	ts.addonGetterFactory.AssertExpectations(ts.t)
+}
+
+type fakeManager struct {
+	t      *testing.T
+	client client.Client
+	sch    *runtime.Scheme
+}
+
+func (f fakeManager) AddHealthzCheck(name string, check healthz.Checker) error {
+	return nil
+}
+
+func (f fakeManager) AddReadyzCheck(name string, check healthz.Checker) error {
+	return nil
+}
+
+func (f fakeManager) GetEventRecorderFor(name string) record.EventRecorder {
+	return nil
+}
+
+func (f fakeManager) GetAPIReader() client.Reader {
+	return nil
+}
+
+func (f fakeManager) GetWebhookServer() *webhook.Server {
+	return nil
 }
 
 func (fakeManager) Add(manager.Runnable) error {
@@ -496,10 +518,6 @@ func (f *fakeManager) GetScheme() *runtime.Scheme {
 	return f.sch
 }
 
-func (fakeManager) GetAdmissionDecoder() runtimeTypes.Decoder {
-	return nil
-}
-
 func (f *fakeManager) GetClient() client.Client {
 	return f.client
 }
@@ -509,10 +527,6 @@ func (fakeManager) GetFieldIndexer() client.FieldIndexer {
 }
 
 func (fakeManager) GetCache() cache.Cache {
-	return nil
-}
-
-func (fakeManager) GetRecorder(name string) record.EventRecorder {
 	return nil
 }
 

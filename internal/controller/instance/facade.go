@@ -3,7 +3,7 @@ package instance
 import (
 	"context"
 
-	"github.com/kubernetes-incubator/service-catalog/pkg/apis/servicecatalog/v1beta1"
+	"github.com/kubernetes-sigs/service-catalog/pkg/apis/servicecatalog/v1beta1"
 	"github.com/kyma-project/helm-broker/internal/controller/broker"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -25,7 +25,7 @@ func New(c client.Client, clusterBrokerName string) *Facade {
 // AnyServiceInstanceExistsForNamespacedServiceBroker checks whether there is at least one service instance created with helm broker service class.
 func (f *Facade) AnyServiceInstanceExistsForNamespacedServiceBroker(namespace string) (bool, error) {
 	instanceList := &v1beta1.ServiceInstanceList{}
-	err := f.client.List(context.TODO(), &client.ListOptions{Namespace: namespace}, instanceList)
+	err := f.client.List(context.TODO(), instanceList, client.InNamespace(namespace))
 	if err != nil {
 		return false, err
 	}
@@ -34,7 +34,7 @@ func (f *Facade) AnyServiceInstanceExistsForNamespacedServiceBroker(namespace st
 	}
 
 	classList := &v1beta1.ServiceClassList{}
-	err = f.client.List(context.TODO(), &client.ListOptions{Namespace: namespace}, classList)
+	err = f.client.List(context.TODO(), classList, client.InNamespace(namespace))
 	if err != nil {
 		return false, err
 	}
@@ -61,7 +61,7 @@ func (f *Facade) AnyServiceInstanceExistsForNamespacedServiceBroker(namespace st
 // AnyServiceInstanceExistsForClusterServiceBroker checks whether there is at least one service instance created with helm broker cluster service class.
 func (f *Facade) AnyServiceInstanceExistsForClusterServiceBroker() (bool, error) {
 	instanceList := &v1beta1.ServiceInstanceList{}
-	err := f.client.List(context.TODO(), &client.ListOptions{}, instanceList)
+	err := f.client.List(context.TODO(), instanceList)
 	if err != nil {
 		return false, err
 	}
@@ -70,7 +70,7 @@ func (f *Facade) AnyServiceInstanceExistsForClusterServiceBroker() (bool, error)
 	}
 
 	classList := &v1beta1.ClusterServiceClassList{}
-	err = f.client.List(context.TODO(), &client.ListOptions{}, classList)
+	err = f.client.List(context.TODO(), classList)
 	if err != nil {
 		return false, err
 	}

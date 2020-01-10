@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kubernetes-incubator/service-catalog/pkg/apis/servicecatalog/v1beta1"
+	"github.com/kubernetes-sigs/service-catalog/pkg/apis/servicecatalog/v1beta1"
 	osb "github.com/pmorie/go-open-service-broker-client/v2"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
@@ -44,7 +44,7 @@ import (
 	"github.com/kyma-project/helm-broker/internal/storage/testdata"
 	"github.com/kyma-project/helm-broker/pkg/apis"
 	"github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
-	dtv1beta1 "github.com/kyma-project/helm-broker/pkg/apis/rafter/v1beta1"
+	dtv1beta1 "github.com/kyma-project/rafter/pkg/apis/rafter/v1beta1"
 	helm2 "k8s.io/helm/pkg/helm"
 )
 
@@ -760,7 +760,7 @@ func (ts *testSuite) assertAssetGroupListIsEmpty() {
 	var assetGroupList dtv1beta1.AssetGroupList
 
 	err := wait.Poll(1*time.Second, 30*time.Second, func() (done bool, err error) {
-		err = ts.dynamicClient.List(context.TODO(), &client.ListOptions{}, &assetGroupList)
+		err = ts.dynamicClient.List(context.TODO(), &assetGroupList)
 		if err != nil {
 			return false, err
 		}
@@ -779,7 +779,7 @@ func (ts *testSuite) assertClusterAssetGroupListIsEmpty() {
 	var clusterAssetGroupList dtv1beta1.ClusterAssetGroupList
 
 	err := wait.Poll(1*time.Second, 30*time.Second, func() (done bool, err error) {
-		err = ts.dynamicClient.List(context.TODO(), &client.ListOptions{}, &clusterAssetGroupList)
+		err = ts.dynamicClient.List(context.TODO(), &clusterAssetGroupList)
 		if err != nil {
 			return false, err
 		}

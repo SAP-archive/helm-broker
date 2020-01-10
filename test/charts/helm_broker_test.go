@@ -108,7 +108,7 @@ func (s *TestSuite) createSampleClusterAddonsConfiguration() {
 		},
 	})
 
-	require.NoError(s.t, err, "while creating cluster addons configuration")
+	require.NoErrorf(s.t, err, "while creating cluster addons configuration")
 	s.t.Logf("ClusterAddonsConfigurations %q is created", s.sampleClusterAddonsCfgName)
 }
 

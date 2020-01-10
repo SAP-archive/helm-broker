@@ -3,7 +3,7 @@ package controller
 import (
 	"context"
 
-	"github.com/kubernetes-incubator/service-catalog/pkg/apis/servicecatalog/v1beta1"
+	"github.com/kubernetes-sigs/service-catalog/pkg/apis/servicecatalog/v1beta1"
 	"github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -73,7 +73,7 @@ func (sbc *ClusterBrokerController) Reconcile(request reconcile.Request) (reconc
 		return reconcile.Result{}, err
 	}
 	cacList := v1alpha1.ClusterAddonsConfigurationList{}
-	err = sbc.cli.List(context.TODO(), &client.ListOptions{}, &cacList)
+	err = sbc.cli.List(context.TODO(), &cacList)
 	if err != nil {
 		return reconcile.Result{}, err
 	}

@@ -32,17 +32,20 @@ else
 	mkdir -p licenses
 endif
 
-# Caution! Remove the “namespace: v.namespace” parameter after regeneration of
-# “components/helm-broker/pkg/client/informers/externalversions/addons/v1alpha1/interface.go” file.
-# clusterAddonsConfigurationInformer doesn’t have the “namespace” field
 .PHONY: generates
 # Generate CRD manifests, clients etc.
 generates: crd-manifests client
 
 .PHONY: crd-manifests
 # Generate CRD manifests
-crd-manifests:
-	go run vendor/sigs.k8s.io/controller-tools/cmd/controller-gen/main.go crd --domain kyma-project.io
+crd-manifests: get-yaml-editor
+	go run vendor/sigs.k8s.io/controller-tools/cmd/controller-gen/main.go crd paths=./pkg/apis/... output:crd:dir=charts/helm-broker/templates/crd
+	mv charts/helm-broker/templates/crd/addons.kyma-project.io_addonsconfigurations.yaml charts/helm-broker/templates/crd/addons-configuration.crd.yaml
+	mv charts/helm-broker/templates/crd/addons.kyma-project.io_clusteraddonsconfigurations.yaml charts/helm-broker/templates/crd/cluster-addons-configuration.crd.yaml
+	$(YAML_EDITOR) d -i charts/helm-broker/templates/crd/addons-configuration.crd.yaml metadata.annotations
+	$(YAML_EDITOR) w -i charts/helm-broker/templates/crd/addons-configuration.crd.yaml metadata.annotations["helm.sh/hook"]  "crd-install"
+	$(YAML_EDITOR) d -i charts/helm-broker/templates/crd/cluster-addons-configuration.crd.yaml metadata.annotations
+	$(YAML_EDITOR) w -i charts/helm-broker/templates/crd/cluster-addons-configuration.crd.yaml metadata.annotations["helm.sh/hook"]  "crd-install"
 
 .PHONY: client
 client:
