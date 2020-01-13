@@ -13,6 +13,7 @@ func handleHealth(etcdURL string) func(w http.ResponseWriter, req *http.Request)
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
+			defer resp.Body.Close()
 			if resp.StatusCode != 200 {
 				w.WriteHeader(http.StatusInternalServerError)
 				return
