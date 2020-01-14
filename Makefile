@@ -11,6 +11,10 @@ CONTROLLER_NAME = helm-controller
 REPO = $(DOCKER_PUSH_REPOSITORY)$(DOCKER_PUSH_DIRECTORY)/
 TAG = $(DOCKER_TAG)
 
+.PHONY: build-binaries
+build-binaries:
+	./hack/build-binaries.sh
+
 .PHONY: build
 build:
 	./before-commit.sh ci

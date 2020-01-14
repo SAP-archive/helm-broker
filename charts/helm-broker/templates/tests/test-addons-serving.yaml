@@ -12,7 +12,8 @@ spec:
   {{- end }}
   containers:
   - name: {{ .Release.Name }}--addon-serving-test
-    image: "{{ .Values.global.containerRegistry.path }}{{ .Values.tests.dir }}/{{ .Values.tests.image }}:{{ .Values.tests.tag }}"
+    imagePullPolicy: {{ .Values.global.image.pullPolicy }}
+    image: "{{ .Values.global.containerRegistry.path }}{{ .Values.tests.dir }}{{ .Values.tests.image }}:{{ .Values.tests.tag }}"
     env:
       - name: HELM_BROKER_URL
         value: "http://{{ template "fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local/cluster"

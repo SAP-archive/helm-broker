@@ -10,7 +10,7 @@ readonly SC_RELEASE_NAMESPACE="catalog"
 readonly SC_RELEASE_NAME="catalog"
 
 readonly CURRENT_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-readonly LOCAL_REPO_ROOT_DIR=$( cd ${CURRENT_DIR}/../../ && pwd )
+readonly LOCAL_REPO_ROOT_DIR=$( cd "${CURRENT_DIR}/../../" && pwd )
 readonly CONTAINER_REPO_ROOT_DIR="/workdir"
 
 source "${CURRENT_DIR}/lib/utilities.sh" || { echo 'Cannot load CI utilities.'; exit 1; }
@@ -44,8 +44,20 @@ chart::lint() {
 }
 
 chart::install_and_test() {
+    pushd "${LOCAL_REPO_ROOT_DIR}"
+    shout "- Building Helm Broker images from sources..."
+    make build-binaries
+    make build-image
+
+    shout "- Loading Helm Broker images into kind cluster..."
+    kind::load_image helm-broker-tests:latest
+    kind::load_image helm-controller:latest
+    kind::load_image helm-broker:latest
+
     shout '- Installing and testing Helm Broker chart...'
     docker_ct_exec ct install --charts ${CONTAINER_REPO_ROOT_DIR}/charts/helm-broker/
+
+    popd
 }
 
 chart::setup() {
