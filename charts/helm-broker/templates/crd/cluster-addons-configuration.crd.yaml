@@ -6,6 +6,13 @@ metadata:
   annotations:
     helm.sh/hook: crd-install
 spec:
+  additionalPrinterColumns:
+  - JSONPath: .status.phase
+    name: Phase
+    type: string
+  - JSONPath: .metadata.creationTimestamp
+    name: Age
+    type: date
   group: addons.kyma-project.io
   names:
     kind: ClusterAddonsConfiguration
