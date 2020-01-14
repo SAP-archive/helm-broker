@@ -273,7 +273,7 @@ func (c *common) loadRepositories(repos []v1alpha1.SpecRepository) *repository.C
 func (c *common) createAddons(URL string) ([]*repository.Entry, error) {
 	concreteGetter, err := c.addonGetterFactory.NewGetter(URL, c.dstPath)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "while getting getter from factory")
 	}
 	defer concreteGetter.Cleanup()
 

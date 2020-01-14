@@ -2,6 +2,7 @@ package broker_test
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/Masterminds/semver"
 	google_protobuf "github.com/golang/protobuf/ptypes/timestamp"
@@ -72,7 +73,11 @@ func (exp *expAll) Populate() {
 	exp.ServicePlan.ID = internal.ServicePlanID(exp.AddonPlan.ID)
 
 	exp.Namespace = internal.Namespace("fix-namespace")
-	exp.ReleaseName = internal.ReleaseName(fmt.Sprintf("hb-%s-%s-%s", exp.Addon.Name, exp.AddonPlan.Name, exp.InstanceID))
+	exp.ReleaseName = internal.ReleaseName(fmt.Sprintf(
+		"hb-%s-%s-%s",
+		strings.Trim(string(exp.Addon.Name[:6]), "-"),
+		strings.Trim(string(exp.AddonPlan.Name[:6]), "-"),
+		exp.InstanceID))
 	exp.ReleaseInfo.Time = &google_protobuf.Timestamp{
 		Seconds: 123123123,
 		Nanos:   1,
