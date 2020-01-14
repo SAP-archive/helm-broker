@@ -1,5 +1,5 @@
 /*
-Copyright 2019 The Helm Broker Authors.
+Copyright 2020 The Helm Broker Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -47,7 +47,6 @@ func (v *version) AddonsConfigurations() AddonsConfigurationInformer {
 }
 
 // ClusterAddonsConfigurations returns a ClusterAddonsConfigurationInformer.
-// Caution! remove "namespace: v.namespace" after file regeneration. clusterAddonsConfigurationInformer doesn't have the “namespace” field
 func (v *version) ClusterAddonsConfigurations() ClusterAddonsConfigurationInformer {
 	return &clusterAddonsConfigurationInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
 }

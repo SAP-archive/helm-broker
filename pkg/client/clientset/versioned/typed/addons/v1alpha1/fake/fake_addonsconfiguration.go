@@ -1,5 +1,5 @@
 /*
-Copyright 2019 The Helm Broker Authors.
+Copyright 2020 The Helm Broker Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -131,7 +131,7 @@ func (c *FakeAddonsConfigurations) DeleteCollection(options *v1.DeleteOptions, l
 // Patch applies the patch and returns the patched addonsConfiguration.
 func (c *FakeAddonsConfigurations) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.AddonsConfiguration, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(addonsconfigurationsResource, c.ns, name, data, subresources...), &v1alpha1.AddonsConfiguration{})
+		Invokes(testing.NewPatchSubresourceAction(addonsconfigurationsResource, c.ns, name, pt, data, subresources...), &v1alpha1.AddonsConfiguration{})
 
 	if obj == nil {
 		return nil, err

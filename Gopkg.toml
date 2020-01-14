@@ -82,16 +82,21 @@ required= [
   version = "2.8.2"
 
 [[constraint]]
-  name = "github.com/kubernetes-incubator/service-catalog"
-  version = "=v0.1.42"
+  name = "github.com/kubernetes-sigs/service-catalog"
+  version = "=v0.3.0-beta.2"
 
 [[constraint]]
   name="sigs.k8s.io/controller-runtime"
-  version = "=v0.1.12"
+  version = "=v0.4.0"
 
 [[constraint]]
   name = "github.com/kyma-project/kyma"
   revision = "eed4ed1c60440b9118f4a97a96d52efdd5a3a336"
+
+# Does not have official release yet
+[[constraint]]
+  name = "github.com/kyma-project/rafter"
+  revision = "2756b8f673dea4b25b0ee0ae12b384704588f438"
 
 [[constraint]]
   name = "github.com/SpectoLabs/hoverfly"
@@ -105,23 +110,33 @@ required= [
 
 [[override]]
   name="sigs.k8s.io/controller-tools"
-  version="v0.1.1"
+  version="=v0.2.4"
 
 [[override]]
   name = "k8s.io/api"
-  version = "kubernetes-1.13.4"
+  version = "kubernetes-1.16.4"
 
 [[override]]
   name = "k8s.io/apimachinery"
-  version = "kubernetes-1.13.4"
+  version = "kubernetes-1.16.4"
 
 [[override]]
   name = "k8s.io/client-go"
-  version = "kubernetes-1.13.4"
+  version = "kubernetes-1.16.4"
 
 [[override]]
   name = "k8s.io/code-generator"
-  version = "kubernetes-1.12.3"
+  # Needs to be at least 1.17 to solve the issue with ignoring the `genclient:nonNamespaced`
+  # https://github.com/kubernetes/kubernetes/issues/80457
+  version = "kubernetes-1.17.0"
+
+[[override]]
+  name="sigs.k8s.io/controller-runtime"
+  version = "=v0.4.0"
+
+[[override]]
+  name="golang.org/x/tools"
+  version = "gopls/v0.2.2"
 
 # For dependency below: Refer to issue https://github.com/golang/dep/issues/1799
 [[override]]

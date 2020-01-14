@@ -5,8 +5,9 @@ set -o errexit
 readonly CURRENT_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 readonly REPO_ROOT_DIR=$( cd ${CURRENT_DIR}/../ && pwd )
 
-readonly SC_NAMESPACE="catalog"
-readonly SC_CHART_NAME="catalog"
+readonly SC_RELEASE_NAMESPACE="catalog"
+readonly SC_RELEASE_NAME="catalog"
+
 readonly HB_NAMESPACE="helm-broker"
 readonly HB_CHART_NAME="helm-broker"
 
@@ -68,17 +69,18 @@ tiller::assert_tiller_is_up() {
   done
 }
 
-install::service_catalog() {
-  shout '- Provisioning Service Catalog chart...'
-
-  helm repo add svc-cat https://svc-catalog-charts.storage.googleapis.com
-  helm install svc-cat/catalog --name ${SC_CHART_NAME} --namespace ${SC_NAMESPACE} --wait
-}
-
 install::helm_broker() {
   shout '- Provisioning Helm Broker chart...'
 
   helm install ${REPO_ROOT_DIR}/charts/helm-broker --name ${HB_CHART_NAME} --namespace ${HB_NAMESPACE} --wait
+}
+
+# Installs service catalog on cluster.
+install::service_catalog() {
+  shout "- Provisioning Service Catalog chart in ${SC_RELEASE_NAMESPACE} namespace..."
+
+  helm repo add svc-cat https://svc-catalog-charts.storage.googleapis.com
+  helm install svc-cat/catalog --name "${SC_RELEASE_NAME}" --namespace "${SC_RELEASE_NAMESPACE}" --wait
 }
 
 main() {

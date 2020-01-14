@@ -5,7 +5,7 @@ import (
 
 	"context"
 
-	"github.com/kubernetes-incubator/service-catalog/pkg/apis/servicecatalog/v1beta1"
+	"github.com/kubernetes-sigs/service-catalog/pkg/apis/servicecatalog/v1beta1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"

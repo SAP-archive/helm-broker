@@ -1,5 +1,5 @@
 /*
-Copyright 2019 The Helm Broker Authors.
+Copyright 2020 The Helm Broker Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -123,7 +123,7 @@ func (c *FakeClusterAddonsConfigurations) DeleteCollection(options *v1.DeleteOpt
 // Patch applies the patch and returns the patched clusterAddonsConfiguration.
 func (c *FakeClusterAddonsConfigurations) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.ClusterAddonsConfiguration, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewRootPatchSubresourceAction(clusteraddonsconfigurationsResource, name, data, subresources...), &v1alpha1.ClusterAddonsConfiguration{})
+		Invokes(testing.NewRootPatchSubresourceAction(clusteraddonsconfigurationsResource, name, pt, data, subresources...), &v1alpha1.ClusterAddonsConfiguration{})
 	if obj == nil {
 		return nil, err
 	}

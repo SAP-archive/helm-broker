@@ -3,7 +3,7 @@ package controller
 import (
 	"context"
 
-	"github.com/kubernetes-incubator/service-catalog/pkg/apis/servicecatalog/v1beta1"
+	"github.com/kubernetes-sigs/service-catalog/pkg/apis/servicecatalog/v1beta1"
 	"github.com/kyma-project/helm-broker/internal/controller/broker"
 	"github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
 	"k8s.io/apimachinery/pkg/types"
@@ -90,7 +90,7 @@ func (sbc *BrokerController) Reconcile(request reconcile.Request) (reconcile.Res
 	}
 	// list addons configurations
 	acList := v1alpha1.AddonsConfigurationList{}
-	err = sbc.cli.List(context.TODO(), &client.ListOptions{Namespace: currentNamespace}, &acList)
+	err = sbc.cli.List(context.TODO(), &acList, client.InNamespace(currentNamespace))
 	if err != nil {
 		return reconcile.Result{}, err
 	}
@@ -101,10 +101,14 @@ func (sbc *BrokerController) Reconcile(request reconcile.Request) (reconcile.Res
 		return reconcile.Result{}, err
 	}
 	if sbExists && !anyNamespacedConfigExists && !instanceByNamespacedExists {
-		sbc.namespacedBrokerFacade.Delete()
+		if err := sbc.namespacedBrokerFacade.Delete(); err != nil {
+			return reconcile.Result{}, err
+		}
 	}
 	if !sbExists && (anyNamespacedConfigExists || instanceByNamespacedExists) {
-		sbc.namespacedBrokerFacade.Create()
+		if err := sbc.namespacedBrokerFacade.Create(); err != nil {
+			return reconcile.Result{}, err
+		}
 	}
 
 	return reconcile.Result{}, nil

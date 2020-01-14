@@ -5,15 +5,17 @@ import (
 )
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
+// Important: Run "make generates" to regenerate files after modifying those structs
+
 
 // +kubebuilder:object:root=true
 
 // AddonsConfiguration is the Schema for the addonsconfigurations API
-// Important: Run "make generates" to regenerate files after modifying this struct
 //
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-// +kubebuilder:categories=all,addons
+// +kubebuilder:resource:categories=all;addons
+// +kubebuilder:subresource:status
 type AddonsConfiguration struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -33,7 +35,6 @@ type AddonsConfigurationStatus struct {
 }
 
 // AddonsConfigurationList contains a list of AddonsConfiguration
-// Important: Run "make generates" to regenerate files after modifying this struct
 //
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type AddonsConfigurationList struct {
@@ -45,18 +46,18 @@ type AddonsConfigurationList struct {
 // +kubebuilder:object:root=true
 
 // ClusterAddonsConfiguration is the Schema for the addonsconfigurations API
-// Important: Run "make generates" to regenerate files after modifying this struct
 //
 // +genclient
 // +genclient:nonNamespaced
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:categories=all,addons
+// +kubebuilder:subresource:status
+// +kubebuilder:resource:scope=Cluster
 type ClusterAddonsConfiguration struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	Spec ClusterAddonsConfigurationSpec `json:"spec,omitempty"`
-	// +optional
 	Status ClusterAddonsConfigurationStatus `json:"status,omitempty"`
 }
 
@@ -71,7 +72,6 @@ type ClusterAddonsConfigurationStatus struct {
 }
 
 // ClusterAddonsConfigurationList contains a list of ClusterAddonsConfiguration
-// Important: Run "make generates" to regenerate files after modifying this struct
 // +genclient:nonNamespaced
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type ClusterAddonsConfigurationList struct {

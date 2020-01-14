@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/kubernetes-incubator/service-catalog/pkg/apis/servicecatalog/v1beta1"
+	"github.com/kubernetes-sigs/service-catalog/pkg/apis/servicecatalog/v1beta1"
 	"github.com/kyma-project/helm-broker/internal/addon"
 	"github.com/kyma-project/helm-broker/internal/addon/provider"
 	"github.com/kyma-project/helm-broker/internal/config"
@@ -15,7 +15,7 @@ import (
 	"github.com/kyma-project/helm-broker/internal/rafter"
 	"github.com/kyma-project/helm-broker/internal/storage"
 	"github.com/kyma-project/helm-broker/pkg/apis"
-	rafterv1beta1 "github.com/kyma-project/helm-broker/pkg/apis/rafter/v1beta1"
+	rafterv1beta1 "github.com/kyma-project/rafter/pkg/apis/rafter/v1beta1"
 	"github.com/sirupsen/logrus"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/manager"

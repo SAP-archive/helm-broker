@@ -6,6 +6,9 @@ set -o pipefail
 
 readonly TMP_DIR=$(mktemp -d)
 
+readonly SC_RELEASE_NAMESPACE="catalog"
+readonly SC_RELEASE_NAME="catalog"
+
 readonly CURRENT_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 readonly LOCAL_REPO_ROOT_DIR=$( cd ${CURRENT_DIR}/../../ && pwd )
 readonly CONTAINER_REPO_ROOT_DIR="/workdir"
@@ -68,6 +71,14 @@ install::tiller() {
     docker_ct_exec helm init --service-account tiller --upgrade --wait
 }
 
+# Installs service catalog on cluster.
+install::service_catalog() {
+  shout "- Provisioning Service Catalog chart in ${SC_RELEASE_NAMESPACE} namespace..."
+
+  docker_ct_exec helm repo add svc-cat https://svc-catalog-charts.storage.googleapis.com
+  docker_ct_exec helm install svc-cat/catalog --name "${SC_RELEASE_NAME}" --namespace "${SC_RELEASE_NAMESPACE}" --wait
+}
+
 install_local-path-provisioner() {
     # kind doesn't support Dynamic PVC provisioning yet https://github.com/kubernetes-sigs/kind/issues/118,
     # this is one ways to get it working
@@ -106,8 +117,8 @@ main() {
     setup_kubectl_in_ct_container
     install_local-path-provisioner
     install::tiller
+    install::service_catalog
 
-    docker_ct_exec kubectl create -f https://raw.githubusercontent.com/kubernetes-sigs/service-catalog/master/charts/catalog/templates/crds/clusterservicebroker.yaml
     chart::lint
     chart::install_and_test
 }

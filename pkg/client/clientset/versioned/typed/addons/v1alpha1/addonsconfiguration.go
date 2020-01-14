@@ -1,5 +1,5 @@
 /*
-Copyright 2019 The Helm Broker Authors.
+Copyright 2020 The Helm Broker Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"time"
+
 	v1alpha1 "github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
 	scheme "github.com/kyma-project/helm-broker/pkg/client/clientset/versioned/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -76,11 +78,16 @@ func (c *addonsConfigurations) Get(name string, options v1.GetOptions) (result *
 
 // List takes label and field selectors, and returns the list of AddonsConfigurations that match those selectors.
 func (c *addonsConfigurations) List(opts v1.ListOptions) (result *v1alpha1.AddonsConfigurationList, err error) {
+	var timeout time.Duration
+	if opts.TimeoutSeconds != nil {
+		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
+	}
 	result = &v1alpha1.AddonsConfigurationList{}
 	err = c.client.Get().
 		Namespace(c.ns).
 		Resource("addonsconfigurations").
 		VersionedParams(&opts, scheme.ParameterCodec).
+		Timeout(timeout).
 		Do().
 		Into(result)
 	return
@@ -88,11 +95,16 @@ func (c *addonsConfigurations) List(opts v1.ListOptions) (result *v1alpha1.Addon
 
 // Watch returns a watch.Interface that watches the requested addonsConfigurations.
 func (c *addonsConfigurations) Watch(opts v1.ListOptions) (watch.Interface, error) {
+	var timeout time.Duration
+	if opts.TimeoutSeconds != nil {
+		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
+	}
 	opts.Watch = true
 	return c.client.Get().
 		Namespace(c.ns).
 		Resource("addonsconfigurations").
 		VersionedParams(&opts, scheme.ParameterCodec).
+		Timeout(timeout).
 		Watch()
 }
 
@@ -150,10 +162,15 @@ func (c *addonsConfigurations) Delete(name string, options *v1.DeleteOptions) er
 
 // DeleteCollection deletes a collection of objects.
 func (c *addonsConfigurations) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
+	var timeout time.Duration
+	if listOptions.TimeoutSeconds != nil {
+		timeout = time.Duration(*listOptions.TimeoutSeconds) * time.Second
+	}
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("addonsconfigurations").
 		VersionedParams(&listOptions, scheme.ParameterCodec).
+		Timeout(timeout).
 		Body(options).
 		Do().
 		Error()

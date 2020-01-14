@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kubernetes-incubator/service-catalog/pkg/apis/servicecatalog/v1beta1"
+	"github.com/kubernetes-sigs/service-catalog/pkg/apis/servicecatalog/v1beta1"
 	"github.com/kyma-project/helm-broker/internal/controller/automock"
 	"github.com/kyma-project/helm-broker/internal/controller/repository"
 	"github.com/kyma-project/helm-broker/internal/platform/logger/spy"

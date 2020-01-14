@@ -13,11 +13,11 @@ global:
   helm_broker:
     image: helm-broker
     dir: /pr
-    version: PR-71
+    version: PR-80
   helm_controller:
     image: helm-controller
     dir: /pr
-    version: PR-71
+    version: PR-80
   # helm broker service parameters
   service:
     type: NodePort

@@ -21,6 +21,7 @@ const (
 )
 
 // AddonStatus define the addon status
+// +kubebuilder:validation:Enum=Ready;Failed
 type AddonStatus string
 
 const (
@@ -61,7 +62,6 @@ type CommonAddonsConfigurationSpec struct {
 type Addon struct {
 	Name    string `json:"name"`
 	Version string `json:"version"`
-	// +kubebuilder:validation:Enum=Ready,Failed
 	Status  AddonStatus       `json:"status,omitempty"`
 	Reason  AddonStatusReason `json:"reason,omitempty"`
 	Message string            `json:"message,omitempty"`
