@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+	"strings"
 	"sync"
 
 	"github.com/kyma-project/helm-broker/internal"
@@ -293,13 +294,23 @@ func getNamespaceFromContext(contextProfile map[string]interface{}) (internal.Na
 	return internal.Namespace(ns.(string)), nil
 }
 
-func createReleaseName(name internal.AddonName, planName internal.AddonPlanName, iID internal.InstanceID) internal.ReleaseName {
-	maxLen := 53
-	relName := fmt.Sprintf("hb-%s-%s-%s", name, planName, iID)
-	if len(relName) <= maxLen {
-		return internal.ReleaseName(relName)
+func normalize(name string) string {
+	maxLen := 6
+	if len(name) > maxLen {
+		name = name[:maxLen]
 	}
-	return internal.ReleaseName(relName[:maxLen])
+	return strings.Trim(name, "-")
+}
+
+func createReleaseName(name internal.AddonName, planName internal.AddonPlanName, iID internal.InstanceID) internal.ReleaseName {
+	// max name length 53 = 36(GUID) + 4(pre + special char) + 12 (6 for name, 6 for plan) + 1 extra char
+	releaseName := fmt.Sprintf(
+		"hb-%s-%s-%s",
+		normalize(string(name)),
+		normalize(string(planName)),
+		iID)
+
+	return internal.ReleaseName(releaseName)
 }
 
 // to work correctly, https://github.com/ghodss/yaml has to be used
