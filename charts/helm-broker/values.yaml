@@ -12,11 +12,11 @@ global:
   # paths to docker images
   helm_broker:
     image: helm-broker
-    dir: /pr
+    dir: /pr/
     version: PR-80
   helm_controller:
     image: helm-controller
-    dir: /pr
+    dir: /pr/
     version: PR-80
   # helm broker service parameters
   service:
@@ -42,7 +42,7 @@ ctrl:
 
 tests:
   image: helm-broker-tests
-  dir: /pr
+  dir: /pr/
   tag: PR-71
   securityContext:
     runAsUser: 2000

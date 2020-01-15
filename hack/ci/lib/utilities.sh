@@ -141,5 +141,5 @@ kind::delete_cluster() {
 # Arguments:
 #   $1 - image name to copy into cluster nodes
 kind::load_image() {
-    kind load docker-image $1 --name=${KIND_CLUSTER_NAME}
+    kind load docker-image "$1" --name=${KIND_CLUSTER_NAME}
 }

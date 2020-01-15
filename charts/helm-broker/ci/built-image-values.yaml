@@ -1,0 +1,14 @@
+global:
+  containerRegistry:
+    path: ""
+  helm_broker:
+    dir: ""
+    version: "latest"
+  helm_controller:
+    dir: ""
+    version: "latest"
+
+tests:
+  image: helm-broker-tests
+  dir: ""
+  tag: "latest"

@@ -14,44 +14,9 @@ echo "GOPATH:" + $GOPATH
 echo -e "${NC}"
 
 ##
-# DEP ENSURE
+# Build binaries
 ##
-dep ensure -v --vendor-only
-ensureResult=$?
-if [ ${ensureResult} != 0 ]; then
-	echo -e "${RED}✗ dep ensure -v --vendor-only${NC}\n$ensureResult${NC}"
-	exit 1
-else echo -e "${GREEN}√ dep ensure -v --vendor-only${NC}"
-fi
-
-##
-# GO BUILD
-##
-binaries=("broker" "controller" "indexbuilder" "targz")
-buildEnv=""
-if [ "$1" == "$CI_FLAG" ]; then
-	# build binary statically for linux architecture
-	buildEnv="env CGO_ENABLED=0 GOOS=linux GOARCH=amd64"
-fi
-
-for binary in "${binaries[@]}"; do
-	${buildEnv} go build -o ${binary} ./cmd/${binary}
-	goBuildResult=$?
-	if [ ${goBuildResult} != 0 ]; then
-		echo -e "${RED}✗ go build ${binary} ${NC}\n$goBuildResult${NC}"
-		exit 1
-	else echo -e "${GREEN}√ go build ${binary} ${NC}"
-	fi
-done
-
-echo "? compile chart tests"
-${buildEnv} go test -v -c -o hb_chart_test ./test/charts/helm_broker_test.go
-goBuildResult=$?
-if [[ ${goBuildResult} != 0 ]]; then
-    echo -e "${RED}✗ go test -c ./test/charts/helm_broker_test.go ${NC}\n$goBuildResult${NC}"
-    exit 1
-else echo -e "${GREEN}√ go test -c ./test/charts/helm_broker_test.go ${NC}"
-fi
+source ./hack/build-binaries.sh
 
 ##
 # DEP STATUS
