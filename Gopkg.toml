@@ -123,6 +123,10 @@ required= [
   name = "k8s.io/code-generator"
   version = "kubernetes-1.12.3"
 
+[[override]]
+  name = "github.com/stretchr/testify"
+  version = "v1.4.0"
+
 # For dependency below: Refer to issue https://github.com/golang/dep/issues/1799
 [[override]]
 name = "gopkg.in/fsnotify.v1"
