@@ -1,17 +1,10 @@
 # Security
 
-Read this document to learn how to secure the Helm Broker on your cluster.
+This document presents the ways to secure the Helm Broker on your cluster against possbile vulnerabilities. 
 
-## Vulnerabilities
+## Authorize access to AddonsConfigurations
 
-The Helm Broker with the current architecture have vulnerabilities. Read below points to know how to protect yourself.
+In the [AddonsConfiguration](https://kyma-project.io/docs/master/components/helm-broker#custom-resource-addons-configuration) custom resource (CR), you can provide URLs to your external addon repositories. If a server delivers too much payload, the Helm Broker may crash with the `OOM killed` reason. This may be used by third parties to damage your cluster or to increase costs. To mitigate this issue, authorize access to the AddonsConfiguration CR. Read [this](https://github.com/kyma-project/kyma/blob/master/docs/security/03-05-roles-in-kyma.md) document to learn how to grant the roles and permissions in Kyma. 
 
-### Addons Configurations
-
-In the AddonsConfiguration CR, you can provide the URLs to addon repositories. If the server will provide too much payload the Helm Broker can crash with the `OOM killed` reason.
-That's a weak part of the Helm Broker which can be used by the third persons to damage the cluster or to increase the costs.
-To mitigate that issue, you can authorize access to the AddonsConfigurations CR. Read this [document](https://github.com/kyma-project/kyma/blob/master/docs/security/03-05-roles-in-kyma.md) to see how it's done in Kyma. 
-
-
-> **NOTE:** The amount of memory and storage size determine the maximum size of your addons repository. These limits are set in the
+> **NOTE:** The amount of memory and storage size determines the maximum size of your addons repository. These limits are set in the
 [Helm Broker chart](https://kyma-project.io/docs/components/helm-broker/#configuration-helm-broker-chart).
