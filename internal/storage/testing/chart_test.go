@@ -190,8 +190,8 @@ func TestMultipleNamespaces(t *testing.T) {
 		_, prodErr := ts.s.Get(ns2, "redis", *semver.MustParse("1.0"))
 
 		// THEN
-		assert.Equal(t, chartForCluster, *cCh)
-		assert.Equal(t, chartForNS, *nCh)
+		ts.AssertChartEqual(&chartForCluster, cCh)
+		ts.AssertChartEqual(&chartForNS, nCh)
 		ts.AssertNotFoundError(prodErr)
 
 	})
