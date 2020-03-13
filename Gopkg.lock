@@ -294,6 +294,14 @@
   version = "v4"
 
 [[projects]]
+  digest = "1:ec66ad050342a3573ed2f5a4337d51b4c6d5d2a717cc6c9ecf86b081235a5759"
+  name = "github.com/cyphar/filepath-securejoin"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "a261ee33d7a517f054effbf451841abaafe3e0fd"
+  version = "v0.2.2"
+
+[[projects]]
   digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
@@ -1864,7 +1872,7 @@
   revision = "e17681d19d3ac4837a019ece36c2a0ec31ffe985"
 
 [[projects]]
-  digest = "1:a3ce4e6d9710b97cc40c9ab59dcfabcfa604ec0080e6bbc4122ec3e3a6afac17"
+  digest = "1:50d9e22e9b76b99fbba64a8fadf23fa7836d61d66bbb7cd3a6d00078a7530972"
   name = "k8s.io/helm"
   packages = [
     "pkg/chartutil",
@@ -1885,8 +1893,8 @@
     "pkg/version",
   ]
   pruneopts = "UT"
-  revision = "02a47c7249b1fc6d8fd3b94e6b4babf9d818144e"
-  version = "v2.12.1"
+  revision = "1ee0254c86d4ed6887327dabed7aa7da29d7eb0d"
+  version = "v2.16.3"
 
 [[projects]]
   digest = "1:c283ca5951eb7d723d3300762f96ff94c2ea11eaceb788279e2b7327f92e4f2a"
