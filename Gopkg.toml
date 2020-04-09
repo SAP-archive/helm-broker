@@ -148,7 +148,6 @@ required= [
   source = "https://github.com/fsnotify/fsnotify.git"
   version="v1.4.7"
 
-
 [[override]]
   name = "gopkg.in/yaml.v2"
   version = "v2.2.8"
