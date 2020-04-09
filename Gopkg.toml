@@ -144,6 +144,11 @@ required= [
 
 # For dependency below: Refer to issue https://github.com/golang/dep/issues/1799
 [[override]]
-name = "gopkg.in/fsnotify.v1"
-source = "https://github.com/fsnotify/fsnotify.git"
-version="v1.4.7"
+  name = "gopkg.in/fsnotify.v1"
+  source = "https://github.com/fsnotify/fsnotify.git"
+  version="v1.4.7"
+
+
+[[override]]
+  name = "gopkg.in/yaml.v2"
+  version = "v2.2.8"
