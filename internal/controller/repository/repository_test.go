@@ -39,5 +39,5 @@ func TestRepository_FetchingError(t *testing.T) {
 	// Then
 	assert.Equal(t, v1alpha1.RepositoryStatusFailed, tr.Repository.Status)
 	assert.Equal(t, v1alpha1.RepositoryURLFetchingError, tr.Repository.Reason)
-	assert.Equal(t, "Fetching repository failed due to error: 'bug'", tr.Repository.Message)
+	assert.Equal(t, "Addon repository unreachable", tr.Repository.Message)
 }

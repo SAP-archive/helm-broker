@@ -48,7 +48,7 @@ func (r RepositoryStatusReason) String() string {
 func (r RepositoryStatusReason) Message() string {
 	switch r {
 	case RepositoryURLFetchingError:
-		return "Fetching repository failed due to error: '%v'"
+		return "Addon repository unreachable"
 	default:
 		return ""
 	}
