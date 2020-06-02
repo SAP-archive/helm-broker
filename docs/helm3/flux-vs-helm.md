@@ -46,18 +46,14 @@ In the following tabs, you can find pros and cons of the above solutions.
   Helm 3
   </summary>
    
-   :heavy_plus_sign:
+   <br/>:heavy_plus_sign: Is more lightweight solution
+   <br/>:heavy_plus_sign: Provides new types of chart
+   <br/>:heavy_plus_sign: Does not need any in-cluster application
+   <br/>:heavy_plus_sign: Can be extended with the Helm Operator
+   <br/>:heavy_plus_sign: Does not need CR to work
    
-   - Is more secure then Helm 2
-   - Provides new types of chart
-   - Does not need any in-cluster application
-   - Can be extended with the Helm Operator
-   - Does not need CR to work
-   
-   :heavy_minus_sign:
-   
-   - No automation process
-   - No parallel executions
+   <br/>:heavy_minus_sign: Does not provide automated processes
+   <br/>:heavy_minus_sign: Does not provide parallel executions
    
   </details>
 
@@ -66,19 +62,16 @@ In the following tabs, you can find pros and cons of the above solutions.
   Helm Operator
   </summary>
    
-   :heavy_plus_sign:
+   <br/>:heavy_plus_sign: Can automate many things and improve customer experience
+   <br/>:heavy_plus_sign: Provides scalable parallel processing
+   <br/>:heavy_plus_sign: Can download a chart from any repository
+   <br/>:heavy_plus_sign: Can be extended with Flux
    
-   - Can automate many things and improve customer experience
-   - Provides scalable processing of the different releases
-   - Can download a chart from any repository
-   - Can be extended with Flux and [memcached](https://github.com/memcached/memcached) used to cache metadata of the pulled docker images
-   
-   :heavy_minus_sign:
-   
-   - Maintenance
-   - Increased resources consumption
-   - New controller along with its CR
-   - With current implementation based on AddonConfigurations we already have charts and their plans downloaded in the Helm Broker, so it look like overhead to have the same logic in another component.
+   <br/>:heavy_minus_sign: Maintenance
+   <br/>:heavy_minus_sign: Increased resources consumption
+   <br/>:heavy_minus_sign: New controller along with its CR
+   <br/>:heavy_minus_sign: It requires more implementation in Helm Broker then Helm 3 approach
+   <br/>:heavy_minus_sign: Another dependency of Helm Broker or 
 
   </details>
 </div>
@@ -103,13 +96,17 @@ In order to use Helm Operator approach, we may need to provide the following dep
 
 - [Helm Operator](https://github.com/fluxcd/helm-operator/tree/v1.1.0/chart/helm-operator)
 - [HelmRelease CR](https://raw.githubusercontent.com/fluxcd/helm-operator/1.1.0/deploy/crds.yaml)
-- **Optional** [FluxCD](https://github.com/fluxcd/helm-operator/tree/master/chart/helm-operator)
+- **Optional** [FluxCD](https://github.com/fluxcd/helm-operator/tree/master/chart/helm-operator) along with [memcached](https://github.com/memcached/memcached)
 
 >**NOTE:** When working with FluxCD use [FluxCTL](https://github.com/fluxcd/flux/releases/tag/1.19.0).
 
 With this solution the Helm Broker would need to create a HelmRelease CR in the provisioning process. It wouldn't need the Helm client anymore.
 
-The Helm Operator beyond the Helm features like managing the charts provides also a lot of features for the Github, but most of them can be used only when FluxCD is configured and installed on the cluster.
+In order to not download the same charts two times, first time by Helm Broker and second by Helm Operator, the Addons' downloading logic would need to be replaced by some other logic which could read only the `index.yaml` file and to create a proper response from its entries on the `/v2/catalog` endpoint. 
+
+#### Flux
+
+The Helm Operator provides a lot of GitOps features, but most of them can be used only when FluxCD is configured and installed on the cluster.
 
 Using Flux you can automate the process of delivering the applications' latest changes after their docker images were build. For example the Helm Broker could mark the HelmRelease created within instance provisioning with the label:
 ```
@@ -122,7 +119,13 @@ There are also other labels which you can use to configure the automation proces
 
 The Helm 3 provides a migration [CLI](https://github.com/helm/helm-2to3) along with the [documentation](https://helm.sh/docs/topics/v2_v3_migration/).
 
-## Links
+## Summary
+
+In my opinion implementing the Helm Operator's support in Helm Broker would need a lot of effort in order to adjust current implementation, but automated processes and other features looks interesting and I wouldn't rule them out to implement in the future.  
+
+It seems the best choice is to stay with plain Helm 3.
+
+### Links
 
 Explore the following links to expand your knowledge about above things:
 
