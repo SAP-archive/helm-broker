@@ -10,9 +10,9 @@ The new version of Helm has numerous new features, but a few deserve highlightin
 - There is no in-cluster (Tiller) component
 - New version of [Helm charts](https://helm.sh/docs/topics/charts/)
 - [Library charts](https://helm.sh/docs/topics/library_charts/) - charts that are used primarily as a resource for other charts
-- Experimental support for storing Helm charts in OCI registries is available for testing
-- A 3-way strategic merge patch is now applied when upgrading Kubernetes resources
-- A chart's supplied values can now be validated against a JSON schema
+- Experimental support for storing [Helm charts in OCI registries](https://helm.sh/docs/topics/registries/) is available for testing
+- A [3-way strategic merge patch](https://helm.sh/docs/faq/#improved-upgrade-strategy-3-way-strategic-merge-patches) is now applied when upgrading Kubernetes resources
+- A chart's supplied values can now be [validated](https://helm.sh/docs/faq/#validating-chart-values-with-jsonschema) against a JSON schema
 - A number of small improvements have been made to make Helm more secure, usable, and robust
 
 ## Helm Operator features
@@ -35,6 +35,53 @@ See the features it provides:
 - Detection and recovery from Helm storage mutations (e.g. a manual Helm release that was made but conflicts with the declared configuration for the release)
 - Parallel and scalable processing of different HelmRelease resources using workers
 - Supports both Helm 2 and 3
+
+## Pros and cons
+
+In the following tabs, you can find pros and cons of the above solutions.
+
+<div tabs>
+  <details>
+  <summary>
+  Helm 3
+  </summary>
+   
+   :heavy_plus_sign:
+   
+   - Is more secure then Helm 2
+   - Provides new types of chart
+   - Does not need any in-cluster application
+   - Can be extended with the Helm Operator
+   - Does not need CR to work
+   
+   :heavy_minus_sign:
+   
+   - No automation process
+   - No parallel executions
+   
+  </details>
+
+  <details>
+  <summary>
+  Helm Operator
+  </summary>
+   
+   :heavy_plus_sign:
+   
+   - Can automate many things and improve customer experience
+   - Provides scalable processing of the different releases
+   - Can download a chart from any repository
+   - Can be extended with Flux and [memcached](https://github.com/memcached/memcached) used to cache metadata of the pulled docker images
+   
+   :heavy_minus_sign:
+   
+   - Maintenance
+   - Increased resources consumption
+   - New controller along with its CR
+   - With current implementation based on AddonConfigurations we already have charts and their plans downloaded in the Helm Broker, so it look like overhead to have the same logic in another component.
+
+  </details>
+</div>
 
 ## Implementation
 
@@ -64,7 +111,12 @@ With this solution the Helm Broker would need to create a HelmRelease CR in the 
 
 The Helm Operator beyond the Helm features like managing the charts provides also a lot of features for the Github, but most of them can be used only when FluxCD is configured and installed on the cluster.
 
-Using Flux you can 
+Using Flux you can automate the process of delivering the applications' latest changes after their docker images were build. For example the Helm Broker could mark the HelmRelease created within instance provisioning with the label:
+```
+fluxcd.io/automated: "true"
+```
+
+There are also other labels which you can use to configure the automation process.
 
 ### Migration
 
