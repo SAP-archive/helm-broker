@@ -7,6 +7,7 @@ APP_NAME = helm-broker
 TOOLS_NAME = helm-broker-tools
 TESTS_NAME = helm-broker-tests
 CONTROLLER_NAME = helm-controller
+HELM3_MIGRATOR_NAME = helm-broker-helm3
 
 REPO = $(DOCKER_PUSH_REPOSITORY)$(DOCKER_PUSH_DIRECTORY)/
 TAG = $(DOCKER_TAG)
@@ -106,11 +107,13 @@ build-image: pull-licenses
 	cp indexbuilder deploy/tools/indexbuilder
 	cp controller deploy/controller/controller
 	cp hb_chart_test deploy/tests/hb_chart_test
+	cp helm3 deploy/helm3/helm3
 
 	docker build -t $(APP_NAME) deploy/broker
 	docker build -t $(CONTROLLER_NAME) deploy/controller
 	docker build -t $(TOOLS_NAME) deploy/tools
 	docker build -t $(TESTS_NAME) deploy/tests
+	docker build -t $*HELM3_MIGRATOR_NAME) deploy/helm3
 
 .PHONY: push-image
 push-image:

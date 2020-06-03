@@ -1,0 +1,55 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ template "fullname" . }}-migration
+  labels:
+    app: {{ template "name" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+spec:
+  template:
+    spec:
+      serviceAccountName: {{ template "fullname" . }}
+      containers:
+      - name: migrator
+        image: "{{ .Values.global.containerRegistry.path }}{{ .Values.global.helm_broker.dir }}helm-broker:{{ .Values.global.helm_broker.version }}"
+        imagePullPolicy: {{ .Values.global.image.pullPolicy }}
+        env:
+          - name: APP_PORT
+            value: "{{ .Values.broker.internalPort }}"
+          - name: APP_STATUS_PORT
+            value: "{{ .Values.broker.statusPort }}"
+          - name: APP_METRICS_PORT
+            value: "{{ .Values.broker.metricsPort }}"
+          - name: APP_CONFIG_FILE_NAME
+            value: /etc/config/helm-broker/config.yaml
+          - name: APP_HELM_TILLER_HOST
+            value: "tiller-deploy.kube-system.svc.cluster.local:44134"
+          - name: APP_HELM_TILLER_TLS_INSECURE
+            value: "{{ .Values.broker.tillerTLSInsecure }}"
+          - name: APP_HELM_TILLER_TLS_ENABLED
+            value: "{{ .Values.broker.tillerTLSEnabled }}"
+      restartPolicy: Never
+      volumes:
+      - name: tmp-empty-dir
+        emptyDir:
+          sizeLimit: "{{ .Values.ctrl.tmpDirSizeLimit }}"
+      - name: config-volume
+        configMap:
+          name: helm-config-map
+      - name: ssh-cfg
+        configMap:
+          name: ssh-cfg
+{{ if .Values.broker.tillerTLSEnabled }}
+      - name: helm-certs
+        secret:
+          secretName: helm-secret
+          items:
+          - key: tls.crt
+            path: tls.crt
+          - key: tls.key
+            path: tls.key
+{{ end }}
+  backoffLimit: 4
+
