@@ -113,7 +113,7 @@ build-image: pull-licenses
 	docker build -t $(CONTROLLER_NAME) deploy/controller
 	docker build -t $(TOOLS_NAME) deploy/tools
 	docker build -t $(TESTS_NAME) deploy/tests
-	docker build -t $*HELM3_MIGRATOR_NAME) deploy/helm3
+	docker build -t $(HELM3_MIGRATOR_NAME) deploy/helm3
 
 .PHONY: push-image
 push-image:
