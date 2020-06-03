@@ -129,6 +129,9 @@ push-image:
 	docker tag $(TESTS_NAME) $(REPO)$(TESTS_NAME):$(TAG)
 	docker push $(REPO)$(TESTS_NAME):$(TAG)
 
+	docker tag $(HELM3_MIGRATOR_NAME) $(REPO)$(HELM3_MIGRATOR_NAME):$(TAG)
+    	docker push $(REPO)$(HELM3_MIGRATOR_NAME):$(TAG)
+
 .PHONY: ci-pr
 ci-pr: build integration-test build-image push-image
 
