@@ -78,7 +78,7 @@ In the following tabs, you can find pros and cons of the above solutions.
    <br/>:heavy_minus_sign: Increased resources consumption
    <br/>:heavy_minus_sign: New controller along with its CR
    <br/>:heavy_minus_sign: It requires more implementation in Helm Broker than the Helm 3 approach
-   <br/>:heavy_minus_sign: Another dependency of Helm Broker or 
+   <br/>:heavy_minus_sign: Another dependency of Helm Broker, may require a feature flag 
 
   </details>
 </div>
@@ -139,3 +139,5 @@ Explore the following links to expand your knowledge about above things:
 - [Example app deploy with Helm 3](https://www.civo.com/learn/guide-to-helm-3-with-an-express-js-microservice)
 - [Example app automation with Helm Operator and Flux](https://www.civo.com/learn/gitops-using-helm3-and-flux-for-an-node-js-and-express-js-microservice)
 - [Explanation of the Helm 3 features](https://thenewstack.io/helm-3-is-almost-boring-and-thats-a-great-sign-of-maturity/)
+- [Deep Dive: Flux the GitOps Operator for Kubernetes](https://www.youtube.com/watch?v=Fs_Oz-RzWWI)
+- [Flagger - Kubernetes operator that automates the promotion of canary deployments](https://docs.flagger.app/)
