@@ -6,7 +6,13 @@ In this document you can read about findings about the [Helm 3](https://helm.sh/
 
 The new version of Helm has numerous new features, but a few deserve highlighting here:
 
-- Releases are stored in a new format (in secrets, not like before in the config maps)
+- Releases are stored in a new format - in secrets created in the release's namespace, not in the config maps in the kube-system namespace. Example secret: 
+
+```
+NAME                          TYPE              
+sh.helm.release.v1.redis.v1   helm.sh/release.v1
+```
+
 - There is no in-cluster (Tiller) component
 - New version of [Helm charts](https://helm.sh/docs/topics/charts/)
 - [Library charts](https://helm.sh/docs/topics/library_charts/) - charts that are used primarily as a resource for other charts
@@ -64,6 +70,7 @@ In the following tabs, you can find pros and cons of the above solutions.
    
    <br/>:heavy_plus_sign: Can automate many things and improve customer experience
    <br/>:heavy_plus_sign: Provides scalable parallel processing
+   <br/>:heavy_plus_sign: User can still use vanilla Helm 3
    <br/>:heavy_plus_sign: Can download a chart from any repository
    <br/>:heavy_plus_sign: Can be extended with Flux
    
