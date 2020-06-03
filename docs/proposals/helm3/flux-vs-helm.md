@@ -76,6 +76,7 @@ In the following tabs, you can find pros and cons of the above solutions.
    
    <br/>:heavy_minus_sign: Maintenance
    <br/>:heavy_minus_sign: Increased resources consumption
+   <br/>:heavy_minus_sign: Helm Operator Pod has super admin permissions like Tiller (will be changed)
    <br/>:heavy_minus_sign: New controller along with its CR
    <br/>:heavy_minus_sign: It requires more implementation in Helm Broker than the Helm 3 approach
    <br/>:heavy_minus_sign: Another dependency of Helm Broker, may require a feature flag 
