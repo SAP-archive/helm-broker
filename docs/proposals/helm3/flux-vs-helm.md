@@ -97,6 +97,10 @@ To download the Helm 3 binary, use the following command:
 curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
 ```
 
+#### Migration
+
+Helm 3 provides [CLI migration](https://github.com/helm/helm-2to3) along with the corresponding [documentation](https://helm.sh/docs/topics/v2_v3_migration/).
+
 ### Helm Operator
 
 In order to use the Helm Operator approach, we may need to provide the following dependencies to our cluster:
@@ -121,10 +125,6 @@ fluxcd.io/automated: "true"
 ```
 
 There are also other labels which you can use to configure the automation process.
-
-### Migration
-
-Helm 3 provides [CLI migration](https://github.com/helm/helm-2to3) along with the corresponding [documentation](https://helm.sh/docs/topics/v2_v3_migration/).
 
 ## Summary
 
