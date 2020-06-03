@@ -20,7 +20,7 @@ fi
 ##
 # GO BUILD
 ##
-binaries=("broker" "controller" "indexbuilder" "targz")
+binaries=("broker" "controller" "indexbuilder" "targz" "helm3")
 buildEnv=""
 if [ "$1" == "$CI_FLAG" ]; then
 	# build binary statically for linux architecture
