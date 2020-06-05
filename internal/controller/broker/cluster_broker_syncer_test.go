@@ -22,6 +22,7 @@ func TestServiceBrokerSync_Success(t *testing.T) {
 	require.NoError(t, v1beta1.AddToScheme(scheme.Scheme))
 	cli := k8sigs.NewFakeClientWithScheme(scheme.Scheme, serviceBroker)
 	csbSyncer := NewBrokerSyncer(cli, spy.NewLogDummy())
+	csbSyncer.SetNamespace(fixDestNs())
 
 	// when
 	err := csbSyncer.Sync()
