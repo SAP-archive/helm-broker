@@ -92,7 +92,7 @@ func (svc *deprovisionService) Deprovision(ctx context.Context, osbCtx OsbContex
 		return nil, errors.Wrap(err, "while inserting instance operation to storage")
 	}
 
-	svc.doAsync(ctx, iID, opID, i.ReleaseName)
+	svc.doAsync(ctx, *i, opID)
 
 	opKey := osb.OperationKey(op.OperationID)
 	resp := &osb.DeprovisionResponse{
@@ -103,23 +103,23 @@ func (svc *deprovisionService) Deprovision(ctx context.Context, osbCtx OsbContex
 	return resp, nil
 }
 
-func (svc *deprovisionService) doAsync(ctx context.Context, iID internal.InstanceID, opID internal.OperationID, releaseName internal.ReleaseName) {
+func (svc *deprovisionService) doAsync(ctx context.Context, inst internal.Instance, opID internal.OperationID) {
 	if svc.testHookAsyncCalled != nil {
 		svc.testHookAsyncCalled(opID)
 	}
-	go svc.do(ctx, iID, opID, releaseName)
+	go svc.do(ctx, inst, opID)
 }
 
 // do is called asynchronously
-func (svc *deprovisionService) do(ctx context.Context, iID internal.InstanceID, opID internal.OperationID, releaseName internal.ReleaseName) {
-
+func (svc *deprovisionService) do(ctx context.Context, inst internal.Instance, opID internal.OperationID) {
+	iID := inst.ID
 	fDo := func() error {
-		err := svc.helmDeleter.Delete(releaseName)
-		if err != nil && !isErrReleaseNotFound(err, releaseName) {
-			return errors.Wrapf(err, "while deleting helm release %q", releaseName)
+		err := svc.helmDeleter.Delete(inst.ReleaseName, inst.Namespace)
+		if err != nil && !isErrReleaseNotFound(err, inst.ReleaseName) {
+			return errors.Wrapf(err, "while deleting helm release %q", inst.ReleaseName)
 		}
 
-		err = svc.instanceBindDataRemover.Remove(iID)
+		err = svc.instanceBindDataRemover.Remove(inst.ID)
 		switch {
 		// we are not checking if instance was bindable and because of that NotFound error is also in happy path
 		// BEWARE: such solution can produce false positive errors e.g.

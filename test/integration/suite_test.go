@@ -32,6 +32,7 @@ import (
 
 	"strings"
 
+	"github.com/kyma-project/helm-broker/internal"
 	"github.com/kyma-project/helm-broker/internal/bind"
 	"github.com/kyma-project/helm-broker/internal/broker"
 	"github.com/kyma-project/helm-broker/internal/config"
@@ -45,7 +46,6 @@ import (
 	"github.com/kyma-project/helm-broker/pkg/apis"
 	"github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
 	dtv1beta1 "github.com/kyma-project/rafter/pkg/apis/rafter/v1beta1"
-	helm2 "k8s.io/helm/pkg/helm"
 )
 
 func init() {
@@ -115,17 +115,6 @@ func newTestSuite(t *testing.T, docsEnabled, httpBasicAuth bool) *testSuite {
 	require.NoError(t, err)
 	logger := logrus.New()
 
-	fakeHelmClient := &helm2.FakeClient{}
-	helmClient := helm.NewClient(helm.Config{}, logger.WithField("service", "helmclient")).WithHelmClientFactory(func() helm.DeleteInstaller {
-		return fakeHelmClient
-	})
-
-	brokerServer := broker.New(sFact.Addon(), sFact.Chart(), sFact.InstanceOperation(), sFact.BindOperation(), sFact.Instance(), sFact.InstanceBindData(),
-		bind.NewRenderer(), bind.NewResolver(k8sClientset.CoreV1()), helmClient, logger.WithField("test", "int"))
-
-	// OSB API Server
-	server := httptest.NewServer(brokerServer.CreateHandler())
-
 	// server with addons repository
 	staticSvr := http.FileServer(http.Dir("testdata"))
 	repoServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -155,6 +144,17 @@ func newTestSuite(t *testing.T, docsEnabled, httpBasicAuth bool) *testSuite {
 		})
 		require.NoError(t, err)
 	}
+	helmClient, err := helm.NewClient(restConfig, "secrets", logger.WithField("service", "helmclient"))
+	require.NoError(t, err)
+	// in the testing environment release won't be provisioned, so we need to set
+	// the timeout to a second to see the expected release exists
+	helmClient.SetInstallingTimeout(time.Second)
+
+	brokerServer := broker.New(sFact.Addon(), sFact.Chart(), sFact.InstanceOperation(), sFact.BindOperation(), sFact.Instance(), sFact.InstanceBindData(),
+		bind.NewRenderer(), bind.NewResolver(k8sClientset.CoreV1()), helmClient, logger.WithField("test", "int"))
+
+	// OSB API Server
+	server := httptest.NewServer(brokerServer.CreateHandler())
 
 	// create a client for managing (cluster) addons configurations
 	dynamicClient, err := client.New(restConfig, client.Options{Scheme: sch})
@@ -175,11 +175,11 @@ func newTestSuite(t *testing.T, docsEnabled, httpBasicAuth bool) *testSuite {
 	return &testSuite{
 		t: t,
 
-		dynamicClient:  dynamicClient,
-		repoServer:     repoServer,
-		server:         server,
-		k8sClient:      k8sClientset,
-		fakeHelmClient: fakeHelmClient,
+		dynamicClient: dynamicClient,
+		repoServer:    repoServer,
+		server:        server,
+		k8sClient:     k8sClientset,
+		helmClient:    helmClient,
 
 		stopCh:         stopCh,
 		tmpDir:         cfg.TmpDir,
@@ -226,17 +226,17 @@ func newOSBClient(url string) (osb.Client, error) {
 }
 
 type testSuite struct {
-	t              *testing.T
-	server         *httptest.Server
-	repoServer     *httptest.Server
-	gitRepository  *gitRepo
-	minio          *minioServer
-	fakeHelmClient *helm2.FakeClient
+	t             *testing.T
+	server        *httptest.Server
+	repoServer    *httptest.Server
+	gitRepository *gitRepo
+	minio         *minioServer
 
 	osbClient     osb.Client
 	dynamicClient client.Client
 	k8sClient     k8s.Interface
 	restConfig    *rest.Config
+	helmClient    *helm.Client
 
 	tmpDir         string
 	stopCh         chan struct{}
@@ -260,10 +260,15 @@ func (ts *testSuite) tearDown() {
 	}
 }
 
-func (ts *testSuite) waitForNumberOfReleases(n int) {
-	timeoutCh := time.After(3 * time.Second)
+func (ts *testSuite) waitForNumberOfReleases(n int, ns string) {
+	timeoutCh := time.After(150 * time.Second)
 	for {
-		if len(ts.fakeHelmClient.Rels) == n {
+		releases, err := ts.helmClient.ListReleases(internal.Namespace(ns))
+		if err != nil {
+			ts.t.Logf("unable to get releases: %s", err.Error())
+		}
+		ts.logger.Infof("num of releases: %d", len(releases))
+		if len(releases) == n {
 			return
 		}
 
@@ -274,12 +279,6 @@ func (ts *testSuite) waitForNumberOfReleases(n int) {
 		default:
 			time.Sleep(pollingInterval)
 		}
-	}
-}
-
-func (ts *testSuite) listReleases() {
-	for _, r := range ts.fakeHelmClient.Rels {
-		fmt.Println(r.Name)
 	}
 }
 
@@ -305,6 +304,9 @@ func (ts *testSuite) provisionInstanceFromServiceClass(prefix, namespace string)
 		OrganizationGUID:  "org-guid",
 		SpaceGUID:         "spaceGUID",
 		AcceptsIncomplete: true,
+		Context: map[string]interface{}{
+			"namespace": namespace,
+		},
 	})
 	require.NoError(ts.t, err)
 
@@ -349,6 +351,9 @@ func (ts *testSuite) provisionInstanceFromClusterServiceClass(prefix, namespace 
 		OrganizationGUID:  "org-guid",
 		SpaceGUID:         "spaceGUID",
 		AcceptsIncomplete: true,
+		Context: map[string]interface{}{
+			"namespace": namespace,
+		},
 	})
 	require.NoError(ts.t, err)
 

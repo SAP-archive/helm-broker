@@ -1,0 +1,63 @@
+tests:
+  image: helm-broker-tests
+  dir: /pr/
+  tag: PR-97
+  securityContext:
+    runAsUser: 2000
+
+service:
+  type: NodePort
+  externalPort: 80
+  annotations: {}
+
+deploy:
+  annotations: {}
+
+ctrl:
+  tmpDirSizeLimit: 1Gi
+  resources:
+    limits:
+      memory: 96Mi
+      cpu: 100m
+    requests:
+      memory: 32Mi
+      cpu: 80m
+  internalPort: 8080
+  statusPort: 8081
+  # enable/disable docs topics support for helm controller
+  documentationEnabled: false
+  uploadServiceURL: "not-needed-if-APP_DOCUMENTATION_ENABLED-set-to-false"
+
+broker:
+  resources:
+    limits:
+      memory: 76Mi
+      cpu: 60m
+    requests:
+      memory: 32Mi
+      cpu: 30m
+  tillerTLSInsecure: true
+  tillerTLSEnabled: false
+  internalPort: 8070
+  statusPort: 8071
+  metricsPort: 8072
+
+defautlAddonsURL: "https://github.com/kyma-project/addons/releases/download/0.10.0/index.yaml"
+
+global:
+  containerRegistry:
+    path: eu.gcr.io/kyma-project
+  # develop mode allows use insecure (http) url for addons configuration
+  isDevelopMode: false
+  # image pull policy for helm broker broker/controller containers
+  image:
+    pullPolicy: IfNotPresent
+  # paths to docker images
+  helm_broker:
+    dir: /pr/
+    version: PR-97
+  helm_controller:
+    dir: /pr/
+    version: PR-97
+  # etcd port uses by helm broker
+  etcdClientPort: 2379

@@ -5,7 +5,7 @@ import (
 	"github.com/kyma-project/helm-broker/internal"
 	"github.com/kyma-project/helm-broker/internal/addon/provider"
 	"github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
-	"k8s.io/helm/pkg/proto/hapi/chart"
+	"helm.sh/helm/v3/pkg/chart"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 

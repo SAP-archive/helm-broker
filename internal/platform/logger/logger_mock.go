@@ -12,7 +12,7 @@ type THTimeForcedFormatter struct {
 	// OrigFormatter is an original formatter
 	OrigFormatter logrus.Formatter
 
-	// Time is a time to be forces in entries.
+	// ReleaseTime is a time to be forces in entries.
 	Time time.Time
 }
 

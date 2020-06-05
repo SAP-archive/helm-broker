@@ -1,16 +1,17 @@
 package etcd
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 
 	"github.com/Masterminds/semver"
-	"github.com/golang/protobuf/proto"
 	"github.com/pkg/errors"
 	"go.etcd.io/etcd/clientv3"
 	"go.etcd.io/etcd/clientv3/namespace"
-	"k8s.io/helm/pkg/proto/hapi/chart"
+	"helm.sh/helm/v3/pkg/chart"
 
 	"github.com/kyma-project/helm-broker/internal"
 )
@@ -46,12 +47,13 @@ func (s *Chart) Upsert(namespace internal.Namespace, c *chart.Chart) (replaced b
 		return false, err
 	}
 
-	data, err := proto.Marshal(c)
-	if err != nil {
-		return false, errors.Wrap(err, "while encoding DSO")
+	buf := bytes.Buffer{}
+	enc := json.NewEncoder(&buf)
+	if err := enc.Encode(c); err != nil {
+		return false, errors.Wrap(err, "while encoding entity")
 	}
 
-	resp, err := s.kv.Put(context.TODO(), s.key(namespace, nv), string(data), clientv3.WithPrevKV())
+	resp, err := s.kv.Put(context.TODO(), s.key(namespace, nv), buf.String(), clientv3.WithPrevKV())
 	if err != nil {
 		return false, errors.Wrap(err, "while calling database")
 	}
@@ -83,9 +85,19 @@ func (s *Chart) Get(namespace internal.Namespace, name internal.ChartName, ver s
 		return nil, errors.New("more than one element matching requested id, should never happen")
 	}
 
+	c, err := s.decodeChart(resp.Kvs[0].Value)
+	if err != nil {
+		return nil, errors.Wrap(err, "while decoding single DSO")
+	}
+
+	return c, nil
+}
+
+func (s *Chart) decodeChart(raw []byte) (*chart.Chart, error) {
+	dec := json.NewDecoder(bytes.NewReader(raw))
 	var c chart.Chart
-	if err := proto.Unmarshal(resp.Kvs[0].Value, &c); err != nil {
-		return nil, errors.Wrap(err, "while decoding DSO")
+	if err := dec.Decode(&c); err != nil {
+		return nil, err
 	}
 
 	return &c, nil

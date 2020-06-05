@@ -11,7 +11,7 @@ import (
 	"github.com/kyma-project/helm-broker/internal/addon"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"k8s.io/helm/pkg/proto/hapi/chart"
+	"helm.sh/helm/v3/pkg/chart"
 )
 
 // Client wraps the concrete getters and provide common functionality for converting the raw addon into models.

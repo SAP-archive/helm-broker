@@ -36,7 +36,7 @@ func TestDeprovisionServiceDeprovisionSuccess(t *testing.T) {
 			close(ts.UpdateStateDescMethodCalled)
 		}).Once()
 
-	ts.HelmClientMock.ExpectOnDelete(ts.Exp.ReleaseName).Once()
+	ts.HelmClientMock.ExpectOnDelete(ts.Exp.ReleaseName, ts.Exp.Namespace).Once()
 
 	ts.InstBindDataMock.ExpectOnRemove(ts.Exp.InstanceID).Once()
 	ts.InstStorageMock.ExpectOnRemove(ts.Exp.InstanceID).Once()
@@ -83,7 +83,7 @@ func TestDeprovisionServiceDeprovisionSuccessIfReleaseNotFound(t *testing.T) {
 			close(ts.UpdateStateDescMethodCalled)
 		}).Once()
 
-	ts.HelmClientMock.On("Delete", ts.Exp.ReleaseName).Return(helmErrors.ErrReleaseNotFound(string(ts.Exp.ReleaseName))).Once()
+	ts.HelmClientMock.On("Delete", ts.Exp.ReleaseName, ts.Exp.Namespace).Return(helmErrors.ErrReleaseNotFound(string(ts.Exp.ReleaseName))).Once()
 
 	ts.InstBindDataMock.ExpectOnRemove(ts.Exp.InstanceID).Once()
 	ts.InstStorageMock.ExpectOnRemove(ts.Exp.InstanceID).Once()
@@ -129,7 +129,7 @@ func TestDeprovisionServiceDeprovisionFailureAsync(t *testing.T) {
 					close(ts.UpdateStateDescMethodCalled)
 				}).Once()
 
-			ts.HelmClientMock.ExpectErrorOnDelete(ts.Exp.ReleaseName, fixErr).Once()
+			ts.HelmClientMock.ExpectErrorOnDelete(ts.Exp.ReleaseName, ts.Exp.Namespace, fixErr).Once()
 		},
 		"on bind data Remove": func(ts *deprovisionServiceTestSuite) {
 			ts.InstStateGetterMock.ExpectOnIsDeprovisioned(ts.Exp.InstanceID, false).Once()
@@ -144,7 +144,7 @@ func TestDeprovisionServiceDeprovisionFailureAsync(t *testing.T) {
 					close(ts.UpdateStateDescMethodCalled)
 				}).Once()
 
-			ts.HelmClientMock.ExpectOnDelete(ts.Exp.ReleaseName).Once()
+			ts.HelmClientMock.ExpectOnDelete(ts.Exp.ReleaseName, ts.Exp.Namespace).Once()
 
 			ts.InstBindDataMock.ExpectErrorRemove(ts.Exp.InstanceID, fixErr).Once()
 		},
@@ -161,7 +161,7 @@ func TestDeprovisionServiceDeprovisionFailureAsync(t *testing.T) {
 					close(ts.UpdateStateDescMethodCalled)
 				}).Once()
 
-			ts.HelmClientMock.ExpectOnDelete(ts.Exp.ReleaseName).Once()
+			ts.HelmClientMock.ExpectOnDelete(ts.Exp.ReleaseName, ts.Exp.Namespace).Once()
 			ts.InstBindDataMock.ExpectOnRemove(ts.Exp.InstanceID).Once()
 
 			ts.InstStorageMock.ExpectErrorRemove(ts.Exp.InstanceID, fixErr).Once()

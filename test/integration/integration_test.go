@@ -198,13 +198,13 @@ func TestProvisioning(t *testing.T) {
 
 	suite.createAddonsConfiguration(stageNS, addonsConfigName, []string{redisRepo}, sourceHTTP)
 	suite.waitForServicesInCatalogEndpoint(fmt.Sprintf("ns/%s", stageNS), []string{redisAddonID})
-	suite.waitForNumberOfReleases(0)
+	suite.waitForNumberOfReleases(0, stageNS)
 
 	// when
 	suite.provisionInstanceFromServiceClass(fmt.Sprintf("ns/%s", stageNS), stageNS)
 
 	// then
-	suite.waitForNumberOfReleases(1)
+	suite.waitForNumberOfReleases(1, stageNS)
 }
 
 func TestUnregisteringServiceBroker(t *testing.T) {
@@ -220,7 +220,7 @@ func TestUnregisteringServiceBroker(t *testing.T) {
 	suite.provisionInstanceFromServiceClass(fmt.Sprintf("ns/%s", stageNS), stageNS)
 
 	// then
-	suite.waitForNumberOfReleases(1)
+	suite.waitForNumberOfReleases(1, stageNS)
 
 	// when
 	suite.deleteAddonsConfiguration(stageNS, addonsConfigName)
@@ -248,7 +248,7 @@ func TestUnregisteringClusterServiceBroker(t *testing.T) {
 	suite.provisionInstanceFromClusterServiceClass("cluster", stageNS)
 
 	// then
-	suite.waitForNumberOfReleases(1)
+	suite.waitForNumberOfReleases(1, stageNS)
 
 	// when
 	suite.deleteClusterAddonsConfiguration(addonsConfigName)

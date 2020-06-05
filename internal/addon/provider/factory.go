@@ -9,7 +9,7 @@ import (
 	getter "github.com/hashicorp/go-getter"
 	"github.com/kyma-project/helm-broker/internal"
 	"github.com/sirupsen/logrus"
-	"k8s.io/helm/pkg/proto/hapi/chart"
+	"helm.sh/helm/v3/pkg/chart"
 )
 
 // Provider defines factory func for returning concrete addon RepositoryGetter

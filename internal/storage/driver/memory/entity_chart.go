@@ -5,8 +5,7 @@ import (
 
 	"github.com/Masterminds/semver"
 	"github.com/pkg/errors"
-
-	"k8s.io/helm/pkg/proto/hapi/chart"
+	"helm.sh/helm/v3/pkg/chart"
 
 	"github.com/kyma-project/helm-broker/internal"
 )

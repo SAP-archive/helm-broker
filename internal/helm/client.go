@@ -1,99 +1,146 @@
 package helm
 
 import (
-	"crypto/tls"
+	"fmt"
 	"time"
 
-	"github.com/ghodss/yaml"
+	"github.com/kyma-project/helm-broker/internal"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"k8s.io/helm/pkg/helm"
-	"k8s.io/helm/pkg/proto/hapi/chart"
-	rls "k8s.io/helm/pkg/proto/hapi/services"
-	"k8s.io/helm/pkg/tlsutil"
-
-	"github.com/kyma-project/helm-broker/internal"
+	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/kube"
+	"helm.sh/helm/v3/pkg/release"
+	"helm.sh/helm/v3/pkg/storage"
+	"helm.sh/helm/v3/pkg/storage/driver"
+	"k8s.io/cli-runtime/pkg/genericclioptions"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+	"k8s.io/kubectl/pkg/cmd/util"
 )
 
-const (
-	installTimeout  = time.Hour
-	deleteWithPurge = true
-)
-
-// NewClient creates Tiller client
-func NewClient(cfg Config, log *logrus.Entry) *Client {
-	tlsopts := tlsutil.Options{
-		KeyFile:            cfg.TillerTLSKey,
-		CertFile:           cfg.TillerTLSCrt,
-		InsecureSkipVerify: cfg.TillerTLSInsecure,
-	}
-
-	client := &Client{
-		tillerHost:        cfg.TillerHost,
-		tillerConnTimeout: int64(cfg.TillerConnectionTimeout),
-		log:               log.WithField("service", "helm_client"),
-		tlsEnabled:        cfg.TillerTLSEnabled,
-	}
-	if cfg.TillerTLSEnabled {
-		tlscfg, err := tlsutil.ClientConfig(tlsopts)
-		if err != nil {
-			log.Fatalf("Unable create helm client. Error: %v", err)
-		}
-		client.tlscfg = tlscfg
-	}
-
-	client.helmClientFactory = client.helmClient
-
-	return client
-}
-
-// Client provide communication with Tiller
+// Client implements a Helm client compatible with Helm3
 type Client struct {
-	tillerHost        string
-	tillerConnTimeout int64
-	tlscfg            *tls.Config
-	tlsEnabled        bool
-	log               *logrus.Entry
+	log        logrus.FieldLogger
+	helmDriver string
+	restConfig *rest.Config
 
-	helmClientFactory func() DeleteInstaller
+	installingTimeout time.Duration
 }
 
-// Install is installing chart release
-func (cli *Client) Install(c *chart.Chart, values internal.ChartValues, releaseName internal.ReleaseName, namespace internal.Namespace) (*rls.InstallReleaseResponse, error) {
-	cli.log.Infof("Installing chart with release name [%s] in namespace [%s]", releaseName, namespace)
-	byteValues, err := yaml.Marshal(values)
-
-	if err != nil {
-		return nil, errors.Wrapf(err, "while marshalling chart values: [%v]", values)
+func NewClient(restConfig *rest.Config, helmDriver string, log logrus.FieldLogger) (*Client, error) {
+	if helmDriver == "" {
+		helmDriver = "secrets"
 	}
-	resp, err := cli.helmClientFactory().InstallReleaseFromChart(c, string(namespace),
-		helm.InstallWait(true),
-		helm.InstallTimeout(int64(installTimeout.Seconds())),
-		helm.ValueOverrides(byteValues),
-		helm.ReleaseName(string(releaseName)))
+	return &Client{
+		log:               log,
+		helmDriver:        helmDriver,
+		restConfig:        restConfig,
+		installingTimeout: time.Hour,
+	}, nil
+}
+
+func (c *Client) Install(chrt *chart.Chart, values internal.ChartValues, releaseName internal.ReleaseName, namespace internal.Namespace) (*release.Release, error) {
+	c.log.Infof("Installing chart with release name [%s], namespace: [%s]", releaseName, namespace)
+
+	aCfg, err := c.provideActionConfig(namespace)
+	if err != nil {
+		return nil, err
+	}
+	installAction := action.NewInstall(aCfg)
+	installAction.ReleaseName = string(releaseName)
+	installAction.Namespace = string(namespace)
+	installAction.Wait = true
+	installAction.Timeout = c.installingTimeout
+	installAction.CreateNamespace = true // https://v3.helm.sh/docs/faq/#automatically-creating-namespaces
+
+	release, err := installAction.Run(chrt, values)
 	if err != nil {
 		return nil, errors.Wrapf(err, "while installing release from chart with name [%s] in namespace [%s]", releaseName, namespace)
 	}
-	return resp, nil
+
+	return release, nil
 }
 
 // Delete is deleting release of the chart
-func (cli *Client) Delete(releaseName internal.ReleaseName) error {
-	cli.log.WithField("purge", deleteWithPurge).Infof("Deleting chart with release name [%s]", releaseName)
-	if _, err := cli.helmClientFactory().DeleteRelease(string(releaseName), helm.DeletePurge(deleteWithPurge)); err != nil {
-		return errors.Wrapf(err, "while deleting release name: [%s]", releaseName)
+func (c *Client) Delete(releaseName internal.ReleaseName, namespace internal.Namespace) error {
+	c.log.Infof("Deleting chart with release name [%s], namespace: [%s]", releaseName, namespace)
+	aCfg, err := c.provideActionConfig(namespace)
+	if err != nil {
+		return err
 	}
-	return nil
+
+	uninstallAction := action.NewUninstall(aCfg)
+	_, err = uninstallAction.Run(string(releaseName))
+	if err != nil {
+		return errors.Wrap(err, "while executing uninstall action")
+	}
+
+	return err
 }
 
-func (cli *Client) helmClient() DeleteInstaller {
-	// helm client is not thread safe -
-	//
-	// helm.ConnectTimeout option is REQUIRED, because of this issue:
-	// https://github.com/kubernetes/helm/issues/3658
-	opts := []helm.Option{helm.Host(cli.tillerHost), helm.ConnectTimeout(cli.tillerConnTimeout)}
-	if cli.tlsEnabled {
-		opts = append(opts, helm.WithTLS(cli.tlscfg))
+// ListReleases returns a list of helm releases in the given namespace
+func (c *Client) ListReleases(namespace internal.Namespace) ([]*release.Release, error) {
+	aCfg, err := c.provideActionConfig(namespace)
+	if err != nil {
+		return nil, err
 	}
-	return helm.NewClient(opts...)
+	listAction := action.NewList(aCfg)
+	return listAction.Run()
+}
+
+func (c *Client) provideActionConfig(namespace internal.Namespace) (*action.Configuration, error) {
+	restClientGetter := c.newConfigFlags(string(namespace))
+	kubeClient := &kube.Client{
+		Factory: util.NewFactory(restClientGetter),
+		Log:     c.log.Debugf,
+	}
+	client, err := kubeClient.Factory.KubernetesClientSet()
+	if err != nil {
+		return nil, errors.Wrap(err, "while getting kube client")
+	}
+
+	store, err := c.provideStorage(client, string(namespace))
+	if err != nil {
+		return nil, errors.Wrap(err, "while getting helm storage")
+	}
+
+	return &action.Configuration{
+		RESTClientGetter: restClientGetter,
+		Releases:         store,
+		KubeClient:       kubeClient,
+		Log:              c.log.Debugf,
+	}, nil
+}
+
+func (c *Client) provideStorage(client *kubernetes.Clientset, namespace string) (*storage.Storage, error) {
+	switch c.helmDriver {
+	case "secret", "secrets", "":
+		s := driver.NewSecrets(client.CoreV1().Secrets(namespace))
+		s.Log = c.log.Debugf
+		return storage.Init(s), nil
+	case "configmap", "configmaps":
+		cm := driver.NewConfigMaps(client.CoreV1().ConfigMaps(namespace))
+		cm.Log = c.log.Debugf
+		return storage.Init(cm), nil
+	case "memory":
+		m := driver.NewMemory()
+		return storage.Init(m), nil
+	default:
+		return nil, fmt.Errorf("unsupported helm driver '%s'", c.helmDriver)
+	}
+}
+
+func (c *Client) newConfigFlags(namespace string) *genericclioptions.ConfigFlags {
+	return &genericclioptions.ConfigFlags{
+		Namespace:   &namespace,
+		APIServer:   &c.restConfig.Host,
+		CAFile:      &c.restConfig.CAFile,
+		BearerToken: &c.restConfig.BearerToken,
+	}
+}
+
+// Sets installing timeout, used in the integration tests
+func (c *Client) SetInstallingTimeout(timeout time.Duration) {
+	c.installingTimeout = timeout
 }

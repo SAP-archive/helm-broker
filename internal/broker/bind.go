@@ -9,7 +9,7 @@ import (
 	osb "github.com/kubernetes-sigs/go-open-service-broker-client/v2"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"k8s.io/helm/pkg/proto/hapi/chart"
+	"helm.sh/helm/v3/pkg/chart"
 
 	"github.com/kyma-project/helm-broker/internal"
 )

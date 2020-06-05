@@ -8,7 +8,7 @@ import (
 	"github.com/asaskevich/govalidator"
 	"github.com/ghodss/yaml"
 	"github.com/imdario/mergo"
-	"github.com/kyma-project/helm-broker/internal/helm"
+
 	"github.com/kyma-project/helm-broker/internal/platform/logger"
 	"github.com/kyma-project/helm-broker/internal/storage"
 	defaults "github.com/mcuadros/go-defaults"
@@ -33,7 +33,7 @@ type Config struct {
 	StatusPort  int              `default:"8071"`
 	MetricsPort int              `default:"8072"`
 	Storage     []storage.Config `valid:"required"`
-	Helm        helm.Config      `valid:"required"`
+	HelmDriver  string           `default:"secrets"`
 }
 
 // Load method has following strategy:

@@ -41,7 +41,8 @@ func main() {
 
 	log := logger.New(&cfg.Logger)
 
-	helmClient := helm.NewClient(cfg.Helm, log)
+	helmClient, err := helm.NewClient(k8sConfig, "secrets", log)
+	fatalOnError(err)
 
 	storageConfig := storage.ConfigList(cfg.Storage)
 	sFact, err := storage.NewFactory(&storageConfig)

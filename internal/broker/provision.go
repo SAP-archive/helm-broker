@@ -48,6 +48,8 @@ func (svc *provisionService) Provision(ctx context.Context, osbCtx OsbContext, r
 	svc.mu.Lock()
 	defer svc.mu.Unlock()
 
+	svc.log.Infof("Triggered provisioning %+v", req)
+
 	iID := internal.InstanceID(req.InstanceID)
 	requestedProvisioningParameters := internal.RequestParameters{
 		Data: req.Parameters,
@@ -78,6 +80,8 @@ func (svc *provisionService) Provision(ctx context.Context, osbCtx OsbContext, r
 	if err != nil {
 		return nil, &osb.HTTPStatusCodeError{StatusCode: http.StatusBadRequest, ErrorMessage: strPtr(fmt.Sprintf("while getting namespace from context: %v", err))}
 	}
+
+	svc.log.Infof("Provisioning %v in namespace [%s]", req.Parameters, req.Context["namespace"])
 
 	// addonID is in 1:1 match with serviceID (from service catalog)
 	svcID := internal.ServiceID(req.ServiceID)
@@ -221,10 +225,12 @@ func (svc *provisionService) do(ctx context.Context, input provisioningInput) {
 			return errors.Wrap(err, "while installing helm release")
 		}
 
+		svc.log.Infof("Triggered helm install: %s %d", resp.Name, resp.Version)
+
 		relInfo := internal.ReleaseInfo{
-			Time:     resp.GetRelease().GetInfo().GetLastDeployed(),
-			Revision: int(resp.GetRelease().GetVersion()),
-			Config:   resp.GetRelease().GetConfig(),
+			ReleaseTime:  resp.Info.LastDeployed.Time,
+			Revision:     resp.Version,
+			ConfigValues: resp.Config,
 		}
 
 		updatedInstance := input.instanceToUpdate
@@ -236,10 +242,6 @@ func (svc *provisionService) do(ctx context.Context, input provisioningInput) {
 		}
 		if exist {
 			svc.log.Infof("Instance %s already existed in storage, instance was replaced on update", updatedInstance.ID)
-		}
-		isRespValid := validateInstallReleaseResponse(resp)
-		if isRespValid != nil {
-			return errors.Wrap(err, "while validating input")
 		}
 
 		return nil

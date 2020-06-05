@@ -5,8 +5,7 @@ import (
 	"strings"
 
 	"github.com/Masterminds/semver"
-	google_protobuf "github.com/golang/protobuf/ptypes/timestamp"
-	"k8s.io/helm/pkg/proto/hapi/chart"
+	"helm.sh/helm/v3/pkg/chart"
 
 	"github.com/kyma-project/helm-broker/internal"
 )
@@ -38,13 +37,9 @@ type expAll struct {
 	ServicePlan struct {
 		ID internal.ServicePlanID
 	}
-	Namespace   internal.Namespace
-	ReleaseName internal.ReleaseName
-	ReleaseInfo struct {
-		Time     *google_protobuf.Timestamp
-		Revision int
-		Config   *chart.Config
-	}
+	Namespace                     internal.Namespace
+	ReleaseName                   internal.ReleaseName
+	ReleaseInfo                   internal.ReleaseInfo
 	ProvisioningParameters        *internal.RequestParameters
 	ParamsHash                    string
 	RequestProvisioningParameters map[string]interface{}
@@ -78,14 +73,8 @@ func (exp *expAll) Populate() {
 		strings.Trim(string(exp.Addon.Name[:6]), "-"),
 		strings.Trim(string(exp.AddonPlan.Name[:6]), "-"),
 		exp.InstanceID))
-	exp.ReleaseInfo.Time = &google_protobuf.Timestamp{
-		Seconds: 123123123,
-		Nanos:   1,
-	}
 	exp.ReleaseInfo.Revision = 123
-	exp.ReleaseInfo.Config = &chart.Config{
-		Raw: "raw-config",
-	}
+	exp.ReleaseInfo.ConfigValues = map[string]interface{}{}
 	exp.ProvisioningParameters = &internal.RequestParameters{
 		Data: map[string]interface{}{
 			"addonsRepositoryURL": exp.Addon.RepositoryURL,
@@ -161,9 +150,9 @@ func (exp *expAll) NewInstance() *internal.Instance {
 
 func (exp *expAll) NewReleaseInfo() internal.ReleaseInfo {
 	return internal.ReleaseInfo{
-		Time:     exp.ReleaseInfo.Time,
-		Revision: exp.ReleaseInfo.Revision,
-		Config:   exp.ReleaseInfo.Config,
+		ReleaseTime: exp.ReleaseInfo.ReleaseTime,
+		Revision:    exp.ReleaseInfo.Revision,
+		Config:      exp.ReleaseInfo.Config,
 	}
 }
 
