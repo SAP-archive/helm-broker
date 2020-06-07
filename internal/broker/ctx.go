@@ -6,13 +6,13 @@ import (
 
 	"github.com/kyma-project/helm-broker/internal"
 	"github.com/pkg/errors"
-	osb "github.com/pmorie/go-open-service-broker-client/v2"
+	osb "github.com/kubernetes-sigs/go-open-service-broker-client/v2"
 )
 
 type contextKey int
 
 const (
-	osbAPIVersion = "2.13"
+	osbAPIVersion = "2.14"
 
 	osbContextKey contextKey = 5001
 )

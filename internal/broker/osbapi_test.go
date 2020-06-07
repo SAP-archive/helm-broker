@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/pborman/uuid"
-	osb "github.com/pmorie/go-open-service-broker-client/v2"
+	osb "github.com/kubernetes-sigs/go-open-service-broker-client/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -106,7 +106,6 @@ func (ts *osbapiTestSuite) OSBClient() osb.Client {
 	if ts.osbClient == nil {
 		config := osb.DefaultClientConfiguration()
 		config.URL = fmt.Sprintf("http://%s/cluster", ts.ServerAddr)
-		config.APIVersion = osb.Version2_13()
 		config.EnableAlphaFeatures = true
 
 		osbClient, err := osb.NewClient(config)
@@ -123,7 +122,6 @@ func (ts *osbapiTestSuite) OSBClientNS() osb.Client {
 	if ts.osbClient == nil {
 		config := osb.DefaultClientConfiguration()
 		config.URL = fmt.Sprintf("http://%s/ns/%s", ts.ServerAddr, testNs)
-		config.APIVersion = osb.Version2_13()
 		config.EnableAlphaFeatures = true
 
 		osbClient, err := osb.NewClient(config)

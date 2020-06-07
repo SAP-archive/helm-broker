@@ -4,18 +4,7 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 NC='\033[0m' # No Color
 
-export GO111MODULE=off
-
-##
-# DEP ENSURE
-##
-dep ensure -v --vendor-only
-ensureResult=$?
-if [ ${ensureResult} != 0 ]; then
-	echo -e "${RED}✗ dep ensure -v --vendor-only${NC}\n$ensureResult${NC}"
-	exit 1
-else echo -e "${GREEN}√ dep ensure -v --vendor-only${NC}"
-fi
+export GO111MODULE=on
 
 ##
 # GO BUILD

@@ -1,6 +1,7 @@
 package charts
 
 import (
+	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -9,7 +10,7 @@ import (
 
 	"github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
 	"github.com/kyma-project/helm-broker/pkg/client/clientset/versioned"
-	osb "github.com/pmorie/go-open-service-broker-client/v2"
+	osb "github.com/kubernetes-sigs/go-open-service-broker-client/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/vrischmann/envconfig"
@@ -95,7 +96,7 @@ func NewTestSuite(t *testing.T) *TestSuite {
 }
 
 func (s *TestSuite) createSampleClusterAddonsConfiguration() {
-	_, err := s.addonsCli.AddonsV1alpha1().ClusterAddonsConfigurations().Create(&v1alpha1.ClusterAddonsConfiguration{
+	_, err := s.addonsCli.AddonsV1alpha1().ClusterAddonsConfigurations().Create(context.TODO(), &v1alpha1.ClusterAddonsConfiguration{
 		ObjectMeta: v1.ObjectMeta{
 			Name: s.sampleClusterAddonsCfgName,
 		},
@@ -106,21 +107,21 @@ func (s *TestSuite) createSampleClusterAddonsConfiguration() {
 				},
 			},
 		},
-	})
+	}, v1.CreateOptions{})
 
 	require.NoErrorf(s.t, err, "while creating cluster addons configuration")
 	s.t.Logf("ClusterAddonsConfigurations %q is created", s.sampleClusterAddonsCfgName)
 }
 
 func (s *TestSuite) deleteSampleClusterAddonsConfiguration() {
-	err := s.addonsCli.AddonsV1alpha1().ClusterAddonsConfigurations().Delete(s.sampleClusterAddonsCfgName, &v1.DeleteOptions{})
+	err := s.addonsCli.AddonsV1alpha1().ClusterAddonsConfigurations().Delete(context.TODO(), s.sampleClusterAddonsCfgName, v1.DeleteOptions{})
 	require.NoError(s.t, err, "while creating cluster addons configuration")
 	s.t.Logf("ClusterAddonsConfigurations %q is deleted", s.sampleClusterAddonsCfgName)
 }
 
 func (s *TestSuite) waitForSampleClusterAddonsConfiguration(timeout time.Duration) {
 	sampleClusterAddonsAvailable := func() (done bool, err error) {
-		cac, err := s.addonsCli.AddonsV1alpha1().ClusterAddonsConfigurations().Get(s.sampleClusterAddonsCfgName, v1.GetOptions{})
+		cac, err := s.addonsCli.AddonsV1alpha1().ClusterAddonsConfigurations().Get(context.TODO(), s.sampleClusterAddonsCfgName, v1.GetOptions{})
 		if err != nil {
 			return false, err
 		}

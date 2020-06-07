@@ -3,14 +3,13 @@ package etcd
 import (
 	"bytes"
 	"context"
-	"encoding/gob"
 	"encoding/json"
 	"fmt"
 	"strings"
 
 	"github.com/Masterminds/semver"
-	"github.com/coreos/etcd/clientv3"
-	"github.com/coreos/etcd/clientv3/namespace"
+	"go.etcd.io/etcd/clientv3"
+	"go.etcd.io/etcd/clientv3/namespace"
 	"github.com/pkg/errors"
 
 	"github.com/kyma-project/helm-broker/internal"
@@ -113,7 +112,7 @@ func (s *Addon) encodeDMToDSO(dm *internal.Addon) (string, error) {
 	if err != nil {
 		return "", errors.Wrap(err, "while encoding Addon to DSO")
 	}
-	enc := gob.NewEncoder(&buf)
+	enc := json.NewEncoder(&buf)
 	if err := enc.Encode(dso); err != nil {
 		return "", errors.Wrap(err, "while encoding entity")
 	}
@@ -121,7 +120,7 @@ func (s *Addon) encodeDMToDSO(dm *internal.Addon) (string, error) {
 }
 
 func (*Addon) decodeDSOToDM(dsoEnc []byte) (*internal.Addon, error) {
-	dec := gob.NewDecoder(bytes.NewReader(dsoEnc))
+	dec := json.NewDecoder(bytes.NewReader(dsoEnc))
 	var dso addonDSO
 	if err := dec.Decode(&dso); err != nil {
 		return nil, errors.Wrap(err, "while decoding DSO")

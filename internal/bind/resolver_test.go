@@ -6,7 +6,7 @@ import (
 
 	"github.com/kyma-project/helm-broker/internal"
 	"github.com/kyma-project/helm-broker/internal/bind"
-	"github.com/renstrom/dedent"
+	"github.com/lithammer/dedent"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/api/core/v1"

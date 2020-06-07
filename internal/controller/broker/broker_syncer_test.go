@@ -16,43 +16,47 @@ import (
 	k8sigs "sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
-func TestClusterServiceBrokerSync_Success(t *testing.T) {
+
+func TestServiceBrokerSync_Success(t *testing.T) {
 	// given
-	clusterServiceBroker := fixClusterServiceBroker()
+	destNs := fixDestNs()
+	serviceBroker := fixServiceBroker()
 	require.NoError(t, v1beta1.AddToScheme(scheme.Scheme))
-	cli := k8sigs.NewFakeClientWithScheme(scheme.Scheme, clusterServiceBroker)
-	csbSyncer := NewClusterBrokerSyncer(cli, clusterServiceBroker.Name, spy.NewLogDummy())
+	cli := k8sigs.NewFakeClientWithScheme(scheme.Scheme, serviceBroker)
+	sbSyncer := NewBrokerSyncer(cli, spy.NewLogDummy())
+	sbSyncer.SetNamespace(destNs)
 
 	// when
-	err := csbSyncer.Sync()
+	err := sbSyncer.Sync()
 	require.NoError(t, err)
 
 	// then
-	csb := &v1beta1.ClusterServiceBroker{}
-	err = cli.Get(context.Background(), types.NamespacedName{Name: clusterServiceBroker.Name}, csb)
+	sb := &v1beta1.ServiceBroker{}
+	err = cli.Get(context.Background(), types.NamespacedName{Namespace: destNs, Name: serviceBroker.Name}, sb)
 	require.NoError(t, err)
 
-	assert.Equal(t, int64(1), csb.Spec.RelistRequests)
+	assert.Equal(t, int64(1), sb.Spec.RelistRequests)
 	assert.Nil(t, err)
 }
 
-func TestClusterServiceBrokerSync_NotExistingBroker(t *testing.T) {
+func TestServiceBrokerSync_NotExistingBroker(t *testing.T) {
 	// given
 	require.NoError(t, v1beta1.AddToScheme(scheme.Scheme))
 	cli := k8sigs.NewFakeClientWithScheme(scheme.Scheme)
-	csbSyncer := NewClusterBrokerSyncer(cli, fixClusterServiceBroker().Name, spy.NewLogDummy())
+	sbSyncer := NewBrokerSyncer(cli, spy.NewLogDummy())
 
 	// when
-	err := csbSyncer.Sync()
+	err := sbSyncer.Sync()
 
 	// then
-	require.NoError(t, err)
+	assert.NoError(t, err)
 }
 
-func fixClusterServiceBroker() *v1beta1.ClusterServiceBroker {
-	return &v1beta1.ClusterServiceBroker{
+func fixServiceBroker() *v1beta1.ServiceBroker {
+	return &v1beta1.ServiceBroker{
 		ObjectMeta: v1.ObjectMeta{
-			Name: "broker-name",
+			Name:      fixBrokerName(),
+			Namespace: fixDestNs(),
 			Labels: map[string]string{
 				"app": "label",
 			},

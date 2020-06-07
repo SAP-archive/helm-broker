@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/Masterminds/semver"
-	"github.com/coreos/etcd/clientv3"
-	"github.com/coreos/etcd/clientv3/namespace"
+	"go.etcd.io/etcd/clientv3"
+	"go.etcd.io/etcd/clientv3/namespace"
 	"github.com/golang/protobuf/proto"
 	"github.com/pkg/errors"
 	"k8s.io/helm/pkg/proto/hapi/chart"

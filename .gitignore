@@ -112,3 +112,4 @@ fabric.properties
 /deploy/controller/controller
 /deploy/tests/hb_chart_test
 toCopy/
+bin/

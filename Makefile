@@ -1,4 +1,9 @@
+# Directory to put `go install`ed binaries in.
+export GOBIN ?= $(shell pwd)/bin
+
 ROOT_PATH := $(shell pwd)
+REPO = $(DOCKER_PUSH_REPOSITORY)$(DOCKER_PUSH_DIRECTORY)/
+TAG = $(DOCKER_TAG)
 GIT_TAG=$(PULL_BASE_REF)
 GIT_REPO=$(REPO_OWNER)/$(REPO_NAME)
 export GITHUB_TOKEN=$(BOT_GITHUB_TOKEN)
@@ -8,25 +13,50 @@ TOOLS_NAME = helm-broker-tools
 TESTS_NAME = helm-broker-tests
 CONTROLLER_NAME = helm-controller
 
-REPO = $(DOCKER_PUSH_REPOSITORY)$(DOCKER_PUSH_DIRECTORY)/
-TAG = $(DOCKER_TAG)
+FILES_TO_CHECK = find . -type f -name "*.go" | grep -v "\/vendor\/|_*/automock/|_*/testdata/|/pkg\/|_*export_test.go"
+
+build:: build-binaries format test
+
+format:: vet goimports fmt golint clean
+
+test:: unit-test integration-test
 
 .PHONY: build-binaries
 build-binaries:
 	./hack/build-binaries.sh
-
-.PHONY: build
-build:
-	./before-commit.sh ci
 
 .PHONY: integration-test
 integration-test:
 	export KUBEBUILDER_CONTROLPLANE_START_TIMEOUT=2m
 	go test -tags=integration ./test/integration/
 
+.PHONY: unit-test
+unit-test:
+	go test ./internal/... ./cmd/...
+
 .PHONY: charts-test
 charts-test:
 	./hack/ci/run-chart-test.sh
+
+# Run go fmt against code
+.PHONY: fmt
+fmt:
+	go fmt $$($(FILES_TO_CHECK)))
+
+# Run go vet against code
+.PHONY: vet
+vet:
+	go vet $$($(FILES_TO_CHECK)))
+
+.PHONY: golint
+golint:
+	@go install golang.org/x/lint/golint
+	@$(GOBIN)/golint $$($(FILES_TO_CHECK)))
+
+.PHONY: goimports
+goimports:
+	@go install golang.org/x/tools/cmd/goimports
+	@$(GOBIN)/goimports  -w -l $$($(FILES_TO_CHECK)))
 
 .PHONY: pull-licenses
 pull-licenses:
@@ -127,13 +157,13 @@ push-image:
 	docker push $(REPO)$(TESTS_NAME):$(TAG)
 
 .PHONY: ci-pr
-ci-pr: build integration-test build-image push-image
+ci-pr: build test build-image push-image
 
 .PHONY: ci-master
-ci-master: build integration-test build-image push-image
+ci-master: build test build-image push-image
 
 .PHONY: ci-release
-ci-release: build integration-test build-image push-image charts-test release
+ci-release: build test build-image push-image charts-test release
 
 .PHONY: clean
 clean:
@@ -141,6 +171,8 @@ clean:
 	rm -f controller
 	rm -f targz
 	rm -f indexbuilder
+	rm -f hb_chart_test
+	rm -rf bin/
 
 .PHONY: path-to-referenced-charts
 path-to-referenced-charts:

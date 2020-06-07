@@ -3,7 +3,7 @@ package etcd
 import (
 	"time"
 
-	"github.com/coreos/etcd/clientv3"
+	"go.etcd.io/etcd/clientv3"
 )
 
 // Client wraps etcd client for testing purposes.

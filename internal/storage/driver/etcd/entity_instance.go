@@ -6,8 +6,8 @@ import (
 	"encoding/gob"
 	"strings"
 
-	"github.com/coreos/etcd/clientv3"
-	"github.com/coreos/etcd/clientv3/namespace"
+	"go.etcd.io/etcd/clientv3"
+	"go.etcd.io/etcd/clientv3/namespace"
 	"github.com/kyma-project/helm-broker/internal"
 	"github.com/pkg/errors"
 )

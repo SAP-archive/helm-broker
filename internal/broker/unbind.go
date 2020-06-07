@@ -3,7 +3,7 @@ package broker
 import (
 	"context"
 
-	osb "github.com/pmorie/go-open-service-broker-client/v2"
+	osb "github.com/kubernetes-sigs/go-open-service-broker-client/v2"
 )
 
 type unbindService struct{}
