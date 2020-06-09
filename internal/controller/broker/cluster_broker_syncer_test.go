@@ -2,6 +2,8 @@ package broker
 
 import (
 	"context"
+	"testing"
+
 	"github.com/kubernetes-sigs/service-catalog/pkg/apis/servicecatalog/v1beta1"
 	"github.com/kyma-project/helm-broker/internal/platform/logger/spy"
 	"github.com/stretchr/testify/assert"
@@ -10,7 +12,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	k8sigs "sigs.k8s.io/controller-runtime/pkg/client/fake"
-	"testing"
 )
 
 func TestClusterServiceBrokerSync_Success(t *testing.T) {

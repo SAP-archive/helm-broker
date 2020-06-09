@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"go.etcd.io/etcd/integration"
 	"github.com/stretchr/testify/require"
+	"go.etcd.io/etcd/integration"
 
 	"github.com/kyma-project/helm-broker/internal/storage"
 	"github.com/kyma-project/helm-broker/internal/storage/driver/etcd"

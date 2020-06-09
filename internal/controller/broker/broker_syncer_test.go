@@ -16,7 +16,6 @@ import (
 	k8sigs "sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
-
 func TestServiceBrokerSync_Success(t *testing.T) {
 	// given
 	destNs := fixDestNs()

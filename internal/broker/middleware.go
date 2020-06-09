@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/kyma-project/helm-broker/internal"
 	osb "github.com/kubernetes-sigs/go-open-service-broker-client/v2"
+	"github.com/kyma-project/helm-broker/internal"
 )
 
 // OSBContextMiddleware implements Handler interface

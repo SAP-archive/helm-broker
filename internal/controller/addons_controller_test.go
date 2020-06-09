@@ -472,7 +472,6 @@ func (ts *testSuite) assertExpectations() {
 	ts.addonGetterFactory.AssertExpectations(ts.t)
 }
 
-
 func getFakeManager(t *testing.T, cli client.Client, sch *runtime.Scheme) manager.Manager {
 	return &fakeManager{
 		t:      t,

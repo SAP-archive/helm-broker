@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pborman/uuid"
 	osb "github.com/kubernetes-sigs/go-open-service-broker-client/v2"
+	"github.com/pborman/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"

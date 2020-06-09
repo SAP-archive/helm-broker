@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pkg/errors"
 	"go.etcd.io/etcd/clientv3"
 	"go.etcd.io/etcd/clientv3/namespace"
-	"github.com/pkg/errors"
 
 	"github.com/kyma-project/helm-broker/internal/platform/ptr"
 	yTime "github.com/kyma-project/helm-broker/internal/platform/time"

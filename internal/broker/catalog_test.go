@@ -11,12 +11,12 @@ import (
 
 	"github.com/Masterminds/semver"
 	"github.com/alecthomas/jsonschema"
+	osb "github.com/kubernetes-sigs/go-open-service-broker-client/v2"
 	"github.com/kyma-project/helm-broker/internal"
 	"github.com/kyma-project/helm-broker/internal/broker"
 	"github.com/kyma-project/helm-broker/internal/broker/automock"
 	"github.com/kyma-project/helm-broker/internal/platform/ptr"
 	"github.com/pkg/errors"
-	osb "github.com/kubernetes-sigs/go-open-service-broker-client/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

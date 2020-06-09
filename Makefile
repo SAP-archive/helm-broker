@@ -13,7 +13,12 @@ TOOLS_NAME = helm-broker-tools
 TESTS_NAME = helm-broker-tests
 CONTROLLER_NAME = helm-controller
 
-FILES_TO_CHECK = find . -type f -name "*.go" | grep -v "\/vendor\/|_*/automock/|_*/testdata/|/pkg\/|_*export_test.go"
+# VERIFY_IGNORE is a grep pattern to exclude files and directories from verification
+VERIFY_IGNORE := /vendor\|/automock
+# FILES_TO_CHECK is a command used to determine which files should be verified
+FILES_TO_CHECK = find . -type f -name "*.go" | grep -v "$(VERIFY_IGNORE)"
+# DIRS_TO_CHECK is a command used to determine which directories should be verified
+DIRS_TO_CHECK = go list ./... | grep -v "$(VERIFY_IGNORE)"
 
 build:: build-binaries format test
 
@@ -41,22 +46,22 @@ charts-test:
 # Run go fmt against code
 .PHONY: fmt
 fmt:
-	go fmt $$($(FILES_TO_CHECK)))
+	go fmt ./internal/... ./cmd/...
 
 # Run go vet against code
 .PHONY: vet
 vet:
-	go vet $$($(FILES_TO_CHECK)))
+	go vet $$($(DIRS_TO_CHECK))
 
 .PHONY: golint
 golint:
 	@go install golang.org/x/lint/golint
-	@$(GOBIN)/golint $$($(FILES_TO_CHECK)))
+	@$(GOBIN)/golint $$($(FILES_TO_CHECK))
 
 .PHONY: goimports
 goimports:
 	@go install golang.org/x/tools/cmd/goimports
-	@$(GOBIN)/goimports  -w -l $$($(FILES_TO_CHECK)))
+	@$(GOBIN)/goimports  -w -l $$($(FILES_TO_CHECK))
 
 .PHONY: pull-licenses
 pull-licenses:

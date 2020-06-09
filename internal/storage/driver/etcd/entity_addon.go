@@ -8,9 +8,9 @@ import (
 	"strings"
 
 	"github.com/Masterminds/semver"
+	"github.com/pkg/errors"
 	"go.etcd.io/etcd/clientv3"
 	"go.etcd.io/etcd/clientv3/namespace"
-	"github.com/pkg/errors"
 
 	"github.com/kyma-project/helm-broker/internal"
 )

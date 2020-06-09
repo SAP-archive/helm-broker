@@ -2,8 +2,9 @@ package testing
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/Masterminds/semver"
 	"github.com/stretchr/testify/assert"

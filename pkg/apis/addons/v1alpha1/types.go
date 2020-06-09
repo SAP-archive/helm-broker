@@ -7,7 +7,6 @@ import (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 // Important: Run "make generates" to regenerate files after modifying those structs
 
-
 // +kubebuilder:object:root=true
 
 // AddonsConfiguration is the Schema for the addonsconfigurations API
@@ -61,7 +60,7 @@ type ClusterAddonsConfiguration struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec ClusterAddonsConfigurationSpec `json:"spec,omitempty"`
+	Spec   ClusterAddonsConfigurationSpec   `json:"spec,omitempty"`
 	Status ClusterAddonsConfigurationStatus `json:"status,omitempty"`
 }
 

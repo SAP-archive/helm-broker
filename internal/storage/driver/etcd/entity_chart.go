@@ -6,10 +6,10 @@ import (
 	"strings"
 
 	"github.com/Masterminds/semver"
-	"go.etcd.io/etcd/clientv3"
-	"go.etcd.io/etcd/clientv3/namespace"
 	"github.com/golang/protobuf/proto"
 	"github.com/pkg/errors"
+	"go.etcd.io/etcd/clientv3"
+	"go.etcd.io/etcd/clientv3/namespace"
 	"k8s.io/helm/pkg/proto/hapi/chart"
 
 	"github.com/kyma-project/helm-broker/internal"

@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/pkg/errors"
 	osb "github.com/kubernetes-sigs/go-open-service-broker-client/v2"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"k8s.io/helm/pkg/proto/hapi/chart"
 

@@ -5,12 +5,12 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"go.etcd.io/etcd/pkg/mock/mockserver"
 	"github.com/kyma-project/helm-broker/internal/storage"
 	"github.com/kyma-project/helm-broker/internal/storage/driver/etcd"
 	"github.com/kyma-project/helm-broker/internal/storage/driver/memory"
 	"github.com/kyma-project/helm-broker/internal/storage/testdata"
 	"github.com/stretchr/testify/require"
+	"go.etcd.io/etcd/pkg/mock/mockserver"
 )
 
 func TestNewFactory(t *testing.T) {
