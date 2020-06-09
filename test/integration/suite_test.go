@@ -159,6 +159,14 @@ func newTestSuite(t *testing.T, docsEnabled, httpBasicAuth bool) *testSuite {
 	// create a client for managing (cluster) addons configurations
 	dynamicClient, err := client.New(restConfig, client.Options{Scheme: sch})
 
+	// create namespaces required in the tests
+	for _, ns := range []string{stageNS, prodNS} {
+		err = dynamicClient.Create(context.TODO(), &corev1.Namespace{
+			ObjectMeta: v1.ObjectMeta{Name: ns},
+		})
+		require.NoError(t, err)
+	}
+
 	// initialize git repositoryDirName
 	gitRepository, err := newGitRepository(t, addonSource)
 	require.NoError(t, err)
@@ -208,7 +216,6 @@ func (ts *testSuite) StartControllers(docsEnabled bool) {
 func newOSBClient(url string) (osb.Client, error) {
 	config := osb.DefaultClientConfiguration()
 	config.URL = url
-	config.APIVersion = osb.Version2_13()
 
 	osbClient, err := osb.NewClient(config)
 	if err != nil {

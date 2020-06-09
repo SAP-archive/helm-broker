@@ -14,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	minio "github.com/minio/minio-go"
+	"github.com/minio/minio-go/v6"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/rand"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -122,8 +122,7 @@ func (m *minioServer) startMinioServer() error {
 
 func (m *minioServer) waitMinioIsReady() error {
 	m.t.Log("Wait for ready minio process")
-
-	err := wait.Poll(1*time.Second, 20*time.Second, func() (done bool, err error) {
+	err := wait.Poll(1*time.Second, time.Minute, func() (done bool, err error) {
 		list, err := m.client.ListBuckets()
 		if err != nil {
 			m.t.Logf("cannot list minio buckets (%s), minio is not ready, retry...", err)
@@ -132,7 +131,10 @@ func (m *minioServer) waitMinioIsReady() error {
 		if len(list) != 0 {
 			m.t.Logf("bucket list is not empty (%d items), trying clear minio", len(list))
 			err = m.clearMinio()
-			return false, err
+			if err != nil {
+				m.t.Logf("error when trying to clear minio: %s", err)
+			}
+			return false, nil
 		}
 
 		m.t.Log("Minio server is ready")

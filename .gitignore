@@ -113,3 +113,4 @@ fabric.properties
 /deploy/tests/hb_chart_test
 toCopy/
 bin/
+test/integration/testdata/basic-hg/.hg/

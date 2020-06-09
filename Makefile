@@ -20,7 +20,9 @@ FILES_TO_CHECK = find . -type f -name "*.go" | grep -v "$(VERIFY_IGNORE)"
 # DIRS_TO_CHECK is a command used to determine which directories should be verified
 DIRS_TO_CHECK = go list ./... | grep -v "$(VERIFY_IGNORE)"
 
-build:: build-binaries format test
+build:: build-binaries verify test
+
+verify:: vet check-imports-local check-fmt-local
 
 format:: vet goimports fmt golint clean
 
@@ -62,6 +64,22 @@ golint:
 goimports:
 	@go install golang.org/x/tools/cmd/goimports
 	@$(GOBIN)/goimports  -w -l $$($(FILES_TO_CHECK))
+
+.PHONY: check-imports-local
+check-imports-local:
+	@if [ -n "$$(goimports -l $$($(FILES_TO_CHECK)))" ]; then \
+		echo "✗ some files are not properly formatted or contain not formatted imports. To repair run make imports"; \
+		goimports -l $$($(FILES_TO_CHECK)); \
+		exit 1; \
+	fi;
+
+.PHONY: check-fmt-local
+check-fmt-local:
+	@if [ -n "$$(gofmt -l $$($(FILES_TO_CHECK)))" ]; then \
+		gofmt -l $$($(FILES_TO_CHECK)); \
+		echo "✗ some files are not properly formatted. To repair run make fmt"; \
+		exit 1; \
+	fi;
 
 .PHONY: pull-licenses
 pull-licenses:

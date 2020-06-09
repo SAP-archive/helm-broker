@@ -3,9 +3,16 @@
 package integration_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
+)
+
+const (
+	stageNS       = "stage"
+	prodNS        = "prod"
+	clusterPrefix = "cluster"
 )
 
 func TestHttpBasicAuth(t *testing.T) {
@@ -14,24 +21,24 @@ func TestHttpBasicAuth(t *testing.T) {
 	defer suite.tearDown()
 
 	t.Run("namespaced", func(t *testing.T) {
-		suite.createSecret("stage", "data-ns", map[string]string{"username": basicUsername, "password": basicPassword})
+		suite.createSecret(stageNS, "data-namespace", map[string]string{"username": basicUsername, "password": basicPassword})
 
 		// when
-		suite.createAddonsConfiguration("stage", addonsConfigName, []string{redisAndAccTestRepo}, sourceHTTP,
-			WithSecretReference("stage", "data-ns"),
+		suite.createAddonsConfiguration(stageNS, addonsConfigName, []string{redisAndAccTestRepo}, sourceHTTP,
+			WithSecretReference(stageNS, "data-namespace"),
 			WithHTTPBasicAuth("{username}", "{password}"))
 
 		// then
-		suite.waitForAddonsConfigurationPhase("stage", addonsConfigName, v1alpha1.AddonsConfigurationReady)
-		suite.waitForServicesInCatalogEndpoint("ns/stage", []string{redisAddonID, accTestAddonID})
+		suite.waitForAddonsConfigurationPhase(stageNS, addonsConfigName, v1alpha1.AddonsConfigurationReady)
+		suite.waitForServicesInCatalogEndpoint(fmt.Sprintf("ns/%s", stageNS), []string{redisAddonID, accTestAddonID})
 	})
 
 	t.Run("cluster", func(t *testing.T) {
-		suite.createSecret("stage", "data-cluster", map[string]string{"username": basicUsername, "password": basicPassword})
+		suite.createSecret(stageNS, "data-cluster", map[string]string{"username": basicUsername, "password": basicPassword})
 
 		// when
 		suite.createClusterAddonsConfiguration(addonsConfigName, []string{redisAndAccTestRepo}, sourceHTTP,
-			WithSecretReference("stage", "data-cluster"),
+			WithSecretReference(stageNS, "data-cluster"),
 			WithHTTPBasicAuth("{username}", "{password}"))
 
 		// then
@@ -62,14 +69,14 @@ func TestPendingAddonsConfiguration(t *testing.T) {
 	defer suite.tearDown()
 
 	// create an AddonsConfiguration with status Pending
-	suite.createAddonsConfiguration("stage", addonsConfigName, []string{redisRepo}, sourceHTTP)
-	suite.updateAddonsConfigurationStatusPhase("stage", addonsConfigName, v1alpha1.AddonsConfigurationPending)
+	suite.createAddonsConfiguration(stageNS, addonsConfigName, []string{redisRepo}, sourceHTTP)
+	suite.updateAddonsConfigurationStatusPhase(stageNS, addonsConfigName, v1alpha1.AddonsConfigurationPending)
 
 	// when
 	suite.StartControllers(false)
 
 	// then
-	suite.waitForAddonsConfigurationPhase("stage", addonsConfigName, v1alpha1.AddonsConfigurationReady)
+	suite.waitForAddonsConfigurationPhase(stageNS, addonsConfigName, v1alpha1.AddonsConfigurationReady)
 }
 
 func TestGetCatalogHappyPath(t *testing.T) {
@@ -111,30 +118,30 @@ func TestGetCatalogHappyPath(t *testing.T) {
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
-			suite.assertNoServicesInCatalogEndpoint("ns/stage")
+			suite.assertNoServicesInCatalogEndpoint(fmt.Sprintf("ns/%s", stageNS))
 
 			// when
-			suite.createAddonsConfiguration("stage", c.addonName, []string{redisAndAccTestRepo}, c.kind)
+			suite.createAddonsConfiguration(stageNS, c.addonName, []string{redisAndAccTestRepo}, c.kind)
 
 			// then
-			suite.waitForAddonsConfigurationPhase("stage", c.addonName, v1alpha1.AddonsConfigurationReady)
-			suite.waitForServicesInCatalogEndpoint("ns/stage", []string{c.redisID, c.testID})
-			suite.assertNoServicesInCatalogEndpoint("ns/prod")
+			suite.waitForAddonsConfigurationPhase(stageNS, c.addonName, v1alpha1.AddonsConfigurationReady)
+			suite.waitForServicesInCatalogEndpoint(fmt.Sprintf("ns/%s", stageNS), []string{c.redisID, c.testID})
+			suite.assertNoServicesInCatalogEndpoint(fmt.Sprintf("ns/%s", prodNS))
 			suite.assertNoServicesInCatalogEndpoint("cluster")
 
 			// when
-			suite.createAddonsConfiguration("prod", c.addonName, []string{redisAndAccTestRepo}, c.kind)
-			suite.waitForAddonsConfigurationPhase("prod", c.addonName, v1alpha1.AddonsConfigurationReady)
-			suite.waitForServicesInCatalogEndpoint("ns/prod", []string{c.redisID, c.testID})
-			suite.waitForServiceBrokerRegistered("prod")
+			suite.createAddonsConfiguration(prodNS, c.addonName, []string{redisAndAccTestRepo}, c.kind)
+			suite.waitForAddonsConfigurationPhase(prodNS, c.addonName, v1alpha1.AddonsConfigurationReady)
+			suite.waitForServicesInCatalogEndpoint(fmt.Sprintf("ns/%s", prodNS), []string{c.redisID, c.testID})
+			suite.waitForServiceBrokerRegistered(prodNS)
 
 			// when
-			suite.updateAddonsConfigurationRepositories("stage", c.addonName, []string{}, c.kind)
-			suite.updateAddonsConfigurationRepositories("prod", c.addonName, []string{}, c.kind)
+			suite.updateAddonsConfigurationRepositories(stageNS, c.addonName, []string{}, c.kind)
+			suite.updateAddonsConfigurationRepositories(prodNS, c.addonName, []string{}, c.kind)
 
 			// then
-			suite.waitForEmptyCatalogResponse("ns/stage")
-			suite.waitForEmptyCatalogResponse("ns/prod")
+			suite.waitForEmptyCatalogResponse(fmt.Sprintf("ns/%s", stageNS))
+			suite.waitForEmptyCatalogResponse(fmt.Sprintf("ns/%s", prodNS))
 		})
 	}
 
@@ -189,12 +196,12 @@ func TestProvisioning(t *testing.T) {
 	suite := newTestSuiteAndStartControllers(t, false, false)
 	defer suite.tearDown()
 
-	suite.createAddonsConfiguration("stage", addonsConfigName, []string{redisRepo}, sourceHTTP)
-	suite.waitForServicesInCatalogEndpoint("ns/stage", []string{redisAddonID})
+	suite.createAddonsConfiguration(stageNS, addonsConfigName, []string{redisRepo}, sourceHTTP)
+	suite.waitForServicesInCatalogEndpoint(fmt.Sprintf("ns/%s", stageNS), []string{redisAddonID})
 	suite.waitForNumberOfReleases(0)
 
 	// when
-	suite.provisionInstanceFromServiceClass("ns/stage", "stage")
+	suite.provisionInstanceFromServiceClass(fmt.Sprintf("ns/%s", stageNS), stageNS)
 
 	// then
 	suite.waitForNumberOfReleases(1)
@@ -205,27 +212,27 @@ func TestUnregisteringServiceBroker(t *testing.T) {
 	suite := newTestSuiteAndStartControllers(t, false, false)
 	defer suite.tearDown()
 
-	suite.createAddonsConfiguration("stage", addonsConfigName, []string{redisRepo}, sourceHTTP)
-	suite.waitForServiceBrokerRegistered("stage")
-	suite.waitForServicesInCatalogEndpoint("ns/stage", []string{redisAddonID})
+	suite.createAddonsConfiguration(stageNS, addonsConfigName, []string{redisRepo}, sourceHTTP)
+	suite.waitForServiceBrokerRegistered(stageNS)
+	suite.waitForServicesInCatalogEndpoint(fmt.Sprintf("ns/%s", stageNS), []string{redisAddonID})
 
 	// when
-	suite.provisionInstanceFromServiceClass("ns/stage", "stage")
+	suite.provisionInstanceFromServiceClass(fmt.Sprintf("ns/%s", stageNS), stageNS)
 
 	// then
 	suite.waitForNumberOfReleases(1)
 
 	// when
-	suite.deleteAddonsConfiguration("stage", addonsConfigName)
+	suite.deleteAddonsConfiguration(stageNS, addonsConfigName)
 
 	// then
-	suite.waitForServiceBrokerRegistered("stage")
+	suite.waitForServiceBrokerRegistered(stageNS)
 
 	// when
-	suite.deprovisionInstance("ns/stage", "stage")
+	suite.deprovisionInstance(fmt.Sprintf("ns/%s", stageNS), stageNS)
 
 	// then
-	suite.waitForServiceBrokerNotRegistered("stage")
+	suite.waitForServiceBrokerNotRegistered(stageNS)
 }
 
 func TestUnregisteringClusterServiceBroker(t *testing.T) {
@@ -238,7 +245,7 @@ func TestUnregisteringClusterServiceBroker(t *testing.T) {
 	suite.waitForServicesInCatalogEndpoint("cluster", []string{redisAddonID})
 
 	// when
-	suite.provisionInstanceFromClusterServiceClass("cluster", "stage")
+	suite.provisionInstanceFromClusterServiceClass("cluster", stageNS)
 
 	// then
 	suite.waitForNumberOfReleases(1)
@@ -252,7 +259,7 @@ func TestUnregisteringClusterServiceBroker(t *testing.T) {
 	suite.waitForClusterServiceBrokerRegistered()
 
 	// when
-	suite.deprovisionInstance("cluster", "stage")
+	suite.deprovisionInstance("cluster", stageNS)
 
 	// then
 	suite.waitForClusterServiceBrokerNotRegistered()
@@ -284,47 +291,47 @@ func TestAddonsConflicts(t *testing.T) {
 
 			// when
 			//  - create an addons configuration with repo with redis addon
-			suite.createAddonsConfiguration("stage", first, []string{redisRepo}, c.kind)
+			suite.createAddonsConfiguration(stageNS, first, []string{redisRepo}, c.kind)
 
 			// then
 			//  - wait for readiness and wait for service redis at the catalog endpoint
-			suite.waitForAddonsConfigurationPhase("stage", first, v1alpha1.AddonsConfigurationReady)
-			suite.waitForServicesInCatalogEndpoint("ns/stage", []string{c.redisID})
+			suite.waitForAddonsConfigurationPhase(stageNS, first, v1alpha1.AddonsConfigurationReady)
+			suite.waitForServicesInCatalogEndpoint(fmt.Sprintf("ns/%s", stageNS), []string{c.redisID})
 
 			// when
 			// - create second addons configuration with a repo with redis and acc-test addons
-			suite.createAddonsConfiguration("stage", second, []string{redisAndAccTestRepo}, c.kind)
+			suite.createAddonsConfiguration(stageNS, second, []string{redisAndAccTestRepo}, c.kind)
 
 			// then
 			// - expect phase "failed", still redis service at the catalog endpoint
-			suite.waitForAddonsConfigurationPhase("stage", second, v1alpha1.AddonsConfigurationFailed)
-			suite.waitForServicesInCatalogEndpoint("ns/stage", []string{c.redisID})
+			suite.waitForAddonsConfigurationPhase(stageNS, second, v1alpha1.AddonsConfigurationFailed)
+			suite.waitForServicesInCatalogEndpoint(fmt.Sprintf("ns/%s", stageNS), []string{c.redisID})
 
 			// when
 			// - remove repo with redis from the first (cluster) addon
-			suite.updateAddonsConfigurationRepositories("stage", first, []string{}, c.kind)
+			suite.updateAddonsConfigurationRepositories(stageNS, first, []string{}, c.kind)
 
 			// then
 			// - expect for readiness and 2 services at the catalog endpoint
-			suite.waitForAddonsConfigurationPhase("stage", second, v1alpha1.AddonsConfigurationReady)
-			suite.waitForServicesInCatalogEndpoint("ns/stage", []string{c.redisID, c.testID})
+			suite.waitForAddonsConfigurationPhase(stageNS, second, v1alpha1.AddonsConfigurationReady)
+			suite.waitForServicesInCatalogEndpoint(fmt.Sprintf("ns/%s", stageNS), []string{c.redisID, c.testID})
 
 			// when
 			// - create third addons configuration with a repo with acc-test addons
-			suite.createAddonsConfiguration("stage", third, []string{accTestRepo}, c.kind)
+			suite.createAddonsConfiguration(stageNS, third, []string{accTestRepo}, c.kind)
 
 			// then
 			// - expect failed (because of the conflict)
-			suite.waitForAddonsConfigurationPhase("stage", third, v1alpha1.AddonsConfigurationFailed)
+			suite.waitForAddonsConfigurationPhase(stageNS, third, v1alpha1.AddonsConfigurationFailed)
 
 			// when
 			// - delete second (cluster) addons configuration, so the third will be reprocessed
-			suite.deleteAddonsConfiguration("stage", second)
+			suite.deleteAddonsConfiguration(stageNS, second)
 
 			// then
 			// - expect readiness
-			suite.waitForAddonsConfigurationPhase("stage", third, v1alpha1.AddonsConfigurationReady)
-			suite.waitForServicesInCatalogEndpoint("ns/stage", []string{c.testID})
+			suite.waitForAddonsConfigurationPhase(stageNS, third, v1alpha1.AddonsConfigurationReady)
+			suite.waitForServicesInCatalogEndpoint(fmt.Sprintf("ns/%s", stageNS), []string{c.testID})
 		})
 	}
 
@@ -428,14 +435,14 @@ func TestAssetGroup(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			// when
-			suite.createAddonsConfiguration("stage", c.addonName, []string{redisAndAccTestRepo}, c.kind)
+			suite.createAddonsConfiguration(stageNS, c.addonName, []string{redisAndAccTestRepo}, c.kind)
 
 			// then
-			suite.waitForAddonsConfigurationPhase("stage", c.addonName, v1alpha1.AddonsConfigurationReady)
-			suite.assertAssetGroupExist("stage", c.assetGroupID)
+			suite.waitForAddonsConfigurationPhase(stageNS, c.addonName, v1alpha1.AddonsConfigurationReady)
+			suite.assertAssetGroupExist(stageNS, c.assetGroupID)
 
 			// when
-			suite.updateAddonsConfigurationRepositories("stage", c.addonName, []string{redisRepo}, c.kind)
+			suite.updateAddonsConfigurationRepositories(stageNS, c.addonName, []string{redisRepo}, c.kind)
 
 			// then
 			suite.assertAssetGroupListIsEmpty()
@@ -500,17 +507,17 @@ func TestDisabledDocs(t *testing.T) {
 	} {
 		t.Run(tn, func(t *testing.T) {
 			// given
-			suite.assertNoServicesInCatalogEndpoint("ns/stage")
+			suite.assertNoServicesInCatalogEndpoint(fmt.Sprintf("ns/%s", stageNS))
 
 			// when
-			suite.createAddonsConfiguration("stage", tc.addonName, []string{redisRepo}, tc.kind)
+			suite.createAddonsConfiguration(stageNS, tc.addonName, []string{redisRepo}, tc.kind)
 
 			// then
-			suite.waitForAddonsConfigurationPhase("stage", tc.addonName, v1alpha1.AddonsConfigurationReady)
-			suite.waitForServicesInCatalogEndpoint("ns/stage", []string{tc.redisID})
+			suite.waitForAddonsConfigurationPhase(stageNS, tc.addonName, v1alpha1.AddonsConfigurationReady)
+			suite.waitForServicesInCatalogEndpoint(fmt.Sprintf("ns/%s", stageNS), []string{tc.redisID})
 
-			suite.deleteAddonsConfiguration("stage", tc.addonName)
-			suite.waitForEmptyCatalogResponse("ns/stage")
+			suite.deleteAddonsConfiguration(stageNS, tc.addonName)
+			suite.waitForEmptyCatalogResponse(fmt.Sprintf("ns/%s", stageNS))
 		})
 	}
 

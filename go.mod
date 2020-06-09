@@ -31,7 +31,7 @@ require (
 	github.com/mcuadros/go-defaults v1.2.0
 	github.com/meatballhat/negroni-logrus v1.1.0
 	github.com/mholt/archiver v3.1.1+incompatible
-	github.com/minio/minio-go v6.0.14+incompatible
+	github.com/minio/minio-go/v6 v6.0.56
 	github.com/mitchellh/copystructure v1.0.0 // indirect
 	github.com/nwaples/rardecode v1.1.0 // indirect
 	github.com/oklog/ulid v1.3.1
