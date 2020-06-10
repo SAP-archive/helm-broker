@@ -1,16 +1,16 @@
 package charts
 
 import (
+	"context"
 	"fmt"
 	"testing"
 	"time"
 
 	"k8s.io/apimachinery/pkg/util/wait"
 
+	osb "github.com/kubernetes-sigs/go-open-service-broker-client/v2"
 	"github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
 	"github.com/kyma-project/helm-broker/pkg/client/clientset/versioned"
-	osb "github.com/pmorie/go-open-service-broker-client/v2"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/vrischmann/envconfig"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -95,7 +95,7 @@ func NewTestSuite(t *testing.T) *TestSuite {
 }
 
 func (s *TestSuite) createSampleClusterAddonsConfiguration() {
-	_, err := s.addonsCli.AddonsV1alpha1().ClusterAddonsConfigurations().Create(&v1alpha1.ClusterAddonsConfiguration{
+	_, err := s.addonsCli.AddonsV1alpha1().ClusterAddonsConfigurations().Create(context.TODO(), &v1alpha1.ClusterAddonsConfiguration{
 		ObjectMeta: v1.ObjectMeta{
 			Name: s.sampleClusterAddonsCfgName,
 		},
@@ -106,21 +106,21 @@ func (s *TestSuite) createSampleClusterAddonsConfiguration() {
 				},
 			},
 		},
-	})
+	}, v1.CreateOptions{})
 
 	require.NoErrorf(s.t, err, "while creating cluster addons configuration")
 	s.t.Logf("ClusterAddonsConfigurations %q is created", s.sampleClusterAddonsCfgName)
 }
 
 func (s *TestSuite) deleteSampleClusterAddonsConfiguration() {
-	err := s.addonsCli.AddonsV1alpha1().ClusterAddonsConfigurations().Delete(s.sampleClusterAddonsCfgName, &v1.DeleteOptions{})
+	err := s.addonsCli.AddonsV1alpha1().ClusterAddonsConfigurations().Delete(context.TODO(), s.sampleClusterAddonsCfgName, v1.DeleteOptions{})
 	require.NoError(s.t, err, "while creating cluster addons configuration")
 	s.t.Logf("ClusterAddonsConfigurations %q is deleted", s.sampleClusterAddonsCfgName)
 }
 
 func (s *TestSuite) waitForSampleClusterAddonsConfiguration(timeout time.Duration) {
 	sampleClusterAddonsAvailable := func() (done bool, err error) {
-		cac, err := s.addonsCli.AddonsV1alpha1().ClusterAddonsConfigurations().Get(s.sampleClusterAddonsCfgName, v1.GetOptions{})
+		cac, err := s.addonsCli.AddonsV1alpha1().ClusterAddonsConfigurations().Get(context.TODO(), s.sampleClusterAddonsCfgName, v1.GetOptions{})
 		if err != nil {
 			return false, err
 		}
@@ -150,18 +150,26 @@ func (s *TestSuite) assertSampleClusterAddonsAreExposedOnCatalogEndpoint(timeout
 	client, err := osb.NewClient(config)
 	require.NoError(s.t, err, "while creating osb client for broker with URL: %s", s.cfg.HelmBrokerURL)
 
-	response, err := client.GetCatalog()
-	require.NoError(s.t, err, "while getting catalog from broker with URL: %s", s.cfg.HelmBrokerURL)
-
-	containService := func(id string) bool {
-		for _, svc := range response.Services {
-			if svc.ID == id {
-				return true
-			}
+	err = wait.PollImmediate(time.Second, timeout, func() (bool, error) {
+		response, err := client.GetCatalog()
+		if err != nil {
+			s.t.Logf("error when calling for catalog %v", err)
 		}
-		return false
-	}
+		containService := func(id string) bool {
+			for _, svc := range response.Services {
+				if svc.ID == id {
+					return true
+				}
+			}
+			return false
+		}
+		if !containService(s.cfg.ExpectedAddonID) {
+			s.t.Logf("expected addon %s was not found", s.cfg.ExpectedAddonID)
+			return false, nil
+		}
 
-	assert.True(s.t, containService(s.cfg.ExpectedAddonID))
-	s.t.Logf("Helm Broker exposes Service [id: %q] from ClusterAddonsConfiguration %s properly", s.cfg.ExpectedAddonID, s.sampleClusterAddonsCfgName)
+		s.t.Logf("Helm Broker exposes Service [id: %q] from ClusterAddonsConfiguration %s properly", s.cfg.ExpectedAddonID, s.sampleClusterAddonsCfgName)
+		return true, nil
+	})
+	require.NoError(s.t, err, "while getting catalog from broker with URL: %s", s.cfg.HelmBrokerURL)
 }

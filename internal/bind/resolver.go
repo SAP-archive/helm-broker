@@ -2,6 +2,7 @@ package bind
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 
 	"github.com/ghodss/yaml"
@@ -114,7 +115,7 @@ func (r *Resolver) getCredVarKeyRefValue(ns internal.Namespace, from CredentialV
 
 // getSecretAllValues returns key-value pairs populated from secret in the supplied namespace
 func getSecretAllValues(client corev1.CoreV1Interface, namespace internal.Namespace, secretSelector NameSelector) (map[string]string, error) {
-	secret, err := client.Secrets(string(namespace)).Get(secretSelector.Name, metav1.GetOptions{})
+	secret, err := client.Secrets(string(namespace)).Get(context.TODO(), secretSelector.Name, metav1.GetOptions{})
 	if err != nil {
 		return map[string]string{}, errors.Wrapf(err, "while getting secrets [%s] from namespace [%s]", secretSelector.Name, namespace)
 	}
@@ -129,7 +130,7 @@ func getSecretAllValues(client corev1.CoreV1Interface, namespace internal.Namesp
 
 // getConfigMapAllValues returns key-value pairs populated from configmap in the supplied namespace
 func getConfigMapAllValues(client corev1.CoreV1Interface, namespace internal.Namespace, configMapSelector NameSelector) (map[string]string, error) {
-	configMap, err := client.ConfigMaps(string(namespace)).Get(configMapSelector.Name, metav1.GetOptions{})
+	configMap, err := client.ConfigMaps(string(namespace)).Get(context.TODO(), configMapSelector.Name, metav1.GetOptions{})
 	if err != nil {
 		return map[string]string{}, errors.Wrapf(err, "while getting configmap [%s] from namespace [%s]", configMapSelector.Name, namespace)
 	}
@@ -139,7 +140,7 @@ func getConfigMapAllValues(client corev1.CoreV1Interface, namespace internal.Nam
 
 // getSecretKeyValue returns the value of a secret in the supplied namespace
 func getSecretKeyValue(client corev1.CoreV1Interface, namespace internal.Namespace, secretSelector KeySelector) (string, error) {
-	secret, err := client.Secrets(string(namespace)).Get(secretSelector.Name, metav1.GetOptions{})
+	secret, err := client.Secrets(string(namespace)).Get(context.TODO(), secretSelector.Name, metav1.GetOptions{})
 	if err != nil {
 		return "", errors.Wrapf(err, "while getting secrets [%s] from namespace [%s]", secretSelector.Name, namespace)
 	}
@@ -154,7 +155,7 @@ func getSecretKeyValue(client corev1.CoreV1Interface, namespace internal.Namespa
 
 // getConfigMapKeyValue returns the value of a configmap in the supplied namespace
 func getConfigMapKeyValue(client corev1.CoreV1Interface, namespace internal.Namespace, configMapSelector KeySelector) (string, error) {
-	configMap, err := client.ConfigMaps(string(namespace)).Get(configMapSelector.Name, metav1.GetOptions{})
+	configMap, err := client.ConfigMaps(string(namespace)).Get(context.TODO(), configMapSelector.Name, metav1.GetOptions{})
 	if err != nil {
 		return "", errors.Wrapf(err, "while getting configmap [%s] from namespace [%s]", configMapSelector.Name, namespace)
 	}
@@ -166,7 +167,7 @@ func getConfigMapKeyValue(client corev1.CoreV1Interface, namespace internal.Name
 }
 
 func getServiceJSONPathValue(kubeClient corev1.CoreV1Interface, namespace internal.Namespace, selector JSONPathSelector) (string, error) {
-	service, err := kubeClient.Services(string(namespace)).Get(selector.Name, metav1.GetOptions{})
+	service, err := kubeClient.Services(string(namespace)).Get(context.TODO(), selector.Name, metav1.GetOptions{})
 	if err != nil {
 		return "", errors.Wrapf(err, "while getting service [%s] from namespace [%s]", selector.Name, namespace)
 	}

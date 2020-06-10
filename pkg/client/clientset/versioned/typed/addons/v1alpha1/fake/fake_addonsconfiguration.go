@@ -19,6 +19,8 @@ limitations under the License.
 package fake
 
 import (
+	"context"
+
 	v1alpha1 "github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
@@ -39,7 +41,7 @@ var addonsconfigurationsResource = schema.GroupVersionResource{Group: "addons.ky
 var addonsconfigurationsKind = schema.GroupVersionKind{Group: "addons.kyma-project.io", Version: "v1alpha1", Kind: "AddonsConfiguration"}
 
 // Get takes name of the addonsConfiguration, and returns the corresponding addonsConfiguration object, and an error if there is any.
-func (c *FakeAddonsConfigurations) Get(name string, options v1.GetOptions) (result *v1alpha1.AddonsConfiguration, err error) {
+func (c *FakeAddonsConfigurations) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.AddonsConfiguration, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewGetAction(addonsconfigurationsResource, c.ns, name), &v1alpha1.AddonsConfiguration{})
 
@@ -50,7 +52,7 @@ func (c *FakeAddonsConfigurations) Get(name string, options v1.GetOptions) (resu
 }
 
 // List takes label and field selectors, and returns the list of AddonsConfigurations that match those selectors.
-func (c *FakeAddonsConfigurations) List(opts v1.ListOptions) (result *v1alpha1.AddonsConfigurationList, err error) {
+func (c *FakeAddonsConfigurations) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.AddonsConfigurationList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewListAction(addonsconfigurationsResource, addonsconfigurationsKind, c.ns, opts), &v1alpha1.AddonsConfigurationList{})
 
@@ -72,14 +74,14 @@ func (c *FakeAddonsConfigurations) List(opts v1.ListOptions) (result *v1alpha1.A
 }
 
 // Watch returns a watch.Interface that watches the requested addonsConfigurations.
-func (c *FakeAddonsConfigurations) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeAddonsConfigurations) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewWatchAction(addonsconfigurationsResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a addonsConfiguration and creates it.  Returns the server's representation of the addonsConfiguration, and an error, if there is any.
-func (c *FakeAddonsConfigurations) Create(addonsConfiguration *v1alpha1.AddonsConfiguration) (result *v1alpha1.AddonsConfiguration, err error) {
+func (c *FakeAddonsConfigurations) Create(ctx context.Context, addonsConfiguration *v1alpha1.AddonsConfiguration, opts v1.CreateOptions) (result *v1alpha1.AddonsConfiguration, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewCreateAction(addonsconfigurationsResource, c.ns, addonsConfiguration), &v1alpha1.AddonsConfiguration{})
 
@@ -90,7 +92,7 @@ func (c *FakeAddonsConfigurations) Create(addonsConfiguration *v1alpha1.AddonsCo
 }
 
 // Update takes the representation of a addonsConfiguration and updates it. Returns the server's representation of the addonsConfiguration, and an error, if there is any.
-func (c *FakeAddonsConfigurations) Update(addonsConfiguration *v1alpha1.AddonsConfiguration) (result *v1alpha1.AddonsConfiguration, err error) {
+func (c *FakeAddonsConfigurations) Update(ctx context.Context, addonsConfiguration *v1alpha1.AddonsConfiguration, opts v1.UpdateOptions) (result *v1alpha1.AddonsConfiguration, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewUpdateAction(addonsconfigurationsResource, c.ns, addonsConfiguration), &v1alpha1.AddonsConfiguration{})
 
@@ -102,7 +104,7 @@ func (c *FakeAddonsConfigurations) Update(addonsConfiguration *v1alpha1.AddonsCo
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeAddonsConfigurations) UpdateStatus(addonsConfiguration *v1alpha1.AddonsConfiguration) (*v1alpha1.AddonsConfiguration, error) {
+func (c *FakeAddonsConfigurations) UpdateStatus(ctx context.Context, addonsConfiguration *v1alpha1.AddonsConfiguration, opts v1.UpdateOptions) (*v1alpha1.AddonsConfiguration, error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewUpdateSubresourceAction(addonsconfigurationsResource, "status", c.ns, addonsConfiguration), &v1alpha1.AddonsConfiguration{})
 
@@ -113,7 +115,7 @@ func (c *FakeAddonsConfigurations) UpdateStatus(addonsConfiguration *v1alpha1.Ad
 }
 
 // Delete takes name of the addonsConfiguration and deletes it. Returns an error if one occurs.
-func (c *FakeAddonsConfigurations) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeAddonsConfigurations) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewDeleteAction(addonsconfigurationsResource, c.ns, name), &v1alpha1.AddonsConfiguration{})
 
@@ -121,15 +123,15 @@ func (c *FakeAddonsConfigurations) Delete(name string, options *v1.DeleteOptions
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeAddonsConfigurations) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(addonsconfigurationsResource, c.ns, listOptions)
+func (c *FakeAddonsConfigurations) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewDeleteCollectionAction(addonsconfigurationsResource, c.ns, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1alpha1.AddonsConfigurationList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched addonsConfiguration.
-func (c *FakeAddonsConfigurations) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.AddonsConfiguration, err error) {
+func (c *FakeAddonsConfigurations) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.AddonsConfiguration, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewPatchSubresourceAction(addonsconfigurationsResource, c.ns, name, pt, data, subresources...), &v1alpha1.AddonsConfiguration{})
 

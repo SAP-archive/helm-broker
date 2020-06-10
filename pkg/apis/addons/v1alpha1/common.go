@@ -1,7 +1,7 @@
 package v1alpha1
 
 import (
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -60,8 +60,8 @@ type CommonAddonsConfigurationSpec struct {
 
 // Addon holds information about single addon
 type Addon struct {
-	Name    string `json:"name"`
-	Version string `json:"version"`
+	Name    string            `json:"name"`
+	Version string            `json:"version"`
 	Status  AddonStatus       `json:"status,omitempty"`
 	Reason  AddonStatusReason `json:"reason,omitempty"`
 	Message string            `json:"message,omitempty"`

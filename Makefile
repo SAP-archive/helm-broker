@@ -1,4 +1,9 @@
+# Directory to put `go install`ed binaries in.
+export GOBIN ?= $(shell pwd)/bin
+
 ROOT_PATH := $(shell pwd)
+REPO = $(DOCKER_PUSH_REPOSITORY)$(DOCKER_PUSH_DIRECTORY)/
+TAG = $(DOCKER_TAG)
 GIT_TAG=$(PULL_BASE_REF)
 GIT_REPO=$(REPO_OWNER)/$(REPO_NAME)
 export GITHUB_TOKEN=$(BOT_GITHUB_TOKEN)
@@ -8,25 +13,73 @@ TOOLS_NAME = helm-broker-tools
 TESTS_NAME = helm-broker-tests
 CONTROLLER_NAME = helm-controller
 
-REPO = $(DOCKER_PUSH_REPOSITORY)$(DOCKER_PUSH_DIRECTORY)/
-TAG = $(DOCKER_TAG)
+# VERIFY_IGNORE is a grep pattern to exclude files and directories from verification
+VERIFY_IGNORE := /vendor\|/automock
+# FILES_TO_CHECK is a command used to determine which files should be verified
+FILES_TO_CHECK = find . -type f -name "*.go" | grep -v "$(VERIFY_IGNORE)"
+# DIRS_TO_CHECK is a command used to determine which directories should be verified
+DIRS_TO_CHECK = go list ./... | grep -v "$(VERIFY_IGNORE)"
+
+build:: build-binaries verify test
+
+verify:: vet check-imports-local check-fmt-local
+
+format:: vet goimports fmt golint clean
+
+test:: unit-test integration-test
 
 .PHONY: build-binaries
 build-binaries:
 	./hack/build-binaries.sh
-
-.PHONY: build
-build:
-	./before-commit.sh ci
 
 .PHONY: integration-test
 integration-test:
 	export KUBEBUILDER_CONTROLPLANE_START_TIMEOUT=2m
 	go test -tags=integration ./test/integration/
 
+.PHONY: unit-test
+unit-test:
+	go test ./internal/... ./cmd/...
+
 .PHONY: charts-test
 charts-test:
 	./hack/ci/run-chart-test.sh
+
+# Run go fmt against code
+.PHONY: fmt
+fmt:
+	go fmt ./internal/... ./cmd/...
+
+# Run go vet against code
+.PHONY: vet
+vet:
+	go vet $$($(DIRS_TO_CHECK))
+
+.PHONY: golint
+golint:
+	@go install golang.org/x/lint/golint
+	@$(GOBIN)/golint $$($(FILES_TO_CHECK))
+
+.PHONY: goimports
+goimports:
+	@go install golang.org/x/tools/cmd/goimports
+	@$(GOBIN)/goimports  -w -l $$($(FILES_TO_CHECK))
+
+.PHONY: check-imports-local
+check-imports-local:
+	@if [ -n "$$(goimports -l $$($(FILES_TO_CHECK)))" ]; then \
+		echo "✗ some files are not properly formatted or contain not formatted imports. To repair run make imports"; \
+		goimports -l $$($(FILES_TO_CHECK)); \
+		exit 1; \
+	fi;
+
+.PHONY: check-fmt-local
+check-fmt-local:
+	@if [ -n "$$(gofmt -l $$($(FILES_TO_CHECK)))" ]; then \
+		gofmt -l $$($(FILES_TO_CHECK)); \
+		echo "✗ some files are not properly formatted. To repair run make fmt"; \
+		exit 1; \
+	fi;
 
 .PHONY: pull-licenses
 pull-licenses:
@@ -127,13 +180,13 @@ push-image:
 	docker push $(REPO)$(TESTS_NAME):$(TAG)
 
 .PHONY: ci-pr
-ci-pr: build integration-test build-image push-image
+ci-pr: build test build-image push-image
 
 .PHONY: ci-master
-ci-master: build integration-test build-image push-image
+ci-master: build test build-image push-image
 
 .PHONY: ci-release
-ci-release: build integration-test build-image push-image charts-test release
+ci-release: build test build-image push-image charts-test release
 
 .PHONY: clean
 clean:
@@ -141,6 +194,8 @@ clean:
 	rm -f controller
 	rm -f targz
 	rm -f indexbuilder
+	rm -f hb_chart_test
+	rm -rf bin/
 
 .PHONY: path-to-referenced-charts
 path-to-referenced-charts:

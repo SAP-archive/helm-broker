@@ -9,9 +9,9 @@ import (
 	"strings"
 
 	"github.com/Masterminds/semver"
-	"github.com/coreos/etcd/clientv3"
-	"github.com/coreos/etcd/clientv3/namespace"
 	"github.com/pkg/errors"
+	"go.etcd.io/etcd/clientv3"
+	"go.etcd.io/etcd/clientv3/namespace"
 
 	"github.com/kyma-project/helm-broker/internal"
 )
@@ -81,6 +81,7 @@ func (s *Addon) Get(namespace internal.Namespace, name internal.AddonName, ver s
 	if err != nil {
 		return nil, errors.Wrap(err, "while calling database")
 	}
+	fmt.Println(resp.Count)
 
 	return s.handleGetResp(resp)
 }
@@ -114,7 +115,7 @@ func (s *Addon) encodeDMToDSO(dm *internal.Addon) (string, error) {
 		return "", errors.Wrap(err, "while encoding Addon to DSO")
 	}
 	enc := gob.NewEncoder(&buf)
-	if err := enc.Encode(dso); err != nil {
+	if err = enc.Encode(dso); err != nil {
 		return "", errors.Wrap(err, "while encoding entity")
 	}
 	return buf.String(), nil

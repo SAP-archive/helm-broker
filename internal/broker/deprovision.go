@@ -6,9 +6,9 @@ import (
 	"strings"
 	"sync"
 
+	osb "github.com/kubernetes-sigs/go-open-service-broker-client/v2"
 	"github.com/kyma-project/helm-broker/internal"
 	"github.com/pkg/errors"
-	osb "github.com/pmorie/go-open-service-broker-client/v2"
 	"github.com/sirupsen/logrus"
 	helmErrors "k8s.io/helm/pkg/storage/errors"
 )

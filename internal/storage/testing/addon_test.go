@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/Masterminds/semver"
 	"github.com/stretchr/testify/assert"
 
@@ -88,7 +90,8 @@ func TestAddonUpsert(t *testing.T) {
 		expDesc := "updated description"
 		ts := newAddonTestSuite(t, sf)
 		fix := ts.MustGetFixture("A1")
-		ts.s.Upsert(internal.ClusterWide, fix)
+		_, err := ts.s.Upsert(internal.ClusterWide, fix)
+		require.NoError(t, err)
 
 		// WHEN:
 		fixNew := ts.MustCopyFixture(fix)
@@ -180,12 +183,13 @@ func TestAddonFindAll(t *testing.T) {
 		// GIVEN:
 		ts := newAddonTestSuite(t, sf)
 		ts.PopulateStorage()
-		ts.s.Upsert(internal.Namespace("stage"), &internal.Addon{
-			ID:          internal.AddonID("id-0000"),
-			Name:        internal.AddonName("other-addon"),
+		_, err := ts.s.Upsert("stage", &internal.Addon{
+			ID:          "id-0000",
+			Name:        "other-addon",
 			Version:     *semver.MustParse("1.1.1"),
 			Description: "",
 		})
+		assert.NoError(t, err)
 
 		// WHEN:
 		got, err := ts.s.FindAll(internal.ClusterWide)
@@ -250,7 +254,8 @@ func (ts *addonTestSuite) generateFixtures() {
 
 func (ts *addonTestSuite) PopulateStorage() {
 	for _, b := range ts.fixtures {
-		ts.s.Upsert(internal.ClusterWide, ts.MustCopyFixture(b))
+		_, err := ts.s.Upsert(internal.ClusterWide, ts.MustCopyFixture(b))
+		assert.NoError(ts.t, err)
 	}
 }
 

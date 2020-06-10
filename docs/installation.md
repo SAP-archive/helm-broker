@@ -84,7 +84,7 @@ go run cmd/broker/main.go
 Now you can test the Broker using the **/v2/catalog** endpoint.
 
 ```bash
-curl -H "X-Broker-API-Version: 2.13" localhost:8080/cluster/v2/catalog
+curl -H "X-Broker-API-Version: 2.14" localhost:8080/cluster/v2/catalog
 ```
 
 5. Start the Controller:

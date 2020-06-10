@@ -19,6 +19,8 @@ limitations under the License.
 package fake
 
 import (
+	"context"
+
 	v1alpha1 "github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
@@ -38,7 +40,7 @@ var clusteraddonsconfigurationsResource = schema.GroupVersionResource{Group: "ad
 var clusteraddonsconfigurationsKind = schema.GroupVersionKind{Group: "addons.kyma-project.io", Version: "v1alpha1", Kind: "ClusterAddonsConfiguration"}
 
 // Get takes name of the clusterAddonsConfiguration, and returns the corresponding clusterAddonsConfiguration object, and an error if there is any.
-func (c *FakeClusterAddonsConfigurations) Get(name string, options v1.GetOptions) (result *v1alpha1.ClusterAddonsConfiguration, err error) {
+func (c *FakeClusterAddonsConfigurations) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.ClusterAddonsConfiguration, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootGetAction(clusteraddonsconfigurationsResource, name), &v1alpha1.ClusterAddonsConfiguration{})
 	if obj == nil {
@@ -48,7 +50,7 @@ func (c *FakeClusterAddonsConfigurations) Get(name string, options v1.GetOptions
 }
 
 // List takes label and field selectors, and returns the list of ClusterAddonsConfigurations that match those selectors.
-func (c *FakeClusterAddonsConfigurations) List(opts v1.ListOptions) (result *v1alpha1.ClusterAddonsConfigurationList, err error) {
+func (c *FakeClusterAddonsConfigurations) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.ClusterAddonsConfigurationList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootListAction(clusteraddonsconfigurationsResource, clusteraddonsconfigurationsKind, opts), &v1alpha1.ClusterAddonsConfigurationList{})
 	if obj == nil {
@@ -69,13 +71,13 @@ func (c *FakeClusterAddonsConfigurations) List(opts v1.ListOptions) (result *v1a
 }
 
 // Watch returns a watch.Interface that watches the requested clusterAddonsConfigurations.
-func (c *FakeClusterAddonsConfigurations) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeClusterAddonsConfigurations) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewRootWatchAction(clusteraddonsconfigurationsResource, opts))
 }
 
 // Create takes the representation of a clusterAddonsConfiguration and creates it.  Returns the server's representation of the clusterAddonsConfiguration, and an error, if there is any.
-func (c *FakeClusterAddonsConfigurations) Create(clusterAddonsConfiguration *v1alpha1.ClusterAddonsConfiguration) (result *v1alpha1.ClusterAddonsConfiguration, err error) {
+func (c *FakeClusterAddonsConfigurations) Create(ctx context.Context, clusterAddonsConfiguration *v1alpha1.ClusterAddonsConfiguration, opts v1.CreateOptions) (result *v1alpha1.ClusterAddonsConfiguration, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootCreateAction(clusteraddonsconfigurationsResource, clusterAddonsConfiguration), &v1alpha1.ClusterAddonsConfiguration{})
 	if obj == nil {
@@ -85,7 +87,7 @@ func (c *FakeClusterAddonsConfigurations) Create(clusterAddonsConfiguration *v1a
 }
 
 // Update takes the representation of a clusterAddonsConfiguration and updates it. Returns the server's representation of the clusterAddonsConfiguration, and an error, if there is any.
-func (c *FakeClusterAddonsConfigurations) Update(clusterAddonsConfiguration *v1alpha1.ClusterAddonsConfiguration) (result *v1alpha1.ClusterAddonsConfiguration, err error) {
+func (c *FakeClusterAddonsConfigurations) Update(ctx context.Context, clusterAddonsConfiguration *v1alpha1.ClusterAddonsConfiguration, opts v1.UpdateOptions) (result *v1alpha1.ClusterAddonsConfiguration, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateAction(clusteraddonsconfigurationsResource, clusterAddonsConfiguration), &v1alpha1.ClusterAddonsConfiguration{})
 	if obj == nil {
@@ -96,7 +98,7 @@ func (c *FakeClusterAddonsConfigurations) Update(clusterAddonsConfiguration *v1a
 
 // UpdateStatus was generated because the type contains a Status member.
 // Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
-func (c *FakeClusterAddonsConfigurations) UpdateStatus(clusterAddonsConfiguration *v1alpha1.ClusterAddonsConfiguration) (*v1alpha1.ClusterAddonsConfiguration, error) {
+func (c *FakeClusterAddonsConfigurations) UpdateStatus(ctx context.Context, clusterAddonsConfiguration *v1alpha1.ClusterAddonsConfiguration, opts v1.UpdateOptions) (*v1alpha1.ClusterAddonsConfiguration, error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootUpdateSubresourceAction(clusteraddonsconfigurationsResource, "status", clusterAddonsConfiguration), &v1alpha1.ClusterAddonsConfiguration{})
 	if obj == nil {
@@ -106,22 +108,22 @@ func (c *FakeClusterAddonsConfigurations) UpdateStatus(clusterAddonsConfiguratio
 }
 
 // Delete takes name of the clusterAddonsConfiguration and deletes it. Returns an error if one occurs.
-func (c *FakeClusterAddonsConfigurations) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeClusterAddonsConfigurations) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewRootDeleteAction(clusteraddonsconfigurationsResource, name), &v1alpha1.ClusterAddonsConfiguration{})
 	return err
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeClusterAddonsConfigurations) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewRootDeleteCollectionAction(clusteraddonsconfigurationsResource, listOptions)
+func (c *FakeClusterAddonsConfigurations) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewRootDeleteCollectionAction(clusteraddonsconfigurationsResource, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1alpha1.ClusterAddonsConfigurationList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched clusterAddonsConfiguration.
-func (c *FakeClusterAddonsConfigurations) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.ClusterAddonsConfiguration, err error) {
+func (c *FakeClusterAddonsConfigurations) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.ClusterAddonsConfiguration, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootPatchSubresourceAction(clusteraddonsconfigurationsResource, name, pt, data, subresources...), &v1alpha1.ClusterAddonsConfiguration{})
 	if obj == nil {

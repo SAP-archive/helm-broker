@@ -5,8 +5,8 @@ import (
 
 	"github.com/kyma-project/helm-broker/internal"
 
+	osb "github.com/kubernetes-sigs/go-open-service-broker-client/v2"
 	"github.com/pkg/errors"
-	osb "github.com/pmorie/go-open-service-broker-client/v2"
 )
 
 type catalogService struct {
@@ -104,10 +104,8 @@ func (f *addonToServiceConverter) mapToParametersSchemas(planSchemas map[interna
 	}
 	if schema, exists := planSchemas[internal.SchemaTypeBind]; exists {
 		out.ServiceBinding = &osb.ServiceBindingSchema{
-			Create: &osb.RequestResponseSchema{
-				InputParametersSchema: osb.InputParametersSchema{
-					Parameters: schema,
-				},
+			Create: &osb.InputParametersSchema{
+				Parameters: schema,
 			},
 		}
 	}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"os"
 	"path"
 	"testing"
@@ -471,10 +472,67 @@ func (ts *testSuite) assertExpectations() {
 	ts.addonGetterFactory.AssertExpectations(ts.t)
 }
 
+func getFakeManager(t *testing.T, cli client.Client, sch *runtime.Scheme) manager.Manager {
+	return &fakeManager{
+		t:      t,
+		client: cli,
+		sch:    sch,
+	}
+}
+
+func fixAddonWithDocsURL(id, name, url, docsURL string) internal.AddonWithCharts {
+	chartName := fmt.Sprintf("chart-%s", name)
+	chartVersion := semver.MustParse("1.0.0")
+	return internal.AddonWithCharts{
+		Addon: &internal.Addon{
+			ID:            internal.AddonID(id),
+			Name:          internal.AddonName(name),
+			Description:   "simple description",
+			Version:       *semver.MustParse("0.0.1"),
+			RepositoryURL: url,
+			Plans: map[internal.AddonPlanID]internal.AddonPlan{
+				internal.AddonPlanID(fmt.Sprintf("plan-%s", name)): {
+					ChartRef: internal.ChartRef{
+						Name:    internal.ChartName(chartName),
+						Version: *chartVersion,
+					},
+				},
+			},
+			Docs: []internal.AddonDocs{
+				{
+					Template: rafter.CommonAssetGroupSpec{
+						Sources: []rafter.Source{
+							{
+								URL: docsURL,
+							},
+						},
+					},
+				},
+			},
+		},
+		Charts: []*chart.Chart{
+			{
+				Metadata: &chart.Metadata{
+					Name:    chartName,
+					Version: chartVersion.String(),
+				},
+			},
+		},
+	}
+}
+
 type fakeManager struct {
 	t      *testing.T
 	client client.Client
 	sch    *runtime.Scheme
+}
+
+func (f fakeManager) Elected() <-chan struct{} {
+	panic("implement me")
+}
+
+func (f fakeManager) AddMetricsExtraHandler(path string, handler http.Handler) error {
+	panic("implement me")
 }
 
 func (f fakeManager) AddHealthzCheck(name string, check healthz.Checker) error {
@@ -532,92 +590,4 @@ func (fakeManager) GetCache() cache.Cache {
 
 func (fakeManager) GetRESTMapper() meta.RESTMapper {
 	return nil
-}
-
-func getFakeManager(t *testing.T, cli client.Client, sch *runtime.Scheme) manager.Manager {
-	return &fakeManager{
-		t:      t,
-		client: cli,
-		sch:    sch,
-	}
-}
-
-func fixAddonWithDocsURL(id, name, url, docsURL string) internal.AddonWithCharts {
-	chartName := fmt.Sprintf("chart-%s", name)
-	chartVersion := semver.MustParse("1.0.0")
-	return internal.AddonWithCharts{
-		Addon: &internal.Addon{
-			ID:            internal.AddonID(id),
-			Name:          internal.AddonName(name),
-			Description:   "simple description",
-			Version:       *semver.MustParse("0.0.1"),
-			RepositoryURL: url,
-			Plans: map[internal.AddonPlanID]internal.AddonPlan{
-				internal.AddonPlanID(fmt.Sprintf("plan-%s", name)): {
-					ChartRef: internal.ChartRef{
-						Name:    internal.ChartName(chartName),
-						Version: *chartVersion,
-					},
-				},
-			},
-			Docs: []internal.AddonDocs{
-				{
-					Template: rafter.CommonAssetGroupSpec{
-						Sources: []rafter.Source{
-							{
-								URL: docsURL,
-							},
-						},
-					},
-				},
-			},
-		},
-		Charts: []*chart.Chart{
-			{
-				Metadata: &chart.Metadata{
-					Name:    chartName,
-					Version: chartVersion.String(),
-				},
-			},
-		},
-	}
-}
-
-func fixAddonWithEmptyDocs(id, name, url string) internal.AddonWithCharts {
-	chartName := fmt.Sprintf("chart-%s", name)
-	chartVersion := semver.MustParse("1.0.0")
-	return internal.AddonWithCharts{
-		Addon: &internal.Addon{
-			ID:            internal.AddonID(id),
-			Name:          internal.AddonName(name),
-			Description:   "simple description",
-			Version:       *semver.MustParse("0.0.1"),
-			RepositoryURL: url,
-			Plans: map[internal.AddonPlanID]internal.AddonPlan{
-				internal.AddonPlanID(fmt.Sprintf("plan-%s", name)): {
-					ChartRef: internal.ChartRef{
-						Name:    internal.ChartName(chartName),
-						Version: *chartVersion,
-					},
-				},
-			},
-			Docs: []internal.AddonDocs{
-				{
-					Template: rafter.CommonAssetGroupSpec{
-						Sources: []rafter.Source{
-							{},
-						},
-					},
-				},
-			},
-		},
-		Charts: []*chart.Chart{
-			{
-				Metadata: &chart.Metadata{
-					Name:    chartName,
-					Version: chartVersion.String(),
-				},
-			},
-		},
-	}
 }

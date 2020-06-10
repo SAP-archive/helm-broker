@@ -5,9 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/coreos/etcd/integration"
-	"github.com/coreos/pkg/capnslog"
 	"github.com/stretchr/testify/require"
+	"go.etcd.io/etcd/integration"
 
 	"github.com/kyma-project/helm-broker/internal/storage"
 	"github.com/kyma-project/helm-broker/internal/storage/driver/etcd"
@@ -42,13 +41,6 @@ func tRunDrivers(t *testing.T, tName string, f func(*testing.T, storage.Factory)
 
 		fT := func(t *testing.T) {
 			if dt == storage.DriverEtcd {
-				// silence logs for all coreos packages to silence etcd
-				ft := capnslog.NewNilFormatter()
-
-				// enable verbose logging
-				//ft := capnslog.NewPrettyFormatter(os.Stdout, true)
-				capnslog.SetFormatter(ft)
-
 				cfg := integration.ClusterConfig{
 					Size:              1,
 					QuotaBackendBytes: 10 * 1024 * 1024,
