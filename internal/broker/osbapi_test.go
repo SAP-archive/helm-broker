@@ -205,10 +205,11 @@ func TestOSBAPICatalogSuccess(t *testing.T) {
 	defer ts.ServerShutdown()
 
 	fixAddon := ts.Exp.NewAddon()
-	ts.StorageFactory.Addon().Upsert(internal.ClusterWide, fixAddon)
+	_, err := ts.StorageFactory.Addon().Upsert(internal.ClusterWide, fixAddon)
+	require.NoError(t, err)
 
 	// WHEN
-	_, err := ts.OSBClient().GetCatalog()
+	_, err = ts.OSBClient().GetCatalog()
 
 	// THEN
 	require.NoError(t, err)
@@ -225,7 +226,8 @@ func TestOSBAPIProvisionSuccess(t *testing.T) {
 	defer ts.ServerShutdown()
 
 	fixAddon := ts.Exp.NewAddon()
-	ts.StorageFactory.Addon().Upsert(internal.ClusterWide, fixAddon)
+	_, err := ts.StorageFactory.Addon().Upsert(internal.ClusterWide, fixAddon)
+	require.NoError(t, err)
 
 	fixChart := ts.Exp.NewChart()
 	ts.StorageFactory.Chart().Upsert(internal.ClusterWide, fixChart)
@@ -592,7 +594,8 @@ func TestOSBAPIBindFailureWithDisallowedParametersFieldInReq(t *testing.T) {
 	defer ts.ServerShutdown()
 
 	fixAddon := ts.Exp.NewAddon()
-	ts.StorageFactory.Addon().Upsert(internal.ClusterWide, fixAddon)
+	_, err := ts.StorageFactory.Addon().Upsert(internal.ClusterWide, fixAddon)
+	require.NoError(t, err)
 
 	// WHEN
 	req := &osb.BindRequest{
@@ -606,7 +609,7 @@ func TestOSBAPIBindFailureWithDisallowedParametersFieldInReq(t *testing.T) {
 		},
 		OriginatingIdentity: &osb.OriginatingIdentity{Platform: osb.PlatformKubernetes, Value: "{}"},
 	}
-	_, err := ts.OSBClient().Bind(req)
+	_, err = ts.OSBClient().Bind(req)
 
 	// THEN
 	require.Error(t, err)
@@ -623,7 +626,8 @@ func TestOSBAPIBindSuccess(t *testing.T) {
 	defer ts.ServerShutdown()
 
 	fixAddon := ts.Exp.NewAddon()
-	ts.StorageFactory.Addon().Upsert(internal.ClusterWide, fixAddon)
+	_, err := ts.StorageFactory.Addon().Upsert(internal.ClusterWide, fixAddon)
+	require.NoError(t, err)
 
 	fixChart := ts.Exp.NewChart()
 	ts.StorageFactory.Chart().Upsert(internal.ClusterWide, fixChart)
@@ -663,7 +667,8 @@ func TestOSBAPIBindRepeatedOnAlreadyExistingBinding(t *testing.T) {
 	ts.StorageFactory.Instance().Upsert(fixInstance)
 
 	fixAddon := ts.Exp.NewAddon()
-	ts.StorageFactory.Addon().Upsert(internal.ClusterWide, fixAddon)
+	_, err := ts.StorageFactory.Addon().Upsert(internal.ClusterWide, fixAddon)
+	require.NoError(t, err)
 
 	fixChart := ts.Exp.NewChart()
 	ts.StorageFactory.Chart().Upsert(internal.ClusterWide, fixChart)

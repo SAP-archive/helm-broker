@@ -11,7 +11,6 @@ import (
 	osb "github.com/kubernetes-sigs/go-open-service-broker-client/v2"
 	"github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
 	"github.com/kyma-project/helm-broker/pkg/client/clientset/versioned"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/vrischmann/envconfig"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -151,18 +150,26 @@ func (s *TestSuite) assertSampleClusterAddonsAreExposedOnCatalogEndpoint(timeout
 	client, err := osb.NewClient(config)
 	require.NoError(s.t, err, "while creating osb client for broker with URL: %s", s.cfg.HelmBrokerURL)
 
-	response, err := client.GetCatalog()
-	require.NoError(s.t, err, "while getting catalog from broker with URL: %s", s.cfg.HelmBrokerURL)
-
-	containService := func(id string) bool {
-		for _, svc := range response.Services {
-			if svc.ID == id {
-				return true
-			}
+	err = wait.PollImmediate(time.Second, timeout, func() (bool, error) {
+		response, err := client.GetCatalog()
+		if err != nil {
+			s.t.Logf("error when calling for catalog %v", err)
 		}
-		return false
-	}
+		containService := func(id string) bool {
+			for _, svc := range response.Services {
+				if svc.ID == id {
+					return true
+				}
+			}
+			return false
+		}
+		if !containService(s.cfg.ExpectedAddonID) {
+			s.t.Logf("expected addon %s was not found", s.cfg.ExpectedAddonID)
+			return false, nil
+		}
 
-	assert.True(s.t, containService(s.cfg.ExpectedAddonID))
-	s.t.Logf("Helm Broker exposes Service [id: %q] from ClusterAddonsConfiguration %s properly", s.cfg.ExpectedAddonID, s.sampleClusterAddonsCfgName)
+		s.t.Logf("Helm Broker exposes Service [id: %q] from ClusterAddonsConfiguration %s properly", s.cfg.ExpectedAddonID, s.sampleClusterAddonsCfgName)
+		return true, nil
+	})
+	require.NoError(s.t, err, "while getting catalog from broker with URL: %s", s.cfg.HelmBrokerURL)
 }

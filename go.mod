@@ -7,7 +7,7 @@ require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/Masterminds/sprig v2.22.0+incompatible // indirect
 	github.com/SpectoLabs/hoverfly v1.1.5
-	github.com/alecthomas/jsonschema v0.0.0-20200530073317-71f438968921
+	github.com/alecthomas/jsonschema v0.0.0-20200123075451-43663a393755
 	github.com/asaskevich/govalidator v0.0.0-20200428143746-21a406dcc535
 	github.com/cyphar/filepath-securejoin v0.2.2 // indirect
 	github.com/dsnet/compress v0.0.1 // indirect
@@ -22,6 +22,7 @@ require (
 	github.com/hashicorp/go-getter v1.4.1
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/huandu/xstrings v1.3.1 // indirect
+	github.com/iancoleman/orderedmap v0.0.0-20190318233801-ac98e3ecb4b0 // indirect
 	github.com/imdario/mergo v0.3.9
 	github.com/kubernetes-sigs/go-open-service-broker-client v0.0.0-20200527163240-4406bd2cb6b8
 	github.com/kubernetes-sigs/service-catalog v0.3.0

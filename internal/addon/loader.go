@@ -342,7 +342,7 @@ func loadPlanSchema(basePath, fileName string, required bool) (*internal.PlanSch
 	}
 
 	// OSB API defines: Schemas MUST NOT be larger than 64kB.
-	// See: https://github.com/openservicebrokerapi/servicebroker/blob/v2.13/spec.md#schema-object
+	// See: https://github.com/openservicebrokerapi/servicebroker/blob/v2.14/spec.md#schema-object
 	if len(b) >= maxSchemaLength {
 		return nil, fmt.Errorf("schema %s is larger than 64 kB", fileName)
 	}

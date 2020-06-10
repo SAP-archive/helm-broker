@@ -41,6 +41,8 @@ github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578/go.mod h1:uGdko
 github.com/SpectoLabs/hoverfly v1.1.5 h1:6kOSGN9JcDPeKR9QiMdp4s8V1GcneKIGwWm3U7kh4xY=
 github.com/SpectoLabs/hoverfly v1.1.5/go.mod h1:vRr0EmJr3iSlHUcW6M0dXNrJJlBngdKFGHxh46M5eJM=
 github.com/agnivade/levenshtein v1.0.1/go.mod h1:CURSv5d9Uaml+FovSIICkLbAUZ9S4RqaHDIsdSBg7lM=
+github.com/alecthomas/jsonschema v0.0.0-20200123075451-43663a393755 h1:+xHAcx6b5TS1DiY+StyK2CrNvD0nQ97G7w45x4ljJFs=
+github.com/alecthomas/jsonschema v0.0.0-20200123075451-43663a393755/go.mod h1:Juc2PrI3wtNfUwptSvAIeNx+HrETwHQs6nf+TkOJlOA=
 github.com/alecthomas/jsonschema v0.0.0-20200530073317-71f438968921 h1:T3+cD5fYvuH36h7EZq+TDpm+d8a6FSD4pQsbmuGGQ8o=
 github.com/alecthomas/jsonschema v0.0.0-20200530073317-71f438968921/go.mod h1:/n6+1/DWPltRLWL/VKyUxg6tzsl5kHUCcraimt4vr60=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=

@@ -3,6 +3,7 @@ package etcd
 import (
 	"bytes"
 	"context"
+	"encoding/gob"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -80,6 +81,7 @@ func (s *Addon) Get(namespace internal.Namespace, name internal.AddonName, ver s
 	if err != nil {
 		return nil, errors.Wrap(err, "while calling database")
 	}
+	fmt.Println(resp.Count)
 
 	return s.handleGetResp(resp)
 }
@@ -112,15 +114,15 @@ func (s *Addon) encodeDMToDSO(dm *internal.Addon) (string, error) {
 	if err != nil {
 		return "", errors.Wrap(err, "while encoding Addon to DSO")
 	}
-	enc := json.NewEncoder(&buf)
-	if err := enc.Encode(dso); err != nil {
+	enc := gob.NewEncoder(&buf)
+	if err = enc.Encode(dso); err != nil {
 		return "", errors.Wrap(err, "while encoding entity")
 	}
 	return buf.String(), nil
 }
 
 func (*Addon) decodeDSOToDM(dsoEnc []byte) (*internal.Addon, error) {
-	dec := json.NewDecoder(bytes.NewReader(dsoEnc))
+	dec := gob.NewDecoder(bytes.NewReader(dsoEnc))
 	var dso addonDSO
 	if err := dec.Decode(&dso); err != nil {
 		return nil, errors.Wrap(err, "while decoding DSO")
