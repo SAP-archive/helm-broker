@@ -5,7 +5,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// DTOs for Open Service Broker v2.14 API
+// DTOs for Open Service Broker v2.13 API
 
 type contextDTO struct {
 	Platform  string             `json:"platform"`
