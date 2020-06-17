@@ -5,7 +5,6 @@ go 1.13
 require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/Masterminds/sprig v2.22.0+incompatible // indirect
-	github.com/SpectoLabs/hoverfly v1.1.5
 	github.com/alecthomas/jsonschema v0.0.0-20200123075451-43663a393755
 	github.com/asaskevich/govalidator v0.0.0-20200428143746-21a406dcc535
 	github.com/dsnet/compress v0.0.1 // indirect
@@ -18,7 +17,6 @@ require (
 	github.com/hashicorp/go-cleanhttp v0.5.1
 	github.com/hashicorp/go-getter v1.4.1
 	github.com/hashicorp/go-multierror v1.1.0
-	github.com/iancoleman/orderedmap v0.0.0-20190318233801-ac98e3ecb4b0 // indirect
 	github.com/imdario/mergo v0.3.9
 	github.com/kubernetes-sigs/go-open-service-broker-client v0.0.0-20190909175253-906fa5f9c249
 	github.com/kubernetes-sigs/service-catalog v0.3.0
@@ -41,7 +39,6 @@ require (
 	github.com/vrischmann/envconfig v1.2.0
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	go.etcd.io/etcd v0.5.0-alpha.5.0.20200401174654-e694b7bb0875
-	google.golang.org/grpc v1.27.0
 	gopkg.in/yaml.v2 v2.3.0
 	helm.sh/helm/v3 v3.2.3
 	k8s.io/api v0.18.3
@@ -50,7 +47,9 @@ require (
 	k8s.io/client-go v0.18.3
 	k8s.io/helm v2.16.7+incompatible
 	k8s.io/kubectl v0.18.3
+	rsc.io/letsencrypt v0.0.3 // indirect
 	sigs.k8s.io/controller-runtime v0.6.0
+	sigs.k8s.io/yaml v1.2.0
 )
 
 replace (

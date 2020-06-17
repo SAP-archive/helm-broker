@@ -48,6 +48,7 @@ func (s *Instance) Upsert(i *internal.Instance) (replaced bool, err error) {
 
 	buf := bytes.Buffer{}
 	enc := gob.NewEncoder(&buf)
+	gob.Register(map[string]interface{}{})
 	if err := enc.Encode(i); err != nil {
 		return false, errors.Wrap(err, "while encoding entity")
 	}
@@ -76,6 +77,7 @@ func (s *Instance) Insert(i *internal.Instance) error {
 
 	buf := bytes.Buffer{}
 	enc := gob.NewEncoder(&buf)
+	gob.Register(map[string]interface{}{})
 	if err := enc.Encode(i); err != nil {
 		return errors.Wrap(err, "while encoding entity")
 	}
@@ -142,6 +144,7 @@ func (s *Instance) GetAll() ([]*internal.Instance, error) {
 
 func (s *Instance) decodeInstance(raw []byte) (*internal.Instance, error) {
 	dec := gob.NewDecoder(bytes.NewReader(raw))
+	gob.Register(map[string]interface{}{})
 	var i internal.Instance
 	if err := dec.Decode(&i); err != nil {
 		return nil, err
