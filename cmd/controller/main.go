@@ -10,6 +10,7 @@ import (
 	"github.com/kyma-project/helm-broker/internal/platform/logger"
 	"github.com/kyma-project/helm-broker/internal/rafter"
 	"github.com/kyma-project/helm-broker/internal/storage"
+	"github.com/kyma-project/helm-broker/internal/storage/migration"
 
 	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
@@ -43,6 +44,12 @@ func main() {
 	go health.NewControllerProbes(fmt.Sprintf(":%d", ctrCfg.StatusPort), storageConfig.ExtractEtcdURL(), mgr.GetClient(), ctrCfg.Namespace).Handle()
 
 	fatalOnError(storageConfig.WaitForEtcdReadiness(), "while waiting for etcd to be ready")
+
+	migrate, err := migration.New(cfg, sFact.Instance(), lg)
+	fatalOnError(err, "while creating migration")
+
+	err = migrate.Execute()
+	fatalOnError(err, "while executing migration")
 
 	lg.Info("Starting the Controller.")
 	err = mgr.Start(signals.SetupSignalHandler())
