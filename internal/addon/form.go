@@ -7,7 +7,7 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/kyma-project/helm-broker/internal"
 	"github.com/pkg/errors"
-	"k8s.io/helm/pkg/proto/hapi/chart"
+	"helm.sh/helm/v3/pkg/chart"
 )
 
 type form struct {

@@ -14,8 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"k8s.io/helm/pkg/proto/hapi/chart"
-	rls "k8s.io/helm/pkg/proto/hapi/services"
+	"helm.sh/helm/v3/pkg/chart"
 
 	"github.com/kyma-project/helm-broker/internal/platform/ptr"
 
@@ -25,6 +24,7 @@ import (
 	"github.com/kyma-project/helm-broker/internal/broker/automock"
 	"github.com/kyma-project/helm-broker/internal/platform/logger/spy"
 	"github.com/kyma-project/helm-broker/internal/storage"
+	"helm.sh/helm/v3/pkg/release"
 )
 
 func newOSBAPITestSuite(t *testing.T) *osbapiTestSuite {
@@ -219,7 +219,9 @@ func TestOSBAPIProvisionSuccess(t *testing.T) {
 	// GIVEN
 	ts := newOSBAPITestSuite(t)
 
-	ts.HelmClient.On("Install", mock.Anything, mock.Anything, ts.Exp.ReleaseName, ts.Exp.Namespace).Return(&rls.InstallReleaseResponse{}, nil).Once()
+	ts.HelmClient.On("Install", mock.Anything, mock.Anything, ts.Exp.ReleaseName, ts.Exp.Namespace).Return(&release.Release{
+		Info: &release.Info{},
+	}, nil).Once()
 	defer ts.HelmClient.AssertExpectations(t)
 
 	ts.ServerRun()
@@ -511,7 +513,7 @@ func TestOSBAPIDeprovisionSuccess(t *testing.T) {
 	fixOperation.OperationID = expOpID
 	ts.StorageFactory.InstanceOperation().Insert(fixOperation)
 
-	ts.HelmClient.On("Delete", ts.Exp.ReleaseName).Return(nil).Once()
+	ts.HelmClient.On("Delete", ts.Exp.ReleaseName, ts.Exp.Namespace).Return(nil).Once()
 	defer ts.HelmClient.AssertExpectations(t)
 
 	ts.ServerRun()
@@ -849,7 +851,7 @@ func TestOSBAPIProvisionSuccessNS(t *testing.T) {
 	// GIVEN
 	ts := newOSBAPITestSuite(t)
 
-	ts.HelmClient.On("Install", mock.Anything, mock.Anything, ts.Exp.ReleaseName, ts.Exp.Namespace).Return(&rls.InstallReleaseResponse{}, nil).Once()
+	ts.HelmClient.On("Install", mock.Anything, mock.Anything, ts.Exp.ReleaseName, ts.Exp.Namespace).Return(&release.Release{Info: &release.Info{}}, nil).Once()
 	defer ts.HelmClient.AssertExpectations(t)
 
 	ts.ServerRun()
@@ -1140,7 +1142,7 @@ func TestOSBAPIDeprovisionSuccessNS(t *testing.T) {
 	fixOperation.OperationID = expOpID
 	ts.StorageFactory.InstanceOperation().Insert(fixOperation)
 
-	ts.HelmClient.On("Delete", ts.Exp.ReleaseName).Return(nil).Once()
+	ts.HelmClient.On("Delete", ts.Exp.ReleaseName, ts.Exp.Namespace).Return(nil).Once()
 	defer ts.HelmClient.AssertExpectations(t)
 
 	ts.ServerRun()

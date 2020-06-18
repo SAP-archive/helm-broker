@@ -5,9 +5,9 @@ import (
 
 	"github.com/kyma-project/helm-broker/internal"
 	"github.com/pkg/errors"
-	"k8s.io/helm/pkg/chartutil"
-	"k8s.io/helm/pkg/engine"
-	"k8s.io/helm/pkg/proto/hapi/chart"
+	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/chartutil"
+	"helm.sh/helm/v3/pkg/engine"
 )
 
 const (
@@ -19,7 +19,7 @@ type chartGoTemplateRenderer interface {
 	Render(*chart.Chart, chartutil.Values) (map[string]string, error)
 }
 
-type toRenderValuesCaps func(*chart.Chart, *chart.Config, chartutil.ReleaseOptions, *chartutil.Capabilities) (chartutil.Values, error)
+type toRenderValuesCaps func(*chart.Chart, map[string]interface{}, chartutil.ReleaseOptions, *chartutil.Capabilities) (chartutil.Values, error)
 
 // Renderer purpose is to render helm template directives, like: {{ .Release.Namespace }}
 type Renderer struct {
@@ -30,8 +30,8 @@ type Renderer struct {
 // NewRenderer creates new instance of Renderer.
 func NewRenderer() *Renderer {
 	return &Renderer{
-		renderEngine:       engine.New(),
-		toRenderValuesCaps: chartutil.ToRenderValuesCaps,
+		renderEngine:       &engine.Engine{},
+		toRenderValuesCaps: chartutil.ToRenderValues,
 	}
 }
 
@@ -41,12 +41,12 @@ func (r *Renderer) Render(bindTemplate internal.AddonPlanBindTemplate, instance 
 	options := r.createReleaseOptions(instance)
 	chartCap := &chartutil.Capabilities{}
 
-	valsToRender, err := r.toRenderValuesCaps(ch, instance.ReleaseInfo.Config, options, chartCap)
+	valsToRender, err := r.toRenderValuesCaps(ch, instance.ReleaseInfo.ConfigValues, options, chartCap)
 	if err != nil {
 		return nil, errors.Wrap(err, "while merging values to render")
 	}
 
-	ch.Templates = append(ch.Templates, &chart.Template{Name: bindFile, Data: bindTemplate})
+	ch.Templates = append(ch.Templates, &chart.File{Name: bindFile, Data: bindTemplate})
 
 	files, err := r.renderEngine.Render(ch, valsToRender)
 	if err != nil {
@@ -64,7 +64,6 @@ func (r *Renderer) Render(bindTemplate internal.AddonPlanBindTemplate, instance 
 func (*Renderer) createReleaseOptions(instance *internal.Instance) chartutil.ReleaseOptions {
 	return chartutil.ReleaseOptions{
 		Name:      string(instance.ReleaseName),
-		Time:      instance.ReleaseInfo.Time,
 		Namespace: string(instance.Namespace),
 		Revision:  instance.ReleaseInfo.Revision,
 		IsInstall: true,

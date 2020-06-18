@@ -4,12 +4,12 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/sirupsen/logrus"
 
-	"k8s.io/helm/pkg/proto/hapi/chart"
-	rls "k8s.io/helm/pkg/proto/hapi/services"
+	"helm.sh/helm/v3/pkg/chart"
 
 	"github.com/kyma-project/helm-broker/internal"
 	"github.com/kyma-project/helm-broker/internal/bind"
 	"github.com/kyma-project/helm-broker/internal/platform/idprovider"
+	"helm.sh/helm/v3/pkg/release"
 )
 
 // be aware that after regenerating mocks, manual steps are required
@@ -138,10 +138,10 @@ type (
 	}
 
 	helmInstaller interface {
-		Install(c *chart.Chart, cv internal.ChartValues, releaseName internal.ReleaseName, namespace internal.Namespace) (*rls.InstallReleaseResponse, error)
+		Install(chrt *chart.Chart, values internal.ChartValues, releaseName internal.ReleaseName, namespace internal.Namespace) (*release.Release, error)
 	}
 	helmDeleter interface {
-		Delete(internal.ReleaseName) error
+		Delete(releaseName internal.ReleaseName, namespace internal.Namespace) error
 	}
 	helmClient interface {
 		helmInstaller

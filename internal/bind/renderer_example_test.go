@@ -6,39 +6,46 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"os"
 	"path/filepath"
 
 	"github.com/kyma-project/helm-broker/internal"
 	"github.com/kyma-project/helm-broker/internal/bind"
 	yhelm "github.com/kyma-project/helm-broker/internal/helm"
 	"github.com/kyma-project/helm-broker/internal/platform/logger/spy"
-	"k8s.io/helm/pkg/chartutil"
+	"helm.sh/helm/v3/pkg/chart/loader"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
-// To run it you need expose tiller pod port by:
-// kubectl port-forward <tiller_pod> 44134:44134 -n kube-system
+// To run it you need to configure KUBECONFIG env
 func ExampleNewRenderer() {
+	cfg, err := clientcmd.BuildConfigFromFlags("", os.Getenv("KUBECONFIG"))
+	fatalOnErr(err)
 	const releaseName = "example-renderer-test"
 	bindTmplRenderer := bind.NewRenderer()
 
 	// loadChart
-	ch, err := chartutil.Load("testdata/repository/redis-0.0.3/chart/redis")
+	ch, err := loader.LoadDir("testdata/repository/redis-0.0.3/chart/redis")
 	fatalOnErr(err)
 
 	// load bind template for above chart
 	b, err := ioutil.ReadFile(filepath.Join("testdata/repository", "redis-0.0.3/plans/micro/bind.yaml"))
 	fatalOnErr(err)
 
-	hClient := yhelm.NewClient("localhost:44134", spy.NewLogDummy())
+	hClient, err := yhelm.NewClient(cfg, spy.NewLogDummy())
+	fatalOnErr(err)
 
 	// install chart in same way as we are doing in our business logic
 	resp, err := hClient.Install(ch, internal.ChartValues{}, releaseName, "ns-name")
 
 	// clean-up, even if install error occurred
-	defer hClient.Delete(releaseName)
+	defer hClient.Delete(releaseName, "ns-name")
 	fatalOnErr(err)
 
-	rendered, err := bindTmplRenderer.Render(internal.AddonPlanBindTemplate(b), resp)
+	rendered, err := bindTmplRenderer.Render(internal.AddonPlanBindTemplate(b), &internal.Instance{
+		Namespace:   "ns-name",
+		ReleaseName: internal.ReleaseName(resp.Name),
+	}, ch)
 	fatalOnErr(err)
 
 	fmt.Println(string(rendered))

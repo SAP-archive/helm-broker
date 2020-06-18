@@ -7,7 +7,7 @@ import (
 
 	"github.com/Masterminds/semver"
 	"github.com/stretchr/testify/assert"
-	"k8s.io/helm/pkg/proto/hapi/chart"
+	"helm.sh/helm/v3/pkg/chart"
 
 	"github.com/kyma-project/helm-broker/internal"
 	"github.com/kyma-project/helm-broker/internal/storage"

@@ -12,7 +12,7 @@ import (
 	"github.com/kyma-project/helm-broker/internal/bind"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"k8s.io/helm/pkg/proto/hapi/chart"
+	"helm.sh/helm/v3/pkg/chart"
 
 	"github.com/kyma-project/helm-broker/internal/broker"
 	"github.com/kyma-project/helm-broker/internal/broker/automock"

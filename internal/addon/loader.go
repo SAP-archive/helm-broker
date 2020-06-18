@@ -14,9 +14,8 @@ import (
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-
-	"k8s.io/helm/pkg/chartutil"
-	"k8s.io/helm/pkg/proto/hapi/chart"
+	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/chart/loader"
 
 	"github.com/kyma-project/helm-broker/internal"
 )
@@ -37,7 +36,7 @@ const (
 	maxSchemaLength = 65536 // 64 k
 )
 
-// Loader provides loading of addons from repository and representing them as addons and charts.
+// Loader provides loading of addons from repository and representing them as addons and helm3 charts.
 type Loader struct {
 	tmpDir       string
 	loadChart    func(name string) (*chart.Chart, error)
@@ -49,7 +48,7 @@ type Loader struct {
 func NewLoader(tmpDir string, log logrus.FieldLogger) *Loader {
 	return &Loader{
 		tmpDir:       tmpDir,
-		loadChart:    chartutil.Load,
+		loadChart:    loader.Load,
 		createTmpDir: ioutil.TempDir,
 		log:          log.WithField("service", "addon:loader"),
 	}
@@ -136,7 +135,7 @@ func (l Loader) discoverPathToHelmChart(baseDir string) (string, error) {
 		return "", errors.Wrapf(err, "while reading directory %s", cDir)
 	}
 
-	directories, files := splitForDirectoriesAndFiles(rawFiles)
+	directories, files := l.splitForDirectoriesAndFiles(rawFiles)
 	if len(directories) == 0 {
 		return "", fmt.Errorf("%q directory SHOULD contain one Helm Chart folder but it's empty", addonChartDirName)
 	}
@@ -153,7 +152,7 @@ func (l Loader) discoverPathToHelmChart(baseDir string) (string, error) {
 	return chartFullPath, nil
 }
 
-func splitForDirectoriesAndFiles(rawFiles []os.FileInfo) (dirs []string, files []string) {
+func (l Loader) splitForDirectoriesAndFiles(rawFiles []os.FileInfo) (dirs []string, files []string) {
 	for _, f := range rawFiles {
 		if f.IsDir() {
 			dirs = append(dirs, f.Name())

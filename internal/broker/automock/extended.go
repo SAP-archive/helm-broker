@@ -49,12 +49,12 @@ func (_m *operationStorage) ExpectOnUpdateStateDesc(iID internal.InstanceID, opI
 }
 
 // HelmClient extensions
-func (_m *helmClient) ExpectOnDelete(rName internal.ReleaseName) *mock.Call {
-	return _m.On("Delete", rName).Return(nil)
+func (_m *helmClient) ExpectOnDelete(rName internal.ReleaseName, ns internal.Namespace) *mock.Call {
+	return _m.On("Delete", rName, ns).Return(nil)
 }
 
-func (_m *helmClient) ExpectErrorOnDelete(rName internal.ReleaseName, err error) *mock.Call {
-	return _m.On("Delete", rName).Return(err)
+func (_m *helmClient) ExpectErrorOnDelete(rName internal.ReleaseName, ns internal.Namespace, err error) *mock.Call {
+	return _m.On("Delete", rName, ns).Return(err)
 }
 
 // InstanceBindDataRemover extensions

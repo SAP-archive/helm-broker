@@ -34,7 +34,7 @@ func Float64(v float64) *float64 {
 	return &v
 }
 
-// Time returns a pointer to the time.Time value passed in.
+// ReleaseTime returns a pointer to the time.ReleaseTime value passed in.
 func Time(v time.Time) *time.Time {
 	return &v
 }

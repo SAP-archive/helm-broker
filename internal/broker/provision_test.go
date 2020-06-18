@@ -9,8 +9,8 @@ import (
 	osb "github.com/kubernetes-sigs/go-open-service-broker-client/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"k8s.io/helm/pkg/proto/hapi/chart"
-	rls "k8s.io/helm/pkg/proto/hapi/services"
+	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/release"
 
 	"github.com/kyma-project/helm-broker/internal"
 	"github.com/kyma-project/helm-broker/internal/broker"
@@ -102,7 +102,7 @@ func TestProvisionServiceProvisionSuccessAsyncInstall(t *testing.T) {
 
 	hiMock := &automock.HelmClient{}
 	defer hiMock.AssertExpectations(t)
-	releaseResp := &rls.InstallReleaseResponse{}
+	releaseResp := &release.Release{Info: &release.Info{}}
 	expChartOverrides := internal.ChartValues{
 		"addonsRepositoryURL": expAddon.RepositoryURL,
 	}

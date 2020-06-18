@@ -8,8 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"k8s.io/helm/pkg/chartutil"
+	"helm.sh/helm/v3/pkg/chart/loader"
 
 	"github.com/kyma-project/helm-broker/internal/addon"
 	"github.com/kyma-project/helm-broker/internal/platform/logger/spy"
@@ -43,7 +42,7 @@ func TestLoaderLoadSuccess(t *testing.T) {
 			addonLoader := addon.NewLoader(fixBaseDir, spy.NewLogDummy())
 			addonLoader.SetCreateTmpDir(createTmpDirFake)
 
-			expChart, err := chartutil.Load("testdata/addon-redis-0.0.1.golden/chart/redis")
+			expChart, err := loader.Load("testdata/addon-redis-0.0.1.golden/chart/redis")
 			require.NoError(t, err)
 
 			fd, err := os.Open(tc.tgzPath)

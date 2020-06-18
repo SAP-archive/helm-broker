@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ .Release.Name }}-addon-serving-test"
+  annotations:
+    "helm.sh/hook": test-success
+spec:
+  serviceAccountName: {{ .Chart.Name }}-tests
+  {{- with .Values.tests.securityContext }}
+  securityContext:
+{{ toYaml . | indent 8 }}
+  {{- end }}
+  containers:
+  - name: {{ .Release.Name }}--addon-serving-test
+    imagePullPolicy: {{ .Values.global.image.pullPolicy }}
+    image: "{{ .Values.global.containerRegistry.path }}{{ .Values.tests.dir }}{{ .Values.tests.image }}:{{ .Values.tests.tag }}"
+    env:
+      - name: HELM_BROKER_URL
+        value: "http://{{ template "fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local/cluster"
+      - name: CLUSTER_ADDONS_CONFIGURATION_URL
+        value: "github.com/kyma-project/addons//addons/index-acc-testing.yaml?ref=2d671e3a9d840b877dd8cd5fd9e6e0147ad4caf0"
+      - name: EXPECTED_ADDON_ID
+        value: "a54abe18-0a84-22e9-ab34-d663bbce3d88"
+  restartPolicy: Never

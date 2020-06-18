@@ -8,13 +8,13 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/alecthomas/jsonschema"
 	"github.com/fatih/structs"
-	google_protobuf "github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
 	rafter "github.com/kyma-project/rafter/pkg/apis/rafter/v1beta1"
 	"github.com/pkg/errors"
+	"helm.sh/helm/v3/pkg/chart"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/helm/pkg/proto/hapi/chart"
+	chartv2 "k8s.io/helm/pkg/proto/hapi/chart"
 )
 
 // Index contains collection of all addons from the given repository
@@ -115,6 +115,10 @@ func (cr ChartRef) GobEncode() ([]byte, error) {
 // It's currently populated from yaml file or request parameters.
 // TODO: switch to more concrete type
 type ChartValues map[string]interface{}
+
+func EmptyChartValues() ChartValues {
+	return map[string]interface{}{}
+}
 
 // AddonPlanBindTemplate represents template used for helm chart installation
 type AddonPlanBindTemplate []byte
@@ -307,9 +311,10 @@ type Namespace string
 
 // ReleaseInfo contains additional data about release installed on instance provisioning.
 type ReleaseInfo struct {
-	Time     *google_protobuf.Timestamp
-	Revision int
-	Config   *chart.Config
+	ReleaseTime  time.Time
+	Revision     int
+	Config       *chartv2.Config
+	ConfigValues map[string]interface{}
 }
 
 // RequestParameters wraps a map containing provided YAML with parameters from request
