@@ -8,6 +8,7 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/alecthomas/jsonschema"
 	"github.com/fatih/structs"
+	google_protobuf "github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
 	rafter "github.com/kyma-project/rafter/pkg/apis/rafter/v1beta1"
 	"github.com/pkg/errors"
@@ -311,6 +312,7 @@ type Namespace string
 
 // ReleaseInfo contains additional data about release installed on instance provisioning.
 type ReleaseInfo struct {
+	Time         *google_protobuf.Timestamp
 	ReleaseTime  time.Time
 	Revision     int
 	Config       *chartv2.Config

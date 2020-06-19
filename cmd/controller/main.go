@@ -4,9 +4,13 @@ import (
 	"flag"
 	"fmt"
 
+	"k8s.io/client-go/kubernetes/scheme"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	envs "github.com/kyma-project/helm-broker/internal/config"
 	"github.com/kyma-project/helm-broker/internal/controller"
 	"github.com/kyma-project/helm-broker/internal/health"
+	"github.com/kyma-project/helm-broker/internal/migration"
 	"github.com/kyma-project/helm-broker/internal/platform/logger"
 	"github.com/kyma-project/helm-broker/internal/rafter"
 	"github.com/kyma-project/helm-broker/internal/storage"
@@ -43,6 +47,14 @@ func main() {
 	go health.NewControllerProbes(fmt.Sprintf(":%d", ctrCfg.StatusPort), storageConfig.ExtractEtcdURL(), mgr.GetClient(), ctrCfg.Namespace).Handle()
 
 	fatalOnError(storageConfig.WaitForEtcdReadiness(), "while waiting for etcd to be ready")
+
+	cli, err := client.New(cfg, client.Options{
+		Scheme: scheme.Scheme,
+	})
+	fatalOnError(err, "while creating client")
+
+	err = migration.New(cli, sFact.Instance(), ctrCfg.ServiceName, ctrCfg.Namespace, lg.WithField("service", "migration")).Execute()
+	fatalOnError(err, "while executing migration")
 
 	lg.Info("Starting the Controller.")
 	err = mgr.Start(signals.SetupSignalHandler())
