@@ -46,14 +46,12 @@ func (s *Chart) Upsert(namespace internal.Namespace, c *chart.Chart) (replaced b
 	if err != nil {
 		return false, err
 	}
-
-	buf := bytes.Buffer{}
-	enc := json.NewEncoder(&buf)
-	if err := enc.Encode(c); err != nil {
-		return false, errors.Wrap(err, "while encoding entity")
+	encoded, err := s.encodeChart(c)
+	if err != nil {
+		return false, errors.Wrap(err, "while encoding chart")
 	}
 
-	resp, err := s.kv.Put(context.TODO(), s.key(namespace, nv), buf.String(), clientv3.WithPrevKV())
+	resp, err := s.kv.Put(context.TODO(), s.key(namespace, nv), encoded, clientv3.WithPrevKV())
 	if err != nil {
 		return false, errors.Wrap(err, "while calling database")
 	}
@@ -64,6 +62,7 @@ func (s *Chart) Upsert(namespace internal.Namespace, c *chart.Chart) (replaced b
 
 	return false, nil
 }
+
 
 // Get returns chart with given name and version from storage
 func (s *Chart) Get(namespace internal.Namespace, name internal.ChartName, ver semver.Version) (*chart.Chart, error) {
@@ -91,16 +90,6 @@ func (s *Chart) Get(namespace internal.Namespace, name internal.ChartName, ver s
 	}
 
 	return c, nil
-}
-
-func (s *Chart) decodeChart(raw []byte) (*chart.Chart, error) {
-	dec := json.NewDecoder(bytes.NewReader(raw))
-	var c chart.Chart
-	if err := dec.Decode(&c); err != nil {
-		return nil, err
-	}
-
-	return &c, nil
 }
 
 // Remove is removing chart with given name and version from storage
@@ -165,4 +154,52 @@ func (*Chart) key(namespace internal.Namespace, nv chartNameVersion) string {
 		prefix = fmt.Sprintf("ns|%s", string(namespace))
 	}
 	return fmt.Sprintf("%s|%s", prefix, string(nv))
+}
+
+
+type dto struct {
+	Main *chart.Chart `json:"main"`
+	Deps []*dto       `json:"dependencies"`
+}
+
+func (s *Chart) toDto(c *chart.Chart) *dto {
+	var deps []*dto
+	for _, d := range c.Dependencies() {
+		deps = append(deps, s.toDto(d))
+	}
+	return &dto {
+		Main: c,
+		Deps: deps,
+	}
+}
+
+func (s *Chart) fromDto(obj *dto) *chart.Chart {
+	chrt := obj.Main
+
+	var deps []*chart.Chart
+	for _, d := range obj.Deps {
+		deps = append(deps, s.fromDto(d))
+	}
+	chrt.SetDependencies(deps...)
+	return chrt
+}
+
+func (s *Chart) encodeChart(c *chart.Chart) (string, error) {
+	obj := s.toDto(c)
+	buf := bytes.Buffer{}
+	enc := json.NewEncoder(&buf)
+	if err := enc.Encode(obj); err != nil {
+		return "", errors.Wrap(err, "while encoding entity")
+	}
+	return buf.String(), nil
+}
+
+func (s *Chart) decodeChart(raw []byte) (*chart.Chart, error) {
+	dec := json.NewDecoder(bytes.NewReader(raw))
+	var obj dto
+	if err := dec.Decode(&obj); err != nil {
+		return nil, err
+	}
+
+	return s.fromDto(&obj), nil
 }

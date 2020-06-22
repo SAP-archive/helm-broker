@@ -55,9 +55,9 @@ global:
   # paths to docker images
   helm_broker:
     dir: /pr/
-    version: PR-80
+    version: PR-97
   helm_controller:
     dir: /pr/
-    version: PR-80
+    version: PR-97
   # etcd port uses by helm broker
   etcdClientPort: 2379
