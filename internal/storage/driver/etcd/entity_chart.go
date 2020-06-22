@@ -63,7 +63,6 @@ func (s *Chart) Upsert(namespace internal.Namespace, c *chart.Chart) (replaced b
 	return false, nil
 }
 
-
 // Get returns chart with given name and version from storage
 func (s *Chart) Get(namespace internal.Namespace, name internal.ChartName, ver semver.Version) (*chart.Chart, error) {
 	nv, err := s.nameVersion(name, ver)
@@ -156,7 +155,6 @@ func (*Chart) key(namespace internal.Namespace, nv chartNameVersion) string {
 	return fmt.Sprintf("%s|%s", prefix, string(nv))
 }
 
-
 type dto struct {
 	Main *chart.Chart `json:"main"`
 	Deps []*dto       `json:"dependencies"`
@@ -167,7 +165,7 @@ func (s *Chart) toDto(c *chart.Chart) *dto {
 	for _, d := range c.Dependencies() {
 		deps = append(deps, s.toDto(d))
 	}
-	return &dto {
+	return &dto{
 		Main: c,
 		Deps: deps,
 	}
