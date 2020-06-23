@@ -19,6 +19,13 @@ import (
 	"k8s.io/kubectl/pkg/cmd/util"
 )
 
+const (
+	// MaxHistory specifies the maximum number of historical releases that will
+	// be retained, including the most recent release. Values of 0 or less are
+	// ignored (meaning no limits are imposed).
+	maxHistory = 1
+)
+
 // Client implements a Helm client compatible with Helm3
 type Client struct {
 	log        logrus.FieldLogger
@@ -116,16 +123,22 @@ func (c *Client) provideActionConfig(namespace internal.Namespace) (*action.Conf
 func (c *Client) provideStorage(client *kubernetes.Clientset, namespace string) (*storage.Storage, error) {
 	switch c.helmDriver {
 	case "secret", "secrets", "":
-		s := driver.NewSecrets(client.CoreV1().Secrets(namespace))
-		s.Log = c.log.Debugf
-		return storage.Init(s), nil
+		sec := driver.NewSecrets(client.CoreV1().Secrets(namespace))
+		sec.Log = c.log.Debugf
+		s := storage.Init(sec)
+		s.MaxHistory = maxHistory
+		return s, nil
 	case "configmap", "configmaps":
 		cm := driver.NewConfigMaps(client.CoreV1().ConfigMaps(namespace))
 		cm.Log = c.log.Debugf
-		return storage.Init(cm), nil
+		s := storage.Init(cm)
+		s.MaxHistory = maxHistory
+		return s, nil
 	case "memory":
 		m := driver.NewMemory()
-		return storage.Init(m), nil
+		s := storage.Init(m)
+		s.MaxHistory = maxHistory
+		return s, nil
 	default:
 		return nil, fmt.Errorf("unsupported helm driver '%s'", c.helmDriver)
 	}
