@@ -12,6 +12,7 @@ import (
 	"github.com/kyma-project/helm-broker/internal"
 	"github.com/kyma-project/helm-broker/internal/storage"
 	"github.com/stretchr/testify/require"
+	"helm.sh/helm/v3/pkg/chart/loader"
 )
 
 func TestChartGet(t *testing.T) {
@@ -89,6 +90,23 @@ func TestChartUpsert(t *testing.T) {
 
 		// THEN:
 		assert.EqualError(t, err, "both name and version must be set")
+	})
+}
+
+func TestHappyPath(t *testing.T) {
+	tRunDrivers(t, "Upsert and get preserves dependencies", func(t *testing.T, sf storage.Factory) {
+		// given
+		ts := newChartTestSuite(t, sf)
+		chrt, err := loader.LoadDir("testing")
+		require.NoError(t, err)
+
+		// when
+		ts.s.Upsert("ns1", chrt)
+
+		// then
+		got, err := ts.s.Get("ns1", internal.ChartName(chrt.Name()), *semver.MustParse(chrt.Metadata.Version))
+		require.NoError(t, err)
+		assert.Len(t, chrt.Dependencies(), len(got.Dependencies()))
 	})
 }
 
