@@ -106,7 +106,7 @@ func TestHappyPath(t *testing.T) {
 		// then
 		got, err := ts.s.Get("ns1", internal.ChartName(chrt.Name()), *semver.MustParse(chrt.Metadata.Version))
 		require.NoError(t, err)
-		assert.Equal(t, len(chrt.Dependencies()), len(got.Dependencies()))
+		assert.Len(t, chrt.Dependencies(), len(got.Dependencies()))
 	})
 }
 
