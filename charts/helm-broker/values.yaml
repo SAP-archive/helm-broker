@@ -1,7 +1,7 @@
 tests:
   image: helm-broker-tests
   dir: /pr/
-  tag: PR-97
+  tag: PR-109
   securityContext:
     runAsUser: 2000
 
@@ -55,9 +55,9 @@ global:
   # paths to docker images
   helm_broker:
     dir: /pr/
-    version: PR-80
+    version: PR-109
   helm_controller:
     dir: /pr/
-    version: PR-80
+    version: PR-109
   # etcd port uses by helm broker
   etcdClientPort: 2379
