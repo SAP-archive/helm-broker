@@ -174,9 +174,9 @@ func (s *Chart) toDto(c *chart.Chart) *dto {
 func (s *Chart) fromDto(obj *dto) *chart.Chart {
 	chrt := obj.Main
 
-	var deps []*chart.Chart
-	for _, d := range obj.Deps {
-		deps = append(deps, s.fromDto(d))
+	deps := make([]*chart.Chart, len(obj.Deps))
+	for i, d := range obj.Deps {
+		deps[i] = s.fromDto(d)
 	}
 	chrt.SetDependencies(deps...)
 	return chrt
@@ -197,6 +197,9 @@ func (s *Chart) decodeChart(raw []byte) (*chart.Chart, error) {
 	var obj dto
 	if err := dec.Decode(&obj); err != nil {
 		return nil, err
+	}
+	if obj.Main == nil {
+		return nil, errors.Errorf("chart cannot be nil: %s", string(raw))
 	}
 
 	return s.fromDto(&obj), nil
