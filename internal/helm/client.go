@@ -1,7 +1,6 @@
 package helm
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/kyma-project/helm-broker/internal"
@@ -9,14 +8,9 @@ import (
 	"github.com/sirupsen/logrus"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
-	"helm.sh/helm/v3/pkg/kube"
 	"helm.sh/helm/v3/pkg/release"
-	"helm.sh/helm/v3/pkg/storage"
-	"helm.sh/helm/v3/pkg/storage/driver"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
-	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
-	"k8s.io/kubectl/pkg/cmd/util"
 )
 
 // Client implements a Helm client compatible with Helm3
@@ -43,13 +37,15 @@ func NewClient(restConfig *rest.Config, helmDriver string, log logrus.FieldLogge
 func (c *Client) Install(chrt *chart.Chart, values internal.ChartValues, releaseName internal.ReleaseName, namespace internal.Namespace) (*release.Release, error) {
 	c.log.Infof("Installing chart with release name [%s], namespace: [%s]", releaseName, namespace)
 
-	aCfg, err := c.provideActionConfig(namespace)
+	ns := string(namespace)
+	cfg, err := c.getConfig(ns)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "while getting config")
 	}
-	installAction := action.NewInstall(aCfg)
+
+	installAction := action.NewInstall(cfg)
 	installAction.ReleaseName = string(releaseName)
-	installAction.Namespace = string(namespace)
+	installAction.Namespace = ns
 	installAction.Wait = true
 	installAction.Timeout = c.installingTimeout
 	installAction.CreateNamespace = true // https://v3.helm.sh/docs/faq/#automatically-creating-namespaces
@@ -65,12 +61,12 @@ func (c *Client) Install(chrt *chart.Chart, values internal.ChartValues, release
 // Delete is deleting release of the chart
 func (c *Client) Delete(releaseName internal.ReleaseName, namespace internal.Namespace) error {
 	c.log.Infof("Deleting chart with release name [%s], namespace: [%s]", releaseName, namespace)
-	aCfg, err := c.provideActionConfig(namespace)
+	cfg, err := c.getConfig(string(namespace))
 	if err != nil {
-		return err
+		return errors.Wrap(err, "while getting config")
 	}
 
-	uninstallAction := action.NewUninstall(aCfg)
+	uninstallAction := action.NewUninstall(cfg)
 	_, err = uninstallAction.Run(string(releaseName))
 	if err != nil {
 		return errors.Wrap(err, "while executing uninstall action")
@@ -81,54 +77,22 @@ func (c *Client) Delete(releaseName internal.ReleaseName, namespace internal.Nam
 
 // ListReleases returns a list of helm releases in the given namespace
 func (c *Client) ListReleases(namespace internal.Namespace) ([]*release.Release, error) {
-	aCfg, err := c.provideActionConfig(namespace)
+	cfg, err := c.getConfig(string(namespace))
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "while getting config")
 	}
-	listAction := action.NewList(aCfg)
+	listAction := action.NewList(cfg)
 	return listAction.Run()
 }
 
-func (c *Client) provideActionConfig(namespace internal.Namespace) (*action.Configuration, error) {
-	restClientGetter := c.newConfigFlags(string(namespace))
-	kubeClient := &kube.Client{
-		Factory: util.NewFactory(restClientGetter),
-		Log:     c.log.Debugf,
-	}
-	client, err := kubeClient.Factory.KubernetesClientSet()
+func (c *Client) getConfig(namespace string) (*action.Configuration, error) {
+	actionConfig := new(action.Configuration)
+	// You can pass an empty string to all namespaces
+	err := actionConfig.Init(c.newConfigFlags(namespace), namespace, c.helmDriver, c.log.Debugf)
 	if err != nil {
-		return nil, errors.Wrap(err, "while getting kube client")
+		return nil, err
 	}
-
-	store, err := c.provideStorage(client, string(namespace))
-	if err != nil {
-		return nil, errors.Wrap(err, "while getting helm storage")
-	}
-
-	return &action.Configuration{
-		RESTClientGetter: restClientGetter,
-		Releases:         store,
-		KubeClient:       kubeClient,
-		Log:              c.log.Debugf,
-	}, nil
-}
-
-func (c *Client) provideStorage(client *kubernetes.Clientset, namespace string) (*storage.Storage, error) {
-	switch c.helmDriver {
-	case "secret", "secrets", "":
-		s := driver.NewSecrets(client.CoreV1().Secrets(namespace))
-		s.Log = c.log.Debugf
-		return storage.Init(s), nil
-	case "configmap", "configmaps":
-		cm := driver.NewConfigMaps(client.CoreV1().ConfigMaps(namespace))
-		cm.Log = c.log.Debugf
-		return storage.Init(cm), nil
-	case "memory":
-		m := driver.NewMemory()
-		return storage.Init(m), nil
-	default:
-		return nil, fmt.Errorf("unsupported helm driver '%s'", c.helmDriver)
-	}
+	return actionConfig, nil
 }
 
 func (c *Client) newConfigFlags(namespace string) *genericclioptions.ConfigFlags {

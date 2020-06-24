@@ -180,13 +180,13 @@ push-image:
 	docker push $(REPO)$(TESTS_NAME):$(TAG)
 
 .PHONY: ci-pr
-ci-pr: build test build-image push-image
+ci-pr: build build-image push-image
 
 .PHONY: ci-master
-ci-master: build test build-image push-image
+ci-master: build build-image push-image
 
 .PHONY: ci-release
-ci-release: build test build-image push-image charts-test release
+ci-release: build build-image push-image charts-test release
 
 .PHONY: clean
 clean:
