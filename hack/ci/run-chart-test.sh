@@ -81,7 +81,8 @@ install::service_catalog() {
   shout "- Provisioning Service Catalog chart in ${SC_RELEASE_NAMESPACE} namespace..."
 
   docker_ct_exec helm repo add svc-cat https://svc-catalog-charts.storage.googleapis.com
-  docker_ct_exec helm install svc-cat/catalog --name "${SC_RELEASE_NAME}" --namespace "${SC_RELEASE_NAMESPACE}" --wait
+  docker_ct_exec kubectl create ns "${SC_RELEASE_NAMESPACE}"
+  docker_ct_exec helm install "${SC_RELEASE_NAME}" svc-cat/catalog  --namespace "${SC_RELEASE_NAMESPACE}" --wait
 }
 
 install_local-path-provisioner() {
