@@ -76,13 +76,6 @@ setup_kubectl_in_ct_container() {
     docker_ct_exec kubectl cluster-info
 }
 
-install::tiller() {
-    shout '- Installing Tiller...'
-    docker_ct_exec kubectl --namespace kube-system create sa tiller
-    docker_ct_exec kubectl create clusterrolebinding tiller-cluster-rule --clusterrole=cluster-admin --serviceaccount=kube-system:tiller
-    docker_ct_exec helm init --service-account tiller --upgrade --wait
-}
-
 # Installs service catalog on cluster.
 install::service_catalog() {
   shout "- Provisioning Service Catalog chart in ${SC_RELEASE_NAMESPACE} namespace..."
@@ -128,7 +121,6 @@ main() {
     kind::create_cluster
     setup_kubectl_in_ct_container
     install_local-path-provisioner
-    install::tiller
     install::service_catalog
 
     chart::lint
