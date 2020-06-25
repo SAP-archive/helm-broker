@@ -11,7 +11,7 @@ readonly SC_RELEASE_NAME="catalog"
 readonly HB_NAMESPACE="helm-broker"
 readonly HB_CHART_NAME="helm-broker"
 
-readonly HELM_BINARY=helm3
+readonly HELM_BINARY=helm
 
 source "${CURRENT_DIR}/ci/lib/utilities.sh" || { echo 'Cannot load CI utilities.'; exit 1; }
 source "${CURRENT_DIR}/ci/lib/deps_ver.sh" || { echo 'Cannot load dependencies versions.'; exit 1; }
