@@ -297,7 +297,7 @@ func TestOSBAPIProvisionRepeatedOnAlreadyFullyProvisionedInstance(t *testing.T) 
 	assert.False(t, resp.Async)
 	assert.Nil(t, resp.OperationKey)
 
-	// No activity on tiller should happen
+	// No activity should happen
 	defer ts.HelmClient.AssertExpectations(t)
 }
 
@@ -339,7 +339,7 @@ func TestOSBAPIProvisionRepeatedOnProvisioningInProgress(t *testing.T) {
 	assert.True(t, resp.Async)
 	assert.EqualValues(t, expOpID, *resp.OperationKey)
 
-	// No activity on tiller should happen
+	// No activity should happen
 	defer ts.HelmClient.AssertExpectations(t)
 }
 
@@ -401,7 +401,7 @@ func TestOSBAPIProvisionConflictErrorOnAlreadyFullyProvisionedInstance(t *testin
 	assert.Nil(t, resp)
 	assert.Equal(t, osb.HTTPStatusCodeError{StatusCode: http.StatusConflict, ErrorMessage: ptrStr(fmt.Sprintf("service instance exists with different parameters: %v", ts.Exp.ProvisioningParameters.Data)), Description: ptrStr("")}, err)
 
-	// No activity on tiller should happen
+	// No activity should happen
 	defer ts.HelmClient.AssertExpectations(t)
 }
 
@@ -435,7 +435,7 @@ func TestOSBAPIDeprovisionOnAlreadyDeprovisionedInstance(t *testing.T) {
 	assert.False(t, resp.Async)
 	assert.Nil(t, resp.OperationKey)
 
-	// No activity on tiller should happen
+	// No activity should happen
 	defer ts.HelmClient.AssertExpectations(t)
 }
 
@@ -464,7 +464,7 @@ func TestOSBAPIDeprovisionOnAlreadyDeprovisionedAndRemovedInstance(t *testing.T)
 	assert.False(t, resp.Async)
 	assert.Nil(t, resp.OperationKey)
 
-	// No activity on tiller should happen
+	// No activity should happen
 	defer ts.HelmClient.AssertExpectations(t)
 }
 
@@ -500,7 +500,7 @@ func TestOSBAPIDeprovisionRepeatedOnDeprovisioningInProgress(t *testing.T) {
 	assert.True(t, resp.Async)
 	assert.EqualValues(t, expOpID, *resp.OperationKey)
 
-	// No activity on tiller should happen
+	// No activity should happen
 	defer ts.HelmClient.AssertExpectations(t)
 }
 
@@ -927,7 +927,7 @@ func TestOSBAPIProvisionRepeatedOnAlreadyFullyProvisionedInstanceNS(t *testing.T
 	assert.False(t, resp.Async)
 	assert.Nil(t, resp.OperationKey)
 
-	// No activity on tiller should happen
+	// No activity should happen
 	defer ts.HelmClient.AssertExpectations(t)
 }
 
@@ -972,7 +972,7 @@ func TestOSBAPIProvisionRepeatedOnProvisioningInProgressNS(t *testing.T) {
 	assert.True(t, resp.Async)
 	assert.EqualValues(t, expOpID, *resp.OperationKey)
 
-	// No activity on tiller should happen
+	// No activity should happen
 	defer ts.HelmClient.AssertExpectations(t)
 }
 
@@ -1030,7 +1030,7 @@ func TestOSBAPIProvisionConflictErrorOnAlreadyFullyProvisionedInstanceNS(t *test
 	// WHEN
 	resp, err = ts.OSBClient().ProvisionInstance(req)
 
-	// No activity on tiller should happen
+	// No activity should happen
 	defer ts.HelmClient.AssertExpectations(t)
 }
 
@@ -1064,7 +1064,7 @@ func TestOSBAPIDeprovisionOnAlreadyDeprovisionedInstanceNS(t *testing.T) {
 	assert.False(t, resp.Async)
 	assert.Nil(t, resp.OperationKey)
 
-	// No activity on tiller should happen
+	// No activity should happen
 	defer ts.HelmClient.AssertExpectations(t)
 }
 
@@ -1093,7 +1093,7 @@ func TestOSBAPIDeprovisionOnAlreadyDeprovisionedAndRemovedInstanceNS(t *testing.
 	assert.False(t, resp.Async)
 	assert.Nil(t, resp.OperationKey)
 
-	// No activity on tiller should happen
+	// No activity should happen
 	defer ts.HelmClient.AssertExpectations(t)
 }
 
@@ -1129,7 +1129,7 @@ func TestOSBAPIDeprovisionRepeatedOnDeprovisioningInProgressNS(t *testing.T) {
 	assert.True(t, resp.Async)
 	assert.EqualValues(t, expOpID, *resp.OperationKey)
 
-	// No activity on tiller should happen
+	// No activity should happen
 	defer ts.HelmClient.AssertExpectations(t)
 }
 

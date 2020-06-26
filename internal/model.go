@@ -292,7 +292,7 @@ type InstanceOperation struct {
 	CreatedAt time.Time
 }
 
-// ReleaseName is the name of the Helm (Tiller) release.
+// ReleaseName is the name of the Helm release.
 type ReleaseName string
 
 // ServiceID is an ID of the Service exposed via Service Catalog.

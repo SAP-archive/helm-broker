@@ -8,7 +8,6 @@ metadata:
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
 data:
   config.yaml: |-
-    tillerTLSInsecure: {{ .Values.broker.tillerTLSInsecure }}
     storage:
       - driver: etcd
         provide:

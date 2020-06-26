@@ -36,8 +36,6 @@ broker:
     requests:
       memory: 32Mi
       cpu: 30m
-  tillerTLSInsecure: true
-  tillerTLSEnabled: false
   internalPort: 8070
   statusPort: 8071
   metricsPort: 8072
