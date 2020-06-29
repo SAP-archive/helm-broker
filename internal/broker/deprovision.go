@@ -3,14 +3,13 @@ package broker
 import (
 	"context"
 	"fmt"
-	"strings"
 	"sync"
 
 	osb "github.com/kubernetes-sigs/go-open-service-broker-client/v2"
 	"github.com/kyma-project/helm-broker/internal"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	helmErrors "k8s.io/helm/pkg/storage/errors"
+	helmErrors "helm.sh/helm/v3/pkg/storage/driver"
 )
 
 type deprovisionService struct {
@@ -115,7 +114,7 @@ func (svc *deprovisionService) do(ctx context.Context, inst internal.Instance, o
 	iID := inst.ID
 	fDo := func() error {
 		err := svc.helmDeleter.Delete(inst.ReleaseName, inst.Namespace)
-		if err != nil && !isErrReleaseNotFound(err, inst.ReleaseName) {
+		if err != nil && !errors.Is(err, helmErrors.ErrReleaseNotFound) {
 			return errors.Wrapf(err, "while deleting helm release %q", inst.ReleaseName)
 		}
 
@@ -153,10 +152,4 @@ func (svc *deprovisionService) do(ctx context.Context, inst internal.Instance, o
 		svc.log.Errorf("Cannot update state for instance [%s]: [%v]", iID, err)
 		return
 	}
-}
-
-// isErrReleaseNotFound implements the error checking for Helm Releases, copied from
-// https://github.com/helm/helm/blob/HEAD@%7B2019-05-30T10:19:27Z%7D/cmd/helm/upgrade.go#L222
-func isErrReleaseNotFound(err error, releaseName internal.ReleaseName) bool {
-	return strings.Contains(err.Error(), helmErrors.ErrReleaseNotFound(string(releaseName)).Error())
 }

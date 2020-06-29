@@ -15,7 +15,7 @@ import (
 	"github.com/kyma-project/helm-broker/internal"
 	"github.com/kyma-project/helm-broker/internal/broker"
 	"github.com/kyma-project/helm-broker/internal/broker/automock"
-	helmErrors "k8s.io/helm/pkg/storage/errors"
+	helmErrors "helm.sh/helm/v3/pkg/storage/driver"
 )
 
 func TestDeprovisionServiceDeprovisionSuccess(t *testing.T) {
@@ -83,7 +83,7 @@ func TestDeprovisionServiceDeprovisionSuccessIfReleaseNotFound(t *testing.T) {
 			close(ts.UpdateStateDescMethodCalled)
 		}).Once()
 
-	ts.HelmClientMock.On("Delete", ts.Exp.ReleaseName, ts.Exp.Namespace).Return(helmErrors.ErrReleaseNotFound(string(ts.Exp.ReleaseName))).Once()
+	ts.HelmClientMock.On("Delete", ts.Exp.ReleaseName, ts.Exp.Namespace).Return(helmErrors.ErrReleaseNotFound).Once()
 
 	ts.InstBindDataMock.ExpectOnRemove(ts.Exp.InstanceID).Once()
 	ts.InstStorageMock.ExpectOnRemove(ts.Exp.InstanceID).Once()
