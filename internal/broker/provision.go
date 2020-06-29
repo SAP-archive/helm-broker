@@ -9,6 +9,8 @@ import (
 	"strings"
 	"sync"
 
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
+
 	osb "github.com/kubernetes-sigs/go-open-service-broker-client/v2"
 	"github.com/kyma-project/helm-broker/internal"
 	"github.com/pkg/errors"
@@ -220,8 +222,12 @@ func (svc *provisionService) do(ctx context.Context, input provisioningInput) {
 		svc.log.Infof("Merging values for operation [%s], releaseName [%s], namespace [%s], addonPlan [%s]. Plan values are: [%v], overrides: [%v], merged: [%v] ",
 			input.operationID, input.releaseName, input.namespace, input.addonPlan.Name, input.addonPlan.ChartValues, input.chartOverrides, out)
 
-		resp, err := svc.helmInstaller.Install(c, internal.ChartValues(out), input.releaseName, input.namespace)
+		resp, err := svc.helmInstaller.Install(c, out, input.releaseName, input.namespace)
 		if err != nil {
+			cause := errors.Cause(err)
+			if apiErrors.IsForbidden(cause) {
+				return errors.Wrap(cause, "user has no sufficient permissions to provision a service")
+			}
 			return errors.Wrap(err, "while installing helm release")
 		}
 
