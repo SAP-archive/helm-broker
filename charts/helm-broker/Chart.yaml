@@ -1,4 +1,5 @@
 name: helm-broker
+apiVersion: v1
 description: Helm broker deployment chart.
 version: 0.1.0
 appVersion: 0.1.0
@@ -12,8 +13,6 @@ maintainers:
     url: https://github.com/pk85/
   - name: piotrmiskiewicz
     email: piotr.miskiewicz@sap.com
-  - name: adamwalach
-    email: adam.walach@sap.com
   - name: jasiu001
     email: piotr.jasiak@sap.com
   - name: polskikiel

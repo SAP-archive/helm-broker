@@ -38,12 +38,6 @@ spec:
             value: "{{ .Values.broker.metricsPort }}"
           - name: APP_CONFIG_FILE_NAME
             value: /etc/config/helm-broker/config.yaml
-          - name: APP_HELM_TILLER_HOST
-            value: "tiller-deploy.kube-system.svc.cluster.local:44134"
-          - name: APP_HELM_TILLER_TLS_INSECURE
-            value: "{{ .Values.broker.tillerTLSInsecure }}"
-          - name: APP_HELM_TILLER_TLS_ENABLED
-            value: "{{ .Values.broker.tillerTLSEnabled }}"
         resources:
 {{ toYaml .Values.broker.resources | indent 10 }}
         volumeMounts:
@@ -51,11 +45,6 @@ spec:
           name: tmp-empty-dir
         - mountPath: /etc/config/helm-broker
           name: config-volume
-{{ if .Values.broker.tillerTLSEnabled }}
-        - mountPath: /etc/certs
-          name: helm-certs
-          readOnly: true
-{{ end }}
         ports:
         - containerPort: {{ .Values.broker.internalPort }}
         readinessProbe:
@@ -102,11 +91,6 @@ spec:
           name: tmp-empty-dir
         - mountPath: /etc/config/helm-broker
           name: config-volume
-{{ if .Values.broker.tillerTLSEnabled }}
-        - mountPath: /etc/certs
-          name: helm-certs
-          readOnly: true
-{{ end }}
         - mountPath: /root/.ssh
           name: ssh-cfg
           readOnly: true
@@ -126,7 +110,6 @@ spec:
           periodSeconds: 60
           timeoutSeconds: 30
           initialDelaySeconds: 10
-
       volumes:
       - name: tmp-empty-dir
         emptyDir:
@@ -137,13 +120,3 @@ spec:
       - name: ssh-cfg
         configMap:
           name: ssh-cfg
-{{ if .Values.broker.tillerTLSEnabled }}
-      - name: helm-certs
-        secret:
-          secretName: helm-secret
-          items:
-          - key: tls.crt
-            path: tls.crt
-          - key: tls.key
-            path: tls.key
-{{ end }}

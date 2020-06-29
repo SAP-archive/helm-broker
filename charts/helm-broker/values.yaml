@@ -1,7 +1,7 @@
 tests:
   image: helm-broker-tests
   dir: /pr/
-  tag: PR-97
+  tag: PR-109
   securityContext:
     runAsUser: 2000
 
@@ -36,8 +36,6 @@ broker:
     requests:
       memory: 32Mi
       cpu: 30m
-  tillerTLSInsecure: true
-  tillerTLSEnabled: false
   internalPort: 8070
   statusPort: 8071
   metricsPort: 8072
@@ -55,9 +53,9 @@ global:
   # paths to docker images
   helm_broker:
     dir: /pr/
-    version: PR-80
+    version: PR-109
   helm_controller:
     dir: /pr/
-    version: PR-80
+    version: PR-109
   # etcd port uses by helm broker
   etcdClientPort: 2379

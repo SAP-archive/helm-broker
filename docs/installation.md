@@ -6,7 +6,7 @@ This document provides two instructions on the Helm Broker local installation. R
 
 
 * [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) 1.16
-* [Helm CLI](https://github.com/kubernetes/helm#install) 2.14
+* [Helm CLI](https://github.com/kubernetes/helm#install) 3.2.0
 * [Docker](https://docs.docker.com/install/) 19.03 
 * [Kind](https://github.com/kubernetes-sigs/kind#installation-and-usage) 0.5
 
@@ -14,24 +14,17 @@ This document provides two instructions on the Helm Broker local installation. R
 
 ## Install Helm Broker from chart
 
-To run the Helm Broker, you need a Kubernetes cluster with Tiller and Service Catalog. Run the `./hack/run-dev-kind.sh` script, or follow these steps to set up the Helm Broker on Kind with all necessary dependencies:
+To run the Helm Broker, you need a Kubernetes cluster with Service Catalog. Run the `./hack/run-dev-kind.sh` script, or follow these steps to set up the Helm Broker on Kind with all necessary dependencies:
 
 1. Create a local cluster on Kind:
 ```bash
 kind create cluster
 ``` 
 
-2. Install Tiller into your cluster:
-```bash
-kubectl create serviceaccount --namespace kube-system tiller
-kubectl create clusterrolebinding tiller-cluster-rule --clusterrole=cluster-admin --serviceaccount=kube-system:tiller
-helm init --service-account tiller --upgrade --wait
-```
-
 3. Install Service Catalog as a Helm chart:
 ```bash
 helm repo add svc-cat https://svc-catalog-charts.storage.googleapis.com
-helm install svc-cat/catalog --name catalog --namespace catalog --set asyncBindingOperationsEnabled=true
+helm install catalog svc-cat/catalog --namespace catalog --set asyncBindingOperationsEnabled=true
 ```
 
 4. Clone the Helm Broker repository:
@@ -41,7 +34,7 @@ git clone git@github.com:kyma-project/helm-broker.git
 
 5. Install the Helm Broker chart from the cloned repository:
 ```bash
-helm install charts/helm-broker --name helm-broker --namespace helm-broker
+helm install charts/helm-broker helm-broker --namespace helm-broker
 ```
 
 ## Install Helm Broker manually
@@ -75,7 +68,6 @@ docker run \
 
 4. Start the Broker:
 ```bash
-APP_HELM_TILLER_TLS_ENABLED=false \
 APP_KUBECONFIG_PATH=/Users/$User/.kube/config \
 APP_CONFIG_FILE_NAME=hack/examples/local-etcd-config.yaml \
 go run cmd/broker/main.go
@@ -104,7 +96,6 @@ go run cmd/controller/main.go -metrics-addr ":8081"
 You can run the Controller and the Broker configured with the in-memory storage, but then the Broker cannot read data stored by the Controller. To run the Broker and the Controller without etcd, run these commands:
 
 ```bash
-APP_HELM_TILLER_TLS_ENABLED=false \
 APP_KUBECONFIG_PATH=/Users/$User/.kube/config \
 APP_CONFIG_FILE_NAME=hack/examples/minimal-config.yaml \
 APP_NAMESPACE=kyma-system go run cmd/broker/main.go

@@ -1,4 +1,3 @@
-  tillerTLSInsecure: true
   storage:
     - driver: etcd
       provide:
