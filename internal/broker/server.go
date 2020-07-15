@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"net/http/pprof"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -88,7 +89,6 @@ func (srv *Server) Run(ctx context.Context, addr string, startedCh chan struct{}
 		}
 		close(startedCh)
 		lnTCP := ln.(*net.TCPListener)
-
 		srv.addr = lnTCP.Addr().String()
 
 		// TODO: add support for tcpKeepAliveListener
@@ -138,10 +138,20 @@ func (srv *Server) CreateHandler() http.Handler {
 	}
 
 	n := negroni.New(negroni.NewRecovery(), logMiddleware)
+
+	rtr.HandleFunc("/debug/pprof/", pprof.Index)
+	rtr.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+	rtr.HandleFunc("/debug/pprof/profile", pprof.Profile)
+	rtr.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+	rtr.HandleFunc("/debug/pprof/trace", pprof.Trace)
+	rtr.Handle("/debug/pprof/goroutine", pprof.Handler("goroutine"))
+	rtr.Handle("/debug/pprof/heap", pprof.Handler("heap"))
+	rtr.Handle("/debug/pprof/threadcreate", pprof.Handler("threadcreate"))
+	rtr.Handle("/debug/pprof/block", pprof.Handler("block"))
+
 	n.UseHandler(rtr)
 	return n
 }
-
 func (srv *Server) handleRouter(router *mux.Router) {
 	osbContextMiddleware := &OSBContextMiddleware{}
 	reqAsyncMiddleware := &RequireAsyncMiddleware{}

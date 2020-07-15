@@ -96,11 +96,14 @@ func (c *Client) getConfig(namespace string) (*action.Configuration, error) {
 }
 
 func (c *Client) newConfigFlags(namespace string) *genericclioptions.ConfigFlags {
+	dir := ""
+	cacheDir := &dir
 	return &genericclioptions.ConfigFlags{
 		Namespace:   &namespace,
 		APIServer:   &c.restConfig.Host,
 		CAFile:      &c.restConfig.CAFile,
 		BearerToken: &c.restConfig.BearerToken,
+		CacheDir:    cacheDir,
 	}
 }
 
