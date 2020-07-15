@@ -14,17 +14,20 @@ import (
 
 // NewInstance creates new Instances storage
 func NewInstance(cli clientv3.KV) (*Instance, error) {
-
-	prefixParts := append(entityNamespacePrefixParts(), string(entityNamespaceInstance))
+	prefixParts := append(entityNamespacePrefixParts(), entityNamespaceInstance)
 	kv := namespace.NewKV(cli, strings.Join(prefixParts, entityNamespaceSeparator))
 
-	d := &Instance{
+	// Register interface types which are used by this domain.
+	// Not registered globally as helm-broker gives an option to configure storage
+	// driver for each domain, so they should be treated separately and cannot
+	// assume that other domain registered that type already.
+	gob.Register(map[string]interface{}{})
+
+	return &Instance{
 		generic: generic{
 			kv: kv,
 		},
-	}
-
-	return d, nil
+	}, nil
 }
 
 // Instance implements etcd based storage for Instance entities.
@@ -48,7 +51,6 @@ func (s *Instance) Upsert(i *internal.Instance) (replaced bool, err error) {
 
 	buf := bytes.Buffer{}
 	enc := gob.NewEncoder(&buf)
-	gob.Register(map[string]interface{}{})
 	if err := enc.Encode(i); err != nil {
 		return false, errors.Wrap(err, "while encoding entity")
 	}
@@ -77,7 +79,6 @@ func (s *Instance) Insert(i *internal.Instance) error {
 
 	buf := bytes.Buffer{}
 	enc := gob.NewEncoder(&buf)
-	gob.Register(map[string]interface{}{})
 	if err := enc.Encode(i); err != nil {
 		return errors.Wrap(err, "while encoding entity")
 	}
@@ -144,7 +145,6 @@ func (s *Instance) GetAll() ([]*internal.Instance, error) {
 
 func (s *Instance) decodeInstance(raw []byte) (*internal.Instance, error) {
 	dec := gob.NewDecoder(bytes.NewReader(raw))
-	gob.Register(map[string]interface{}{})
 	var i internal.Instance
 	if err := dec.Decode(&i); err != nil {
 		return nil, err
