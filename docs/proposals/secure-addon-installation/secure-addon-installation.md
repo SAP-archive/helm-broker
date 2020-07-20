@@ -42,11 +42,11 @@ This section describes architecture both for the install and uninstall action as
 
 > **NOTE:** In the first phase, the support for binding is out of scope, but the Service Catalog enables that flow too.
 
-#### Install
+#### Installation
 
-The new install workflow consists of the following steps:
+The new installation workflow consists of the following steps:
 
-1. The user using Console UI, or using kubectl, or the Kubernetes controller (technical user) creates a ServiceInstance for a given addon.
+1. The user creates a ServiceInstance for a given addon using Console UI, kubectl, or the Kubernetes controller (technical user).
 2. Service Catalog detects the newly created ServiceInstance. 
 3. Service Catalog sends the provisioning request to Helm Broker. The **UserInfo** field is included in the provisioning HTTP header. 
 4. Helm Broker extracts the **UserInfo** from the header and creates a Helm client with **ImpersonateUser** set to the `username` from the request. 
@@ -55,20 +55,20 @@ The new install workflow consists of the following steps:
  <img alt="arch" src="./install.svg"/>
 </p>
 
-> **NOTE:** The above solution works for both User and ServiceAccount. Kubernetes client should be configured in such a way: 
+> **NOTE:** This solution works for both User and ServiceAccount. Kubernetes client should be configured in such a way: 
 > - for User, the **{USERNAME}** should be used
 > - for ServiceAccount, the **system:serviceaccount:{NAMESPACE}:{SERVICEACCOUNT}** should be used
 >
 > Naming is already handled by the Service Catalog webhook and **userInfo.username** contains a proper value.
 
-#### Uninstall
+#### Uninstallation
 
-The new uninstall workflow consists of the following steps:
+The new uninstallation workflow consists of the following steps:
 
-1. The user using Console UI, or using kubectl, or the Kubernetes controller (technical user) deletes a ServiceInstance.
+1. The user deletes a ServiceInstance using Console UI, kubectl, or the Kubernetes controller (technical user).
 2. Service Catalog uses the identity of the last user that created or modified the instance.
 3. Service Catalog sends the deprovisioning request to Helm Broker with the info on the last user that created or modified the instance specified in the header.
-4. Helm Broker ignores the user's identity and uses **cluster-admin** ServiceAccount which has admin permissions to delete a release from the cluster.
+4. Helm Broker ignores the user's identity and uses the **cluster-admin** ServiceAccount which has admin permissions to delete a release from the cluster.
 
 <p align="center">
  <img alt="arch" src="./uninstall.svg"/>
@@ -86,7 +86,7 @@ Follow these steps to validate the proposed workflow:
    kubectl set image deployment/service-catalog-catalog-webhook svr=mszostok/service-catalog-amd64:fixed-userinfo
     ```
 3. Check out the [`impersonate-helm-broker`](https://github.com/mszostok/impersonate-helm-broker) repository locally.
-4. Install the impersonate-helm-broker. Run:
+4. Install the `impersonate-helm-broker`. Run:
     ```bash
     kubectl create -f ./deploy
     ```
@@ -129,13 +129,13 @@ Follow these steps to validate the proposed workflow:
 
 ### Follow-ups
 
-The following follow-ups need to be executed:
+These are the follow-ups that must be executed if we proceed with this solution:
 
 1. The **userInfo** field is always updated with the Service Catalog controller ServiceAccount. 
    
-   Accepted solution: [This PR](https://github.com/kubernetes-sigs/service-catalog/pull/2822) needs to be merged to fix the user's identity feature. Check the PR for more details.
+   Accepted solution: [This PR](https://github.com/kubernetes-sigs/service-catalog/pull/2822) must be merged to fix the user's identity feature. Check the PR for more details.
 
-2. Console Backend Service creates a ServiceInstance and ServiceBindings using controller ServiceAccount instead of a user account who triggered that call. 
+2. Console Backend Service creates a ServiceInstance and ServiceBindings using controller ServiceAccount instead of a user account that triggered that call. 
    
    Accepted solution: A PR is needed to Console Backend Service to add the [user impersonation](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#user-impersonation) feature in the client-go calls.
 
@@ -145,10 +145,10 @@ The following follow-ups need to be executed:
 
    Rejected solution: Move the field from **.spec.userInfo** to **.status.userInfo**. This solution is more clear but more time-consuming and requires changes in the Service Catalog repository.
 
-4. The Helm Broker lacks functionality for using User/ServiceAccount RBAC for provisioning a given [addon](https://github.com/kyma-project/addons).
+4. Helm Broker lacks functionality for using User/ServiceAccount RBAC for provisioning a given [addon](https://github.com/kyma-project/addons).
 
-    Accepted solution: Implement logic from [`impersonate-helm-broker`](https://github.com/mszostok/impersonate-helm-broker) PoC component in Helm Broker:
+    Accepted solution: Implement logic from the [`impersonate-helm-broker`](https://github.com/mszostok/impersonate-helm-broker) PoC component in Helm Broker:
        
      - [Originating identity middleware](https://github.com/mszostok/impersonate-helm-broker/blob/master/internal/middleware/identity.go).
      - [User impersonation in Helm commands](https://github.com/mszostok/impersonate-helm-broker/blob/3d7f4300250a882e5c98fe174dc5fa38bcae536e/internal/helm/install.go#L76-L77).
-     - Update Helm Broker documentation with information from **Architecture** section from this proposal.
+     - Update Helm Broker documentation with information from the **Architecture** section from this proposal.
