@@ -19,16 +19,20 @@ import (
 
 // NewInstanceOperation returns new instance of InstanceOperation storage.
 func NewInstanceOperation(cli clientv3.KV) (*InstanceOperation, error) {
-	prefixParts := append(entityNamespacePrefixParts(), string(entityNamespaceInstanceOperation))
+	prefixParts := append(entityNamespacePrefixParts(), entityNamespaceInstanceOperation)
 	kv := namespace.NewKV(cli, strings.Join(prefixParts, entityNamespaceSeparator))
 
-	d := &InstanceOperation{
+	// Register interface types which are used by this domain.
+	// Not registered globally as helm-broker gives an option to configure storage
+	// driver for each domain, so they should be treated separately and cannot
+	// assume that other domain registered that type already.
+	gob.Register(map[string]interface{}{})
+
+	return &InstanceOperation{
 		generic: generic{
 			kv: kv,
 		},
-	}
-
-	return d, nil
+	}, nil
 }
 
 // InstanceOperation implements etcd based storage InstanceOperation.
@@ -163,7 +167,6 @@ func (*InstanceOperation) handleGetError(errIn error) error {
 func (s *InstanceOperation) encodeDMToDSO(dm *internal.InstanceOperation) (string, error) {
 	buf := bytes.Buffer{}
 	enc := gob.NewEncoder(&buf)
-	gob.Register(map[string]interface{}{})
 	if err := enc.Encode(dm); err != nil {
 		return "", errors.Wrap(err, "while encoding entity")
 	}
