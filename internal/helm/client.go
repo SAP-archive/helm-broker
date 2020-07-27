@@ -1,6 +1,7 @@
 package helm
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/kyma-project/helm-broker/internal"
@@ -49,6 +50,9 @@ func (c *Client) Install(chrt *chart.Chart, values internal.ChartValues, release
 	installAction.Wait = true
 	installAction.Timeout = c.installingTimeout
 	installAction.CreateNamespace = true // https://v3.helm.sh/docs/faq/#automatically-creating-namespaces
+
+	fmt.Println("CHART:", chrt)
+	fmt.Println("VALUES:", values)
 
 	release, err := installAction.Run(chrt, values)
 	if err != nil {
