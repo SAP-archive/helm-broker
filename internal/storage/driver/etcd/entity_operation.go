@@ -27,6 +27,7 @@ func NewInstanceOperation(cli clientv3.KV) (*InstanceOperation, error) {
 	// driver for each domain, so they should be treated separately and cannot
 	// assume that other domain registered that type already.
 	gob.Register(map[string]interface{}{})
+	gob.Register([]interface{}{})
 
 	return &InstanceOperation{
 		generic: generic{
