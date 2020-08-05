@@ -128,7 +128,7 @@ func (l Loader) loadChartFromDir(baseDir string) (*chart.Chart, error) {
 func (l Loader) discoverPathToHelmChart(baseDir string) (string, error) {
 	cDir := filepath.Join(baseDir, addonChartDirName)
 	rawFiles, err := ioutil.ReadDir(cDir)
-	time.Sleep(time.Minute * 10)
+	time.Sleep(time.Minute * 2)
 	switch {
 	case err == nil:
 	case os.IsNotExist(err):
