@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
@@ -127,8 +128,7 @@ func (l Loader) loadChartFromDir(baseDir string) (*chart.Chart, error) {
 func (l Loader) discoverPathToHelmChart(baseDir string) (string, error) {
 	cDir := filepath.Join(baseDir, addonChartDirName)
 	rawFiles, err := ioutil.ReadDir(cDir)
-	for {
-	}
+	time.Sleep(time.Minute * 10)
 	switch {
 	case err == nil:
 	case os.IsNotExist(err):
