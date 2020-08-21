@@ -4,8 +4,8 @@ tlsSetup:
 
 etcd:
   image: "quay.io/coreos/etcd"
-  imageTag: "v3.3.9"
-  secure: false
+  imageTag: "v3.3.23"
+  secure: true
   resources:
     limits:
       cpu: 200m
