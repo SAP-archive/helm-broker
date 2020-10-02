@@ -69,7 +69,7 @@ func TestReconcileAddonsConfiguration_AddAddonsProcess(t *testing.T) {
 
 			// WHEN
 			reconciler := NewReconcileAddonsConfiguration(ts.mgr, ts.addonGetterFactory, ts.chartStorage, ts.addonStorage,
-				ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, ts.templateService, tmpDir, spy.NewLogDummy())
+				ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, ts.templateService, tmpDir, time.Second, spy.NewLogDummy())
 
 			// THEN
 			result, err := reconciler.Reconcile(reconcile.Request{NamespacedName: types.NamespacedName{Namespace: fixAddonsCfg.Namespace, Name: fixAddonsCfg.Name}})
@@ -109,7 +109,7 @@ func TestReconcileAddonsConfiguration_AddAddonsProcess_ErrorIfBrokerExist(t *tes
 
 	// WHEN
 	reconciler := NewReconcileAddonsConfiguration(ts.mgr, ts.addonGetterFactory, ts.chartStorage, ts.addonStorage,
-		ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, ts.templateService, tmpDir, spy.NewLogDummy())
+		ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, ts.templateService, tmpDir, time.Second, spy.NewLogDummy())
 
 	// THEN
 	result, err := reconciler.Reconcile(reconcile.Request{NamespacedName: types.NamespacedName{Namespace: fixAddonsCfg.Namespace, Name: fixAddonsCfg.Name}})
@@ -148,7 +148,7 @@ func TestReconcileAddonsConfiguration_UpdateAddonsProcess(t *testing.T) {
 
 	// WHEN
 	reconciler := NewReconcileAddonsConfiguration(ts.mgr, ts.addonGetterFactory, ts.chartStorage, ts.addonStorage,
-		ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, ts.templateService, tmpDir, spy.NewLogDummy())
+		ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, ts.templateService, tmpDir, time.Second, spy.NewLogDummy())
 
 	// THEN
 	result, err := reconciler.Reconcile(reconcile.Request{NamespacedName: types.NamespacedName{Namespace: fixAddonsCfg.Namespace, Name: fixAddonsCfg.Name}})
@@ -180,7 +180,7 @@ func TestReconcileAddonsConfiguration_UpdateAddonsProcess_ConflictingAddons(t *t
 
 	// WHEN
 	reconciler := NewReconcileAddonsConfiguration(ts.mgr, ts.addonGetterFactory, ts.chartStorage, ts.addonStorage,
-		ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, ts.templateService, tmpDir, spy.NewLogDummy())
+		ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, ts.templateService, tmpDir, time.Second, spy.NewLogDummy())
 
 	// THEN
 	result, err := reconciler.Reconcile(reconcile.Request{NamespacedName: types.NamespacedName{Namespace: fixAddonsCfg.Namespace, Name: fixAddonsCfg.Name}})
@@ -204,7 +204,7 @@ func TestReconcileAddonsConfiguration_DeleteAddonsProcess(t *testing.T) {
 
 	// WHEN
 	reconciler := NewReconcileAddonsConfiguration(ts.mgr, ts.addonGetterFactory, ts.chartStorage, ts.addonStorage,
-		ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, ts.templateService, tmpDir, spy.NewLogDummy())
+		ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, ts.templateService, tmpDir, time.Second, spy.NewLogDummy())
 
 	// THEN
 	result, err := reconciler.Reconcile(reconcile.Request{NamespacedName: types.NamespacedName{Namespace: fixAddonsCfg.Namespace, Name: fixAddonsCfg.Name}})
@@ -228,7 +228,7 @@ func TestReconcileAddonsConfiguration_DeleteAddonsProcess_ReconcileOtherAddons(t
 
 	// WHEN
 	reconciler := NewReconcileAddonsConfiguration(ts.mgr, ts.addonGetterFactory, ts.chartStorage, ts.addonStorage,
-		ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, ts.templateService, tmpDir, spy.NewLogDummy())
+		ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, ts.templateService, tmpDir, time.Second, spy.NewLogDummy())
 
 	// THEN
 	result, err := reconciler.Reconcile(reconcile.Request{NamespacedName: types.NamespacedName{Namespace: fixAddonsCfg.Namespace, Name: fixAddonsCfg.Name}})

@@ -39,6 +39,7 @@ type RepositoryStatusReason string
 const (
 	RepositoryURLFetchingError   RepositoryStatusReason = "FetchingIndexError"
 	RepositoryURLTemplatingError RepositoryStatusReason = "TemplatingURLError"
+	RepositoryEmptyURLError      RepositoryStatusReason = "EmptyURLError"
 )
 
 func (r RepositoryStatusReason) String() string {

@@ -87,12 +87,12 @@ func SetupAndStartController(cfg *rest.Config, ctrCfg *config.ControllerConfig, 
 
 	// Creating controllers
 	lg.Info("Setting up controller")
-	acReconcile := NewReconcileAddonsConfiguration(mgr, addonGetterFactory, sFact.Chart(), sFact.Addon(), sbFacade, dtProvider, sbSyncer, templateService, ctrCfg.TmpDir, lg)
+	acReconcile := NewReconcileAddonsConfiguration(mgr, addonGetterFactory, sFact.Chart(), sFact.Addon(), sbFacade, dtProvider, sbSyncer, templateService, ctrCfg.TmpDir, ctrCfg.ReprocessOnErrorDuration, lg)
 	acController := NewAddonsConfigurationController(acReconcile)
 	err = acController.Start(mgr)
 	fatalOnError(err, "unable to start AddonsConfigurationController")
 
-	cacReconcile := NewReconcileClusterAddonsConfiguration(mgr, addonGetterFactory, sFact.Chart(), sFact.Addon(), csbFacade, cdtProvider, csbSyncer, templateService, ctrCfg.TmpDir, lg)
+	cacReconcile := NewReconcileClusterAddonsConfiguration(mgr, addonGetterFactory, sFact.Chart(), sFact.Addon(), csbFacade, cdtProvider, csbSyncer, templateService, ctrCfg.TmpDir, ctrCfg.ReprocessOnErrorDuration, lg)
 	cacController := NewClusterAddonsConfigurationController(cacReconcile)
 	err = cacController.Start(mgr)
 	fatalOnError(err, "unable to start ClusterAddonsConfigurationController")

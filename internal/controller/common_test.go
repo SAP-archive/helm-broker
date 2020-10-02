@@ -2,6 +2,7 @@ package controller
 
 import (
 	"testing"
+	"time"
 
 	"context"
 
@@ -48,7 +49,7 @@ func TestCommon_OnAdd(t *testing.T) {
 			ts := getClusterTestSuite(t, tc.obj...)
 			defer ts.assertExpectations()
 			common := newControllerCommon(ts.mgr.GetClient(), ts.addonGetterFactory, ts.addonStorage, ts.chartStorage,
-				ts.docsProvider, ts.brokerSyncer, ts.brokerFacade, ts.templateService, "", logrus.New())
+				ts.docsProvider, ts.brokerSyncer, ts.brokerFacade, ts.templateService, "", time.Second, logrus.New())
 
 			ts.brokerFacade.On("Exist").Return(false, nil)
 
@@ -108,7 +109,7 @@ func TestCommon_OnDelete(t *testing.T) {
 		t.Run(tn, func(t *testing.T) {
 			ts := getClusterTestSuite(t, tc.obj...)
 			common := newControllerCommon(ts.mgr.GetClient(), ts.addonGetterFactory, ts.addonStorage, ts.chartStorage,
-				ts.docsProvider, ts.brokerSyncer, ts.brokerFacade, ts.templateService, "", logrus.New())
+				ts.docsProvider, ts.brokerSyncer, ts.brokerFacade, ts.templateService, "", time.Second, logrus.New())
 
 			err := common.OnDelete(tc.addon)
 			require.NoError(t, err)
@@ -149,7 +150,7 @@ func TestCommon_OnAdd_NamespaceScoped(t *testing.T) {
 			ts := getTestSuite(t, tc.obj...)
 			defer ts.assertExpectations()
 			common := newControllerCommon(ts.mgr.GetClient(), ts.addonGetterFactory, ts.addonStorage, ts.chartStorage,
-				ts.docsProvider, ts.brokerSyncer, ts.brokerFacade, ts.templateService, "", logrus.New())
+				ts.docsProvider, ts.brokerSyncer, ts.brokerFacade, ts.templateService, "", time.Second, logrus.New())
 
 			ts.brokerFacade.On("Exist").Return(false, nil)
 
@@ -213,7 +214,7 @@ func TestCommon_OnDelete_NamespaceScoped(t *testing.T) {
 		t.Run(tn, func(t *testing.T) {
 			ts := getTestSuite(t, tc.obj...)
 			common := newControllerCommon(ts.mgr.GetClient(), ts.addonGetterFactory, ts.addonStorage, ts.chartStorage,
-				ts.docsProvider, ts.brokerSyncer, ts.brokerFacade, ts.templateService, "", logrus.New())
+				ts.docsProvider, ts.brokerSyncer, ts.brokerFacade, ts.templateService, "", time.Second, logrus.New())
 
 			common.SetWorkingNamespace(tc.addon.Meta.Namespace)
 
@@ -236,7 +237,7 @@ func TestCommon_PrepareForProcessing(t *testing.T) {
 		t.Run(tn, func(t *testing.T) {
 			ts := getTestSuite(t, tc.obj...)
 			common := newControllerCommon(ts.mgr.GetClient(), ts.addonGetterFactory, ts.addonStorage, ts.chartStorage,
-				ts.docsProvider, ts.brokerSyncer, ts.brokerFacade, ts.templateService, "", logrus.New())
+				ts.docsProvider, ts.brokerSyncer, ts.brokerFacade, ts.templateService, "", time.Second, logrus.New())
 
 			err := common.PrepareForProcessing(tc.addon)
 			require.NoError(t, err)
@@ -257,7 +258,7 @@ func TestCommon_PrepareForProcessing_NamespaceScoped(t *testing.T) {
 		t.Run(tn, func(t *testing.T) {
 			ts := getTestSuite(t, tc.obj...)
 			common := newControllerCommon(ts.mgr.GetClient(), ts.addonGetterFactory, ts.addonStorage, ts.chartStorage,
-				ts.docsProvider, ts.brokerSyncer, ts.brokerFacade, ts.templateService, "", logrus.New())
+				ts.docsProvider, ts.brokerSyncer, ts.brokerFacade, ts.templateService, "", time.Second, logrus.New())
 
 			common.SetWorkingNamespace(tc.addon.Meta.Namespace)
 

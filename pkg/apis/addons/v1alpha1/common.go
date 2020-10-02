@@ -81,10 +81,32 @@ type StatusRepository struct {
 	Addons  []Addon                `json:"addons"`
 }
 
+func (sr *StatusRepository) Equal(obj StatusRepository) bool {
+	return sr.URL == obj.URL &&
+		sr.Status == obj.Status &&
+		sr.Reason == obj.Reason &&
+		sr.Message == obj.Message
+}
+
 // CommonAddonsConfigurationStatus defines the observed state of AddonsConfiguration
 type CommonAddonsConfigurationStatus struct {
 	Phase              AddonsConfigurationPhase `json:"phase"`
 	LastProcessedTime  *metav1.Time             `json:"lastProcessedTime,omitempty"`
 	ObservedGeneration int64                    `json:"observedGeneration,omitempty"`
 	Repositories       []StatusRepository       `json:"repositories,omitempty"`
+}
+
+func (st *CommonAddonsConfigurationStatus) Equals(other *CommonAddonsConfigurationStatus) bool {
+	if st.Phase != other.Phase {
+		return false
+	}
+	if len(st.Repositories) != len(other.Repositories) {
+		return false
+	}
+	for i := 0; i < len(st.Repositories); i++ {
+		if !st.Repositories[i].Equal(other.Repositories[i]) {
+			return false
+		}
+	}
+	return true
 }

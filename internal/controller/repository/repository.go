@@ -50,10 +50,24 @@ func (ar *Repository) FetchingError(err error) {
 	ar.Repository.Message = fmt.Sprintf(reason.Message(), err.Error())
 }
 
+// IsFetchingError checks if the repository failed because of Fetching error
+func (ar *Repository) IsFetchingError() bool {
+	return ar.Repository.Status == addonsv1alpha1.RepositoryStatusFailed &&
+		ar.Repository.Reason == addonsv1alpha1.RepositoryURLFetchingError
+}
+
 // TemplatingError sets StatusRepository as failed with URLTemplatingError as a reason
 func (ar *Repository) TemplatingError(err error) {
 	reason := addonsv1alpha1.RepositoryURLTemplatingError
 	ar.Failed()
 	ar.Repository.Reason = reason
 	ar.Repository.Message = fmt.Sprintf(reason.Message(), err.Error())
+}
+
+// EmptyURLError sets StatusRepository as failed with EmptyURLError as a reason
+func (ar *Repository) EmptyURLError(err error) {
+	reason := addonsv1alpha1.RepositoryEmptyURLError
+	ar.Failed()
+	ar.Repository.Reason = reason
+	ar.Repository.Message = fmt.Sprintf(reason.Message())
 }

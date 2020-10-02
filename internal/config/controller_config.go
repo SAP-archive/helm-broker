@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"time"
 
 	"io/ioutil"
 	"os"
@@ -36,6 +37,7 @@ type ControllerConfig struct {
 	DevelopMode              bool
 	UploadServiceURL         string `default:"http://rafter-upload-service.kyma-system.svc.cluster.local:3000"`
 	DocumentationEnabled     bool
+	ReprocessOnErrorDuration time.Duration `default:"5m"`
 }
 
 // LoadControllerConfig method has following strategy:

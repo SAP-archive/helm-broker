@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"path"
+	"time"
 
 	"github.com/kyma-project/helm-broker/internal"
 	"github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
@@ -29,12 +30,12 @@ type ReconcileClusterAddonsConfiguration struct {
 // NewReconcileClusterAddonsConfiguration returns a new reconcile.Reconciler
 func NewReconcileClusterAddonsConfiguration(mgr manager.Manager, addonGetterFactory addonGetterFactory, chartStorage chartStorage,
 	addonStorage addonStorage, brokerFacade brokerFacade, docsProvider docsProvider, brokerSyncer brokerSyncer,
-	templateService templateService, tmpDir string, log logrus.FieldLogger) reconcile.Reconciler {
+	templateService templateService, tmpDir string, reprocessOnErrorDuration time.Duration, log logrus.FieldLogger) reconcile.Reconciler {
 	return &ReconcileClusterAddonsConfiguration{
 		log:    log.WithField("controller", "cluster-addons"),
 		Client: mgr.GetClient(),
 
-		common: newControllerCommon(mgr.GetClient(), addonGetterFactory, addonStorage, chartStorage, docsProvider, brokerSyncer, brokerFacade, templateService, path.Join(tmpDir, "cluster-addon-loader-dst"), log),
+		common: newControllerCommon(mgr.GetClient(), addonGetterFactory, addonStorage, chartStorage, docsProvider, brokerSyncer, brokerFacade, templateService, path.Join(tmpDir, "cluster-addon-loader-dst"), reprocessOnErrorDuration, log),
 	}
 }
 
