@@ -101,7 +101,7 @@ func (c *ControllerHealth) runAddonsConfigurationControllerCycle(req *http.Reque
 		}
 
 		if len(addonsConfiguration.Status.Repositories) != 1 {
-			lg.Infof("[liveness-probe] Liveness probe addonsConfiguration repositories status not set %d", len(addonsConfiguration.Status.Repositories))
+			lg.Infof("[liveness-probe] Liveness probe addonsConfiguration repositories status not set, number of repositories: %d", len(addonsConfiguration.Status.Repositories))
 			return false, nil
 		}
 

@@ -42,6 +42,8 @@ type common struct {
 	reprocessOnErrorDuration time.Duration
 }
 
+var TemporaryError = errors.New("Temporary error")
+
 func newControllerCommon(client client.Client, addonGetterFactory addonGetterFactory, addonStorage addonStorage,
 	chartStorage chartStorage, docsProvider docsProvider, brokerSyncer brokerSyncer, brokerFacade brokerFacade,
 	templateService templateService, dstPath string, reprocessOnErrorDuration time.Duration, log logrus.FieldLogger) *common {
@@ -100,7 +102,7 @@ func (c *common) Reconcile(addon *internal.CommonAddon, trace string) (reconcile
 		}
 		if err := c.OnAdd(addon, addon.Status); err != nil {
 			c.log.Errorf("while adding %s process: %v", trace, err)
-			if IsTemporaryError(err) {
+			if errors.Is(err, TemporaryError) {
 				c.log.Infof("The error is temporary, marking for a reprocess")
 				return reconcile.Result{RequeueAfter: c.reprocessOnErrorDuration}, errors.Wrapf(err, "while updating %s", trace)
 			}
@@ -116,7 +118,7 @@ func (c *common) Reconcile(addon *internal.CommonAddon, trace string) (reconcile
 
 		if err := c.OnAdd(addon, lastStatus); err != nil {
 			c.log.Errorf("while updating %s process: %v", trace, err)
-			if IsTemporaryError(err) {
+			if errors.Is(err, TemporaryError) {
 				c.log.Infof("The error is temporary, reprocessing")
 				return reconcile.Result{RequeueAfter: c.reprocessOnErrorDuration}, errors.Wrapf(err, "while updating %s", trace)
 			}
@@ -143,25 +145,6 @@ func (c *common) PrepareForProcessing(addon *internal.CommonAddon) error {
 	return nil
 }
 
-type TemporaryError struct {
-}
-
-func (TemporaryError) Error() string {
-	return "temporary error"
-}
-
-func IsTemporaryError(err error) bool {
-	if err == nil {
-		return false
-	}
-	switch err.(type) {
-	case *TemporaryError, TemporaryError:
-		return true
-	default:
-		return false
-	}
-}
-
 // OnAdd executes logic on adding ClusterAddonsConfiguration or AddonsConfiguration if namespace is set
 func (c *common) OnAdd(addon *internal.CommonAddon, lastStatus v1alpha1.CommonAddonsConfigurationStatus) error {
 	c.log.Infof("- load addons and charts for each addon")
@@ -177,7 +160,7 @@ func (c *common) OnAdd(addon *internal.CommonAddon, lastStatus v1alpha1.CommonAd
 				return errors.Wrap(err, "while update addons configuration status")
 			}
 		}
-		return TemporaryError{}
+		return TemporaryError
 	}
 
 	c.log.Info("- check duplicate ID addons alongside repositories")
