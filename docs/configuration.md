@@ -21,3 +21,4 @@ Use the following environment variables to configure the `Controller` container 
 | **APP_CLUSTER_SERVICE_BROKER_NAME** | Yes | | Specifies the name of the ClusterServiceBroker resource which registers the Helm Broker in the Service Catalog. |
 | **APP_DEVELOP_MODE** | No | `false` | If set to `true`, you can use unsecured HTTP-based repositories URLs. |
 | **APP_DOCUMENTATION_ENABLED** | No | `false` | If set to `true`, the Helm Broker uploads addons documentation to the [Rafter](https://kyma-project.io/docs/components/headless-cms/). |
+| **APP_REPROCESS_ON_ERROR_DURATION** | No | `5m` | Specifies the time after which Helm Broker performs the repository connection retry that has previously failed. |

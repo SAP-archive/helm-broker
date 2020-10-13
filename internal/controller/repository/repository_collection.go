@@ -80,6 +80,15 @@ func (rc *Collection) IsRepositoriesFailed() bool {
 	return result
 }
 
+func (rc *Collection) IsRepositoriesFetchingError() bool {
+	for _, repository := range rc.Repositories {
+		if repository.IsFetchingError() {
+			return true
+		}
+	}
+	return false
+}
+
 type idConflictData struct {
 	repositoryURL string
 	addonsName    string

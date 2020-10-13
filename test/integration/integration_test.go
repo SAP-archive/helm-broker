@@ -265,6 +265,25 @@ func TestUnregisteringClusterServiceBroker(t *testing.T) {
 	suite.waitForClusterServiceBrokerNotRegistered()
 }
 
+func TestRetryOnNetworkError(t *testing.T) {
+	// given
+	suite := newTestSuiteAndStartControllers(t, false, false)
+	defer suite.tearDown()
+	suite.brokeRepoServer()
+
+	acName := "sample-ac"
+
+	// prepare failed addons configuration
+	suite.createAddonsConfiguration(stageNS, acName, []string{redisRepo}, sourceHTTP)
+	suite.waitForAddonsConfigurationPhase(stageNS, acName, v1alpha1.AddonsConfigurationFailed)
+
+	// when
+	suite.repairRepoServer()
+
+	// then
+	suite.waitForAddonsConfigurationPhase(stageNS, acName, v1alpha1.AddonsConfigurationReady)
+}
+
 // TestAddonsConflicts check Helm Broker contract with conflicts on Addons.
 // It's tested only with HTTP, testing other protocols do not make sense, cause
 // conflicts resolving is in higher layer, so it's protocol agnostic.

@@ -101,14 +101,14 @@ func (c *ControllerHealth) runAddonsConfigurationControllerCycle(req *http.Reque
 		}
 
 		if len(addonsConfiguration.Status.Repositories) != 1 {
-			lg.Info("[liveness-probe] Liveness probe addonsConfiguration repositories status not set")
+			lg.Infof("[liveness-probe] Liveness probe addonsConfiguration repositories status not set, number of repositories: %d", len(addonsConfiguration.Status.Repositories))
 			return false, nil
 		}
 
 		status := addonsConfiguration.Status.Repositories[0].Status
 		reason := addonsConfiguration.Status.Repositories[0].Reason
 		if status == v1alpha1.RepositoryStatusFailed {
-			if reason == v1alpha1.RepositoryURLFetchingError {
+			if reason == v1alpha1.RepositoryEmptyURLError {
 				lg.Info("[liveness-probe] Liveness probe addonsConfiguration has achieved the desired status")
 				return true, nil
 			}

@@ -115,19 +115,6 @@ func newTestSuite(t *testing.T, docsEnabled, httpBasicAuth bool) *testSuite {
 	require.NoError(t, err)
 	logger := logrus.New()
 
-	// server with addons repository
-	staticSvr := http.FileServer(http.Dir("testdata"))
-	repoServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if httpBasicAuth {
-			u, p, ok := r.BasicAuth()
-			assert.True(t, ok, "basic auth required")
-			assert.Equal(t, basicUsername, u)
-			assert.Equal(t, basicPassword, p)
-		}
-
-		staticSvr.ServeHTTP(w, r)
-	}))
-
 	// setup and start kube-apiserver
 	environment := &envtest.Environment{}
 	restConfig, err := environment.Start()
@@ -172,11 +159,10 @@ func newTestSuite(t *testing.T, docsEnabled, httpBasicAuth bool) *testSuite {
 	require.NoError(t, err)
 	stopCh := make(chan struct{})
 
-	return &testSuite{
+	ts := &testSuite{
 		t: t,
 
 		dynamicClient: dynamicClient,
-		repoServer:    repoServer,
 		server:        server,
 		k8sClient:     k8sClientset,
 		helmClient:    helmClient,
@@ -189,6 +175,25 @@ func newTestSuite(t *testing.T, docsEnabled, httpBasicAuth bool) *testSuite {
 
 		logger: logger,
 	}
+
+	// server with addons repository
+	staticSvr := http.FileServer(http.Dir("testdata"))
+	ts.repoServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if httpBasicAuth {
+			u, p, ok := r.BasicAuth()
+			assert.True(t, ok, "basic auth required")
+			assert.Equal(t, basicUsername, u)
+			assert.Equal(t, basicPassword, p)
+		}
+
+		if ts.IsRepoServerBroker() {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+
+		staticSvr.ServeHTTP(w, r)
+	}))
+
+	return ts
 }
 
 func (ts *testSuite) StartControllers(docsEnabled bool) {
@@ -204,6 +209,7 @@ func (ts *testSuite) StartControllers(docsEnabled bool) {
 		ClusterServiceBrokerName: clusterBrokerName,
 		TmpDir:                   os.TempDir(),
 		DocumentationEnabled:     docsEnabled,
+		ReprocessOnErrorDuration: 250 * time.Millisecond,
 	}, ":8001", ts.storageFactory, uploadClient, ts.logger.WithField("svc", "broker"))
 
 	go func() {
@@ -244,8 +250,9 @@ type testSuite struct {
 
 	logger logrus.FieldLogger
 
-	planID    string
-	serviceID string
+	planID             string
+	serviceID          string
+	isRepoServerBroken bool
 }
 
 func (ts *testSuite) tearDown() {
@@ -258,6 +265,14 @@ func (ts *testSuite) tearDown() {
 		require.NoError(ts.t, err)
 		ts.minio.stopMinioServer()
 	}
+}
+
+func (ts *testSuite) brokeRepoServer() {
+	ts.isRepoServerBroken = true
+}
+
+func (ts *testSuite) repairRepoServer() {
+	ts.isRepoServerBroken = false
 }
 
 func (ts *testSuite) waitForNumberOfReleases(n int, ns string) {
@@ -659,7 +674,7 @@ func (ts *testSuite) updateClusterAddonsConfigurationStatusPhase(name string, ph
 func (ts *testSuite) createSpecRepositories(urls []string, repoKind string, repoModifiers ...func(r *v1alpha1.SpecRepository)) []v1alpha1.SpecRepository {
 	// v1alpha1.SpecRepository cannot be null, needs to be empty array
 	if len(urls) == 0 {
-		return []v1alpha1.SpecRepository{{}}
+		return []v1alpha1.SpecRepository{}
 	}
 	var repositories []v1alpha1.SpecRepository
 	for _, url := range urls {
@@ -804,4 +819,8 @@ func (ts *testSuite) assertClusterAssetGroupListIsEmpty() {
 	})
 
 	require.NoError(ts.t, err)
+}
+
+func (ts *testSuite) IsRepoServerBroker() bool {
+	return ts.isRepoServerBroken
 }

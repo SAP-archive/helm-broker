@@ -2,7 +2,6 @@ package controller
 
 import (
 	"fmt"
-
 	"time"
 
 	"github.com/Masterminds/semver"
@@ -39,12 +38,15 @@ type common struct {
 	templateService templateService
 	log             logrus.FieldLogger
 
-	trace string
+	trace                    string
+	reprocessOnErrorDuration time.Duration
 }
+
+var TemporaryError = errors.New("Temporary error")
 
 func newControllerCommon(client client.Client, addonGetterFactory addonGetterFactory, addonStorage addonStorage,
 	chartStorage chartStorage, docsProvider docsProvider, brokerSyncer brokerSyncer, brokerFacade brokerFacade,
-	templateService templateService, dstPath string, log logrus.FieldLogger) *common {
+	templateService templateService, dstPath string, reprocessOnErrorDuration time.Duration, log logrus.FieldLogger) *common {
 	return &common{
 		addonGetterFactory: addonGetterFactory,
 
@@ -63,6 +65,8 @@ func newControllerCommon(client client.Client, addonGetterFactory addonGetterFac
 
 		dstPath: dstPath,
 		log:     log,
+
+		reprocessOnErrorDuration: reprocessOnErrorDuration,
 	}
 }
 
@@ -98,11 +102,15 @@ func (c *common) Reconcile(addon *internal.CommonAddon, trace string) (reconcile
 		}
 		if err := c.OnAdd(addon, addon.Status); err != nil {
 			c.log.Errorf("while adding %s process: %v", trace, err)
+			if errors.Is(err, TemporaryError) {
+				c.log.Infof("The error is temporary, marking for a reprocess")
+				return reconcile.Result{RequeueAfter: c.reprocessOnErrorDuration}, errors.Wrapf(err, "while updating %s", trace)
+			}
 			return reconcile.Result{}, errors.Wrapf(err, "while creating %s", trace)
 		}
 		c.log.Infof("Add %s process completed", trace)
 
-	} else if addon.Meta.Generation > addon.Status.ObservedGeneration {
+	} else if addon.IsReadyForReprocessing() {
 		c.log.Infof("Start update %s process", trace)
 
 		lastStatus := addon.Status
@@ -110,6 +118,10 @@ func (c *common) Reconcile(addon *internal.CommonAddon, trace string) (reconcile
 
 		if err := c.OnAdd(addon, lastStatus); err != nil {
 			c.log.Errorf("while updating %s process: %v", trace, err)
+			if errors.Is(err, TemporaryError) {
+				c.log.Infof("The error is temporary, reprocessing")
+				return reconcile.Result{RequeueAfter: c.reprocessOnErrorDuration}, errors.Wrapf(err, "while updating %s", trace)
+			}
 			return reconcile.Result{}, errors.Wrapf(err, "while updating %s", trace)
 		}
 		c.log.Infof("Update %s process completed", trace)
@@ -137,6 +149,19 @@ func (c *common) PrepareForProcessing(addon *internal.CommonAddon) error {
 func (c *common) OnAdd(addon *internal.CommonAddon, lastStatus v1alpha1.CommonAddonsConfigurationStatus) error {
 	c.log.Infof("- load addons and charts for each addon")
 	repositories := c.loadRepositories(addon.Spec.Repositories)
+	if repositories.IsRepositoriesFetchingError() {
+		c.log.Warnf("Unable to read repositories, scheduling for a retry")
+		addon.Status.Phase = v1alpha1.AddonsConfigurationFailed
+
+		c.statusSnapshot(&addon.Status, repositories)
+		if !addon.Status.Equals(&lastStatus) {
+			// update status only if Status.Repositories has been changed
+			if err := c.updateAddonStatus(addon); err != nil {
+				return errors.Wrap(err, "while update addons configuration status")
+			}
+		}
+		return TemporaryError
+	}
 
 	c.log.Info("- check duplicate ID addons alongside repositories")
 	repositories.ReviseAddonDuplicationInRepository()
@@ -246,7 +271,14 @@ func (c *common) loadRepositories(repos []v1alpha1.SpecRepository) *repository.C
 	repositories := repository.NewRepositoryCollection()
 	for _, specRepository := range repos {
 		c.log.Infof("- create addons for %q repository", specRepository.URL)
+
 		repo := repository.NewAddonsRepository(specRepository.URL)
+		if specRepository.URL == "" {
+			repo.EmptyURLError(errors.New("URL must not be empty"))
+			repositories.AddRepository(repo)
+			c.log.Error("URL must not be empty")
+			continue
+		}
 
 		addonsURL, err := c.templateService.TemplateURL(specRepository)
 		if err != nil {

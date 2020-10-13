@@ -194,6 +194,19 @@ func (ca *CommonAddon) IsReadyForInitialProcessing() bool {
 	return ca.Status.ObservedGeneration == 0 || ca.Status.Phase == v1alpha1.AddonsConfigurationPending
 }
 
+func (ca *CommonAddon) IsReadyForReprocessing() bool {
+	if ca.Meta.Generation > ca.Status.ObservedGeneration {
+		return true
+	}
+
+	for _, r := range ca.Status.Repositories {
+		if r.Status == v1alpha1.RepositoryStatusFailed && r.Reason == v1alpha1.RepositoryURLFetchingError {
+			return true
+		}
+	}
+	return false
+}
+
 // AddonWithCharts aggregates an addon with its chart(s)
 type AddonWithCharts struct {
 	Addon  *Addon
