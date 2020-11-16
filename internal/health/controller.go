@@ -1,6 +1,7 @@
 package health
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"time"
@@ -57,7 +58,7 @@ func (c *ControllerHealth) liveProbe(client client.Client, lg *logrus.Entry) (st
 
 func (c *ControllerHealth) runFullControllersCycle(client client.Client, lg *logrus.Entry) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
-		if err := c.runAddonsConfigurationControllerCycle(req, client, lg); err != nil {
+		if err := c.runAddonsConfigurationControllerCycle(client, lg); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -67,7 +68,7 @@ func (c *ControllerHealth) runFullControllersCycle(client client.Client, lg *log
 	}
 }
 
-func (c *ControllerHealth) runAddonsConfigurationControllerCycle(req *http.Request, client client.Client, lg *logrus.Entry) error {
+func (c *ControllerHealth) runAddonsConfigurationControllerCycle(client client.Client, lg *logrus.Entry) error {
 	addonsConfiguration := &v1alpha1.AddonsConfiguration{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      probeName,
@@ -80,8 +81,9 @@ func (c *ControllerHealth) runAddonsConfigurationControllerCycle(req *http.Reque
 		},
 	}
 
+	ctx := context.Background()
 	lg.Infof("[liveness-probe] Creating liveness probe addonsConfiguration in %q namespace", c.livenessProbeNamespace)
-	err := client.Create(req.Context(), addonsConfiguration)
+	err := client.Create(ctx, addonsConfiguration)
 	if err != nil && !apierrors.IsAlreadyExists(err) {
 		lg.Errorf("[liveness-probe] Cannot create liveness probe addonsConfiguration: %s", err)
 		return err
@@ -90,7 +92,7 @@ func (c *ControllerHealth) runAddonsConfigurationControllerCycle(req *http.Reque
 	lg.Info("[liveness-probe] Waiting for liveness probe addonsConfiguration desirable status")
 	err = wait.Poll(1*time.Second, 10*time.Second, func() (done bool, err error) {
 		key := types.NamespacedName{Name: probeName, Namespace: c.livenessProbeNamespace}
-		err = client.Get(req.Context(), key, addonsConfiguration)
+		err = client.Get(ctx, key, addonsConfiguration)
 		if apierrors.IsNotFound(err) {
 			lg.Info("[liveness-probe] Liveness probe addonsConfiguration not found")
 			return false, nil
@@ -123,7 +125,7 @@ func (c *ControllerHealth) runAddonsConfigurationControllerCycle(req *http.Reque
 	}
 
 	lg.Info("[liveness-probe] Removing liveness probe addonsConfiguration")
-	err = client.Delete(req.Context(), addonsConfiguration)
+	err = client.Delete(ctx, addonsConfiguration)
 	if err != nil {
 		lg.Errorf("[liveness-probe] Cannot delete liveness probe addonsConfiguration: %s", err)
 		return err
