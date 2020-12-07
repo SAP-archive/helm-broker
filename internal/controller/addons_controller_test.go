@@ -19,6 +19,7 @@ import (
 	"github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
 
 	"github.com/Masterminds/semver"
+	"github.com/go-logr/logr"
 	"github.com/kubernetes-sigs/service-catalog/pkg/apis/servicecatalog/v1beta1"
 	rafter "github.com/kyma-project/rafter/pkg/apis/rafter/v1beta1"
 	"github.com/stretchr/testify/assert"
@@ -589,5 +590,9 @@ func (fakeManager) GetCache() cache.Cache {
 }
 
 func (fakeManager) GetRESTMapper() meta.RESTMapper {
+	return nil
+}
+
+func (fakeManager) GetLogger() logr.Logger {
 	return nil
 }

@@ -11,6 +11,7 @@ require (
 	github.com/fatih/structs v1.1.0
 	github.com/frankban/quicktest v1.10.0 // indirect
 	github.com/ghodss/yaml v1.0.0
+	github.com/go-logr/logr v0.2.0
 	github.com/golang/protobuf v1.4.2
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/gorilla/mux v1.7.4
@@ -32,28 +33,27 @@ require (
 	github.com/pborman/uuid v1.2.0
 	github.com/pierrec/lz4 v2.5.2+incompatible // indirect
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/client_golang v1.6.0
-	github.com/sirupsen/logrus v1.6.0
+	github.com/prometheus/client_golang v1.7.1
+	github.com/sirupsen/logrus v1.7.0
 	github.com/stretchr/testify v1.6.1
 	github.com/urfave/negroni v1.0.0
 	github.com/vrischmann/envconfig v1.2.0
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
-	go.etcd.io/etcd v0.0.0-20200824191128-ae9734ed278b
+	go.etcd.io/etcd v0.5.0-alpha.5.0.20200819165624-17cef6e3e9d5
 	gopkg.in/yaml.v2 v2.3.0
-	helm.sh/helm/v3 v3.3.4
-	k8s.io/api v0.18.8
-	k8s.io/apimachinery v0.18.8
-	k8s.io/cli-runtime v0.18.8
-	k8s.io/client-go v0.18.8
+	helm.sh/helm/v3 v3.4.1
+	k8s.io/api v0.19.3
+	k8s.io/apimachinery v0.19.3
+	k8s.io/cli-runtime v0.19.3
+	k8s.io/client-go v0.19.3
 	k8s.io/helm v2.16.7+incompatible
 	rsc.io/letsencrypt v0.0.3 // indirect
-	sigs.k8s.io/controller-runtime v0.6.0
+	sigs.k8s.io/controller-runtime v0.6.4
 	sigs.k8s.io/yaml v1.2.0
 )
 
 replace (
-	google.golang.org/grpc => google.golang.org/grpc v1.26.0
+	github.com/go-logr/logr => github.com/go-logr/logr v0.3.0
 	gopkg.in/yaml.v2 => gopkg.in/yaml.v2 v2.2.8
-	k8s.io/kube-openapi => k8s.io/kube-openapi v0.0.0-20200410145947-61e04a5be9a6
 	sigs.k8s.io/structured-merge-diff/v3 => sigs.k8s.io/structured-merge-diff/v3 v3.0.0
 )
