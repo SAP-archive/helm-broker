@@ -30,7 +30,7 @@ func TestBrokerControllerReconcile_CreateSB(t *testing.T) {
 	svc, cli := prepareBrokerController(t, fixReadyAddonsConfiguration())
 
 	// when
-	res, err := svc.Reconcile(fixRequest())
+	res, err := svc.Reconcile(context.TODO(), fixRequest())
 
 	// then
 	require.NoError(t, err)
@@ -44,7 +44,7 @@ func TestBrokerControllerReconcile_DeleteSB(t *testing.T) {
 	svc, cli := prepareBrokerController(t, fixServiceBroker())
 
 	// when
-	res, err := svc.Reconcile(fixRequest())
+	res, err := svc.Reconcile(context.TODO(), fixRequest())
 
 	// then
 	require.NoError(t, err)
@@ -58,7 +58,7 @@ func TestBrokerControllerReconcile_BlockDeletionByExistingInstances(t *testing.T
 	svc, cli := prepareBrokerController(t, fixServiceBroker(), fixServiceInstance(), fixServiceClass())
 
 	// when
-	res, err := svc.Reconcile(fixRequest())
+	res, err := svc.Reconcile(context.TODO(), fixRequest())
 
 	// then
 	require.NoError(t, err)

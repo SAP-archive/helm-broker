@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-logr/logr"
+
 	"github.com/kyma-project/helm-broker/internal"
 	"github.com/kyma-project/helm-broker/internal/controller/automock"
 	"github.com/kyma-project/helm-broker/internal/controller/repository"
@@ -72,7 +74,7 @@ func TestReconcileAddonsConfiguration_AddAddonsProcess(t *testing.T) {
 				ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, ts.templateService, tmpDir, time.Second, spy.NewLogDummy())
 
 			// THEN
-			result, err := reconciler.Reconcile(reconcile.Request{NamespacedName: types.NamespacedName{Namespace: fixAddonsCfg.Namespace, Name: fixAddonsCfg.Name}})
+			result, err := reconciler.Reconcile(context.TODO(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: fixAddonsCfg.Namespace, Name: fixAddonsCfg.Name}})
 			assert.NoError(t, err)
 			assert.False(t, result.Requeue)
 
@@ -112,7 +114,7 @@ func TestReconcileAddonsConfiguration_AddAddonsProcess_ErrorIfBrokerExist(t *tes
 		ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, ts.templateService, tmpDir, time.Second, spy.NewLogDummy())
 
 	// THEN
-	result, err := reconciler.Reconcile(reconcile.Request{NamespacedName: types.NamespacedName{Namespace: fixAddonsCfg.Namespace, Name: fixAddonsCfg.Name}})
+	result, err := reconciler.Reconcile(context.TODO(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: fixAddonsCfg.Namespace, Name: fixAddonsCfg.Name}})
 	assert.Error(t, err)
 	assert.False(t, result.Requeue)
 
@@ -151,7 +153,7 @@ func TestReconcileAddonsConfiguration_UpdateAddonsProcess(t *testing.T) {
 		ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, ts.templateService, tmpDir, time.Second, spy.NewLogDummy())
 
 	// THEN
-	result, err := reconciler.Reconcile(reconcile.Request{NamespacedName: types.NamespacedName{Namespace: fixAddonsCfg.Namespace, Name: fixAddonsCfg.Name}})
+	result, err := reconciler.Reconcile(context.TODO(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: fixAddonsCfg.Namespace, Name: fixAddonsCfg.Name}})
 	assert.NoError(t, err)
 	assert.False(t, result.Requeue)
 }
@@ -183,7 +185,7 @@ func TestReconcileAddonsConfiguration_UpdateAddonsProcess_ConflictingAddons(t *t
 		ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, ts.templateService, tmpDir, time.Second, spy.NewLogDummy())
 
 	// THEN
-	result, err := reconciler.Reconcile(reconcile.Request{NamespacedName: types.NamespacedName{Namespace: fixAddonsCfg.Namespace, Name: fixAddonsCfg.Name}})
+	result, err := reconciler.Reconcile(context.TODO(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: fixAddonsCfg.Namespace, Name: fixAddonsCfg.Name}})
 	assert.NoError(t, err)
 	assert.False(t, result.Requeue)
 
@@ -207,7 +209,7 @@ func TestReconcileAddonsConfiguration_DeleteAddonsProcess(t *testing.T) {
 		ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, ts.templateService, tmpDir, time.Second, spy.NewLogDummy())
 
 	// THEN
-	result, err := reconciler.Reconcile(reconcile.Request{NamespacedName: types.NamespacedName{Namespace: fixAddonsCfg.Namespace, Name: fixAddonsCfg.Name}})
+	result, err := reconciler.Reconcile(context.TODO(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: fixAddonsCfg.Namespace, Name: fixAddonsCfg.Name}})
 	assert.NoError(t, err)
 	assert.False(t, result.Requeue)
 
@@ -231,7 +233,7 @@ func TestReconcileAddonsConfiguration_DeleteAddonsProcess_ReconcileOtherAddons(t
 		ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, ts.templateService, tmpDir, time.Second, spy.NewLogDummy())
 
 	// THEN
-	result, err := reconciler.Reconcile(reconcile.Request{NamespacedName: types.NamespacedName{Namespace: fixAddonsCfg.Namespace, Name: fixAddonsCfg.Name}})
+	result, err := reconciler.Reconcile(context.TODO(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: fixAddonsCfg.Namespace, Name: fixAddonsCfg.Name}})
 	assert.NoError(t, err)
 	assert.False(t, result.Requeue)
 
@@ -525,6 +527,7 @@ type fakeManager struct {
 	t      *testing.T
 	client client.Client
 	sch    *runtime.Scheme
+	l      logr.Logger
 }
 
 func (f fakeManager) Elected() <-chan struct{} {
@@ -563,7 +566,7 @@ func (fakeManager) SetFields(interface{}) error {
 	return nil
 }
 
-func (fakeManager) Start(<-chan struct{}) error {
+func (fakeManager) Start(ctx context.Context) error {
 	return nil
 }
 
@@ -590,4 +593,8 @@ func (fakeManager) GetCache() cache.Cache {
 
 func (fakeManager) GetRESTMapper() meta.RESTMapper {
 	return nil
+}
+
+func (f *fakeManager) GetLogger() logr.Logger {
+	return f.l
 }

@@ -55,8 +55,8 @@ func (sbc *ClusterBrokerController) Start(mgr manager.Manager) error {
 
 	err = c.Watch(&source.Kind{Type: &v1beta1.ClusterServiceBroker{}}, eventHandler, predicate.Funcs{
 		// filter out all other ClusterServiceBroker, only "helm-broker" is interesting for us
-		CreateFunc: func(e event.CreateEvent) bool { return e.Meta.GetName() == sbc.clusterBrokerName },
-		DeleteFunc: func(e event.DeleteEvent) bool { return e.Meta.GetName() == sbc.clusterBrokerName },
+		CreateFunc: func(e event.CreateEvent) bool { return e.Object.GetName() == sbc.clusterBrokerName },
+		DeleteFunc: func(e event.DeleteEvent) bool { return e.Object.GetName() == sbc.clusterBrokerName },
 		UpdateFunc: func(_ event.UpdateEvent) bool { return false },
 	})
 	if err != nil {
@@ -67,7 +67,7 @@ func (sbc *ClusterBrokerController) Start(mgr manager.Manager) error {
 }
 
 // Reconcile checks if the cluster service broker must be removed
-func (sbc *ClusterBrokerController) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+func (sbc *ClusterBrokerController) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	csbExists, err := sbc.clusterBrokerFacade.Exist()
 	if err != nil {
 		return reconcile.Result{}, err

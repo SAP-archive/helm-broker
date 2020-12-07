@@ -28,7 +28,7 @@ func TestClusterBrokerControllerReconcile_CreateCSB(t *testing.T) {
 	svc, cli := prepareClusterBrokerController(t, fixReadyClusterAddonsConfiguration())
 
 	// when
-	res, err := svc.Reconcile(fixRequest())
+	res, err := svc.Reconcile(context.TODO(), fixRequest())
 
 	// then
 	require.NoError(t, err)
@@ -42,7 +42,7 @@ func TestClusterBrokerControllerReconcile_DeleteSB(t *testing.T) {
 	svc, cli := prepareClusterBrokerController(t, fixClusterServiceBroker())
 
 	// when
-	res, err := svc.Reconcile(fixRequest())
+	res, err := svc.Reconcile(context.TODO(), fixRequest())
 
 	// then
 	require.NoError(t, err)
@@ -56,7 +56,7 @@ func TestClusterBrokerControllerReconcile_BlockDeletionByExistingInstances(t *te
 	svc, cli := prepareClusterBrokerController(t, fixClusterServiceBroker(), fixServiceInstanceForClusterServiceClass(), fixClusterServiceClass())
 
 	// when
-	res, err := svc.Reconcile(fixRequest())
+	res, err := svc.Reconcile(context.TODO(), fixRequest())
 
 	// then
 	require.NoError(t, err)

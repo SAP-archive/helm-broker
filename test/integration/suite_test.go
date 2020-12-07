@@ -21,7 +21,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	k8s "k8s.io/client-go/kubernetes"
@@ -213,7 +212,7 @@ func (ts *testSuite) StartControllers(docsEnabled bool) {
 	}, ":8001", ts.storageFactory, uploadClient, ts.logger.WithField("svc", "broker"))
 
 	go func() {
-		if err := mgr.Start(ts.stopCh); err != nil {
+		if err := mgr.Start(context.TODO()); err != nil {
 			ts.t.Errorf("Controller Manager could not start: %v", err.Error())
 		}
 	}()
@@ -509,7 +508,7 @@ func (ts *testSuite) waitForAddonsConfigurationPhase(namespace, name string, exp
 	ts.waitForPhase(&ac, &(ac.Status.CommonAddonsConfigurationStatus), types.NamespacedName{Name: name, Namespace: namespace}, expectedPhase)
 }
 
-func (ts *testSuite) waitForPhase(obj runtime.Object, status *v1alpha1.CommonAddonsConfigurationStatus, nn types.NamespacedName, expectedPhase v1alpha1.AddonsConfigurationPhase) {
+func (ts *testSuite) waitForPhase(obj client.Object, status *v1alpha1.CommonAddonsConfigurationStatus, nn types.NamespacedName, expectedPhase v1alpha1.AddonsConfigurationPhase) {
 	timeoutCh := time.After(5 * time.Second)
 	for {
 		err := ts.dynamicClient.Get(context.TODO(), nn, obj)
