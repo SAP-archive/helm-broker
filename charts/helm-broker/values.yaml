@@ -1,7 +1,7 @@
 tests:
   image: helm-broker-tests
   dir: /pr/
-  tag: PR-128
+  tag: PR-136
   securityContext:
     runAsUser: 2000
 
