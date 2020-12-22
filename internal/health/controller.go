@@ -6,12 +6,13 @@ import (
 	"net/http"
 	"time"
 
+	"k8s.io/apimachinery/pkg/types"
+
 	"github.com/gorilla/mux"
 	"github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
 	"github.com/sirupsen/logrus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -69,12 +70,11 @@ func (c *ControllerHealth) runFullControllersCycle(client client.Client, lg *log
 }
 
 func (c *ControllerHealth) runAddonsConfigurationControllerCycle(client client.Client, lg *logrus.Entry) error {
-	addonsConfiguration := &v1alpha1.AddonsConfiguration{
+	addonsConfiguration := &v1alpha1.ClusterAddonsConfiguration{
 		ObjectMeta: v1.ObjectMeta{
-			Name:      probeName,
-			Namespace: c.livenessProbeNamespace,
+			Name: probeName,
 		},
-		Spec: v1alpha1.AddonsConfigurationSpec{
+		Spec: v1alpha1.ClusterAddonsConfigurationSpec{
 			CommonAddonsConfigurationSpec: v1alpha1.CommonAddonsConfigurationSpec{
 				Repositories: []v1alpha1.SpecRepository{{URL: ""}},
 			},
@@ -91,7 +91,7 @@ func (c *ControllerHealth) runAddonsConfigurationControllerCycle(client client.C
 
 	lg.Info("[liveness-probe] Waiting for liveness probe addonsConfiguration desirable status")
 	err = wait.Poll(1*time.Second, 10*time.Second, func() (done bool, err error) {
-		key := types.NamespacedName{Name: probeName, Namespace: c.livenessProbeNamespace}
+		key := types.NamespacedName{Name: probeName, Namespace: ""}
 		err = client.Get(ctx, key, addonsConfiguration)
 		if apierrors.IsNotFound(err) {
 			lg.Info("[liveness-probe] Liveness probe addonsConfiguration not found")
