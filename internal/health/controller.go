@@ -70,7 +70,7 @@ func (c *ControllerHealth) runFullControllersCycle(client client.Client, lg *log
 }
 
 func (c *ControllerHealth) runAddonsConfigurationControllerCycle(client client.Client, lg *logrus.Entry) error {
-	addonsConfiguration := &v1alpha1.ClusterAddonsConfiguration{
+	clusterAddonsConfiguration := &v1alpha1.ClusterAddonsConfiguration{
 		ObjectMeta: v1.ObjectMeta{
 			Name: probeName,
 		},
@@ -82,55 +82,55 @@ func (c *ControllerHealth) runAddonsConfigurationControllerCycle(client client.C
 	}
 
 	ctx := context.Background()
-	lg.Infof("[liveness-probe] Creating liveness probe addonsConfiguration in %q namespace", c.livenessProbeNamespace)
-	err := client.Create(ctx, addonsConfiguration)
+	lg.Info("[liveness-probe] Creating liveness probe clusterAddonsConfiguration")
+	err := client.Create(ctx, clusterAddonsConfiguration)
 	if err != nil && !apierrors.IsAlreadyExists(err) {
-		lg.Errorf("[liveness-probe] Cannot create liveness probe addonsConfiguration: %s", err)
+		lg.Errorf("[liveness-probe] Cannot create liveness probe clusterAddonsConfiguration: %s", err)
 		return err
 	}
 
-	lg.Info("[liveness-probe] Waiting for liveness probe addonsConfiguration desirable status")
+	lg.Info("[liveness-probe] Waiting for liveness probe clusterAddonsConfiguration desirable status")
 	err = wait.Poll(1*time.Second, 10*time.Second, func() (done bool, err error) {
 		key := types.NamespacedName{Name: probeName, Namespace: ""}
-		err = client.Get(ctx, key, addonsConfiguration)
+		err = client.Get(ctx, key, clusterAddonsConfiguration)
 		if apierrors.IsNotFound(err) {
-			lg.Info("[liveness-probe] Liveness probe addonsConfiguration not found")
+			lg.Info("[liveness-probe] Liveness probe clusterAddonsConfiguration not found")
 			return false, nil
 		}
 		if err != nil {
-			lg.Errorf("[liveness-probe] Cannot get probe addonsConfiguration: %s", err)
+			lg.Errorf("[liveness-probe] Cannot get probe clusterAddonsConfiguration: %s", err)
 			return false, nil
 		}
 
-		if len(addonsConfiguration.Status.Repositories) != 1 {
-			lg.Infof("[liveness-probe] Liveness probe addonsConfiguration repositories status not set, number of repositories: %d", len(addonsConfiguration.Status.Repositories))
+		if len(clusterAddonsConfiguration.Status.Repositories) != 1 {
+			lg.Infof("[liveness-probe] Liveness probe clusterAddonsConfiguration repositories status not set, number of repositories: %d", len(clusterAddonsConfiguration.Status.Repositories))
 			return false, nil
 		}
 
-		status := addonsConfiguration.Status.Repositories[0].Status
-		reason := addonsConfiguration.Status.Repositories[0].Reason
+		status := clusterAddonsConfiguration.Status.Repositories[0].Status
+		reason := clusterAddonsConfiguration.Status.Repositories[0].Reason
 		if status == v1alpha1.RepositoryStatusFailed {
 			if reason == v1alpha1.RepositoryEmptyURLError {
-				lg.Info("[liveness-probe] Liveness probe addonsConfiguration has achieved the desired status")
+				lg.Info("[liveness-probe] Liveness probe clusterAddonsConfiguration has achieved the desired status")
 				return true, nil
 			}
 		}
 
-		lg.Infof("[liveness-probe] Liveness probe addonsConfiguration current status: %s: %s", status, reason)
+		lg.Infof("[liveness-probe] Liveness probe clusterAddonsConfiguration current status: %s: %s", status, reason)
 		return false, nil
 	})
 	if err != nil {
-		lg.Errorf("[liveness-probe] Waiting for liveness probe addonsConfiguration failed: %s", err)
+		lg.Errorf("[liveness-probe] Waiting for liveness probe clusterAddonsConfiguration failed: %s", err)
 		return err
 	}
 
-	lg.Info("[liveness-probe] Removing liveness probe addonsConfiguration")
-	err = client.Delete(ctx, addonsConfiguration)
+	lg.Info("[liveness-probe] Removing liveness probe clusterAddonsConfiguration")
+	err = client.Delete(ctx, clusterAddonsConfiguration)
 	if err != nil {
-		lg.Errorf("[liveness-probe] Cannot delete liveness probe addonsConfiguration: %s", err)
+		lg.Errorf("[liveness-probe] Cannot delete liveness probe clusterAddonsConfiguration: %s", err)
 		return err
 	}
 
-	lg.Info("[liveness-probe] AddonsConfiguration controller is live")
+	lg.Info("[liveness-probe] ClusterAddonsConfiguration controller is live")
 	return nil
 }

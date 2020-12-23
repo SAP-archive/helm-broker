@@ -56,6 +56,6 @@ global:
     version: PR-136
   helm_controller:
     dir: /pr/
-    version: PR-136
+    version: PR-139
   # etcd port uses by helm broker
   etcdClientPort: 2379
