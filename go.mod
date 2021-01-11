@@ -19,7 +19,7 @@ require (
 	github.com/hashicorp/go-getter v1.4.1
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/imdario/mergo v0.3.9
-	github.com/kubernetes-sigs/go-open-service-broker-client v0.0.0-20190909175253-906fa5f9c249
+	github.com/kubernetes-sigs/go-open-service-broker-client v0.0.0-20200527163240-4406bd2cb6b8
 	github.com/kubernetes-sigs/service-catalog v0.3.0
 	github.com/kyma-project/kyma v0.5.1-0.20200317154738-0bb20217c2cb
 	github.com/kyma-project/rafter v0.0.0-20200413150919-1a89277ac3d8

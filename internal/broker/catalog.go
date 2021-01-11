@@ -104,10 +104,8 @@ func (f *addonToServiceConverter) mapToParametersSchemas(planSchemas map[interna
 	}
 	if schema, exists := planSchemas[internal.SchemaTypeBind]; exists {
 		out.ServiceBinding = &osb.ServiceBindingSchema{
-			Create: &osb.RequestResponseSchema{
-				InputParametersSchema: osb.InputParametersSchema{
-					Parameters: schema,
-				},
+			Create: &osb.InputParametersSchema{
+				Parameters: schema,
 			},
 		}
 	}

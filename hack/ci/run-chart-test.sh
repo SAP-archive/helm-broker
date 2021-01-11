@@ -80,7 +80,7 @@ setup_kubectl_in_ct_container() {
 install::service_catalog() {
   shout "- Provisioning Service Catalog chart in ${SC_RELEASE_NAMESPACE} namespace..."
 
-  docker_ct_exec helm repo add svc-cat https://svc-catalog-charts.storage.googleapis.com
+  docker_ct_exec helm repo add svc-cat https://kubernetes-sigs.github.io/service-catalog
   docker_ct_exec kubectl create ns "${SC_RELEASE_NAMESPACE}"
   docker_ct_exec helm install "${SC_RELEASE_NAME}" svc-cat/catalog  --namespace "${SC_RELEASE_NAMESPACE}" --wait
 }
