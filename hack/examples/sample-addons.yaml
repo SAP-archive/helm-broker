@@ -4,4 +4,4 @@ metadata:
   name: addons-cfg-sample
 spec:
   repositories:
-    - url: "https://github.com/kyma-project/addons/releases/download/latest/index-testing.yaml"
+    - url: "https://github.com/kyma-project/addons/releases/download/0.14.0/index-testing.yaml"
