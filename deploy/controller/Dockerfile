@@ -1,8 +1,6 @@
-FROM alpine:3.12.3
+FROM alpine:3.13
 
-RUN apk --no-cache add ca-certificates
-RUN apk add --no-cache git=2.26.2-r0 openssh=8.3_p1-r1 mercurial=5.4-r0
-RUN apk --no-cache add --update curl --repository=http://dl-cdn.alpinelinux.org/alpine/edge/main
+RUN apk add --no-cache ca-certificates curl git openssh mercurial
 
 COPY ./start.sh /root/start.sh
 COPY ./controller /root/controller
