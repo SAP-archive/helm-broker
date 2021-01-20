@@ -23,7 +23,7 @@ kind create cluster
 
 3. Install Service Catalog as a Helm chart:
 ```bash
-helm repo add svc-cat https://svc-catalog-charts.storage.googleapis.com
+helm repo add svc-cat https://kubernetes-sigs.github.io/service-catalog
 helm install catalog svc-cat/catalog --namespace catalog --set asyncBindingOperationsEnabled=true
 ```
 

@@ -57,7 +57,7 @@ install::helm_broker() {
 install::service_catalog() {
   shout "- Provisioning Service Catalog chart in ${SC_RELEASE_NAMESPACE} namespace..."
 
-  ${HELM_BINARY} repo add svc-cat https://svc-catalog-charts.storage.googleapis.com
+  ${HELM_BINARY} repo add svc-cat https://kubernetes-sigs.github.io/service-catalog
   ${HELM_BINARY} install "${SC_RELEASE_NAME}" svc-cat/catalog --namespace "${SC_RELEASE_NAMESPACE}" --wait --create-namespace
 }
 
