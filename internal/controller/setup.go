@@ -33,7 +33,7 @@ func SetupAndStartController(cfg *rest.Config, ctrCfg *config.ControllerConfig, 
 		}
 		mgr = newMgr
 		return true, nil
-	}, time.Minute), "while setting up a manager")
+	}, time.Minute*3), "while setting up a manager")
 
 	lg.Info("Registering Components.")
 
@@ -116,7 +116,7 @@ func fatalOnError(err error, msg string) {
 
 func waitAtMost(fn func() (bool, error), duration time.Duration) error {
 	timeout := time.After(duration)
-	tick := time.Tick(500 * time.Millisecond)
+	tick := time.Tick(time.Second * 5)
 
 	for {
 		ok, err := fn()
