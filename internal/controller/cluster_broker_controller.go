@@ -77,18 +77,22 @@ func (sbc *ClusterBrokerController) Reconcile(request reconcile.Request) (reconc
 	if err != nil {
 		return reconcile.Result{}, err
 	}
-	anyClusterAddonsConfigExists := len(cacList.Items) > 0
-	instanceExists, err := sbc.instanceChecker.AnyServiceInstanceExistsForClusterServiceBroker()
+
+	configurationsExist := len(cacList.Items) > 0
+	instancesExist, err := sbc.instanceChecker.AnyServiceInstanceExistsForClusterServiceBroker()
 	if err != nil {
 		return reconcile.Result{}, err
 	}
 
-	if csbExists && (!anyClusterAddonsConfigExists && !instanceExists) {
-		sbc.clusterBrokerFacade.Delete()
+	if csbExists && (!configurationsExist && !instancesExist) {
+		if err = sbc.clusterBrokerFacade.Delete(); err != nil {
+			return reconcile.Result{}, err
+		}
 	}
-	if !csbExists && (anyClusterAddonsConfigExists || instanceExists) {
-		sbc.clusterBrokerFacade.Create()
+	if !csbExists && (configurationsExist || instancesExist) {
+		if err = sbc.clusterBrokerFacade.Create(); err != nil {
+			return reconcile.Result{}, err
+		}
 	}
-
 	return reconcile.Result{}, nil
 }
