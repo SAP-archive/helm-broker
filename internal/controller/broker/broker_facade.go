@@ -2,10 +2,12 @@ package broker
 
 import (
 	"fmt"
+	"time"
+
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	"context"
 
-	multierror "github.com/hashicorp/go-multierror"
 	"github.com/kubernetes-sigs/service-catalog/pkg/apis/servicecatalog/v1beta1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -49,23 +51,23 @@ func (f *Facade) SetNamespace(namespace string) {
 	f.namespace = namespace
 }
 
-// Create creates ServiceBroker. Errors don't stop execution of method. AlreadyExist errors are ignored.
+// Create creates ServiceBroker
 func (f *Facade) Create() error {
 	f.log.Infof("- creating ServiceBroker %s/%s", NamespacedBrokerName, f.namespace)
-
-	var resultErr *multierror.Error
 	svcURL := fmt.Sprintf("http://%s.%s.svc.cluster.local", f.serviceName, f.systemNamespace)
-	_, err := f.createServiceBroker(svcURL)
-	if err != nil {
-		resultErr = multierror.Append(resultErr, err)
-		f.log.Warnf("Creation of namespaced-broker for namespace [%s] results in error: [%s]. AlreadyExist errors will be ignored.", f.namespace, err)
-	}
-	resultErr = filterOutMultiError(resultErr, ignoreAlreadyExist)
 
-	if resultErr == nil {
-		return nil
+	err := wait.PollImmediate(time.Second, time.Second*30, func() (bool, error) {
+		_, err := f.createServiceBroker(svcURL)
+		if err != nil && !k8serrors.IsAlreadyExists(err) {
+			f.log.Errorf("creation of ServiceBroker %s results in error: [%s]", NamespacedBrokerName, err)
+			return false, nil
+		}
+		return true, nil
+	})
+	if err != nil {
+		return errors.Wrap(err, "while waiting for service broker creation")
 	}
-	return resultErr
+	return nil
 }
 
 // createServiceBroker returns just created or existing ServiceBroker
@@ -129,22 +131,4 @@ func (f *Facade) Exist() (bool, error) {
 	}
 
 	return true, nil
-}
-
-func filterOutMultiError(merr *multierror.Error, predicate func(err error) bool) *multierror.Error {
-	if merr == nil {
-		return nil
-	}
-	var out *multierror.Error
-	for _, wrapped := range merr.Errors {
-		if predicate(wrapped) {
-			out = multierror.Append(out, wrapped)
-		}
-	}
-	return out
-
-}
-
-func ignoreAlreadyExist(err error) bool {
-	return !k8serrors.IsAlreadyExists(err)
 }

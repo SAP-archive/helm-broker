@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/kyma-project/helm-broker/internal/storage/driver/etcd"
 	"github.com/kyma-project/helm-broker/internal/storage/driver/memory"
 
@@ -98,22 +100,27 @@ func (cl *ConfigList) ExtractEtcdURL() string {
 }
 
 // WaitForEtcdReadiness waits for ETCD to be ready
-func (cl *ConfigList) WaitForEtcdReadiness() error {
-	var lastErr error
-	var lastStatus int
-	if err := wait.Poll(time.Second, time.Second*30, func() (bool, error) {
-		resp, err := http.Get(cl.ExtractEtcdURL() + "/health")
-		if err != nil {
-			lastErr = err
+func (cl *ConfigList) WaitForEtcdReadiness(log logrus.FieldLogger) error {
+	var (
+		resp       *http.Response
+		lastErr    error
+		lastStatus int
+	)
+
+	if err := wait.Poll(time.Second*5, time.Minute*3, func() (bool, error) {
+		resp, lastErr = http.Get(cl.ExtractEtcdURL() + "/health")
+		if lastErr != nil {
+			log.Errorf("while getting etcd server status: %v", lastErr)
 			return false, nil
 		}
 		if resp.StatusCode == http.StatusOK {
 			return true, nil
 		}
 		lastStatus = resp.StatusCode
+		log.Warnf("expected status code %d, got %d", http.StatusOK, lastStatus)
 		return false, nil
 	}); err != nil {
-		return errors.Wrapf(err, "while waiting for etcd: %v: status code %d", lastErr, lastStatus)
+		return errors.Errorf("while waiting for etcd: %v: status code %d", lastErr, lastStatus)
 	}
 	return nil
 }

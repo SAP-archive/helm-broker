@@ -43,10 +43,10 @@ func main() {
 	uploadClient := rafter.NewClient(ctrCfg.UploadServiceURL, lg)
 	mgr := controller.SetupAndStartController(cfg, ctrCfg, metricsAddr, sFact, uploadClient, lg)
 
+	fatalOnError(storageConfig.WaitForEtcdReadiness(lg), "while waiting for etcd to be ready")
+
 	// TODO: switch to native implementation after merge: https://github.com/kubernetes-sigs/controller-runtime/pull/419
 	go health.NewControllerProbes(fmt.Sprintf(":%d", ctrCfg.StatusPort), storageConfig.ExtractEtcdURL(), mgr.GetClient(), ctrCfg.Namespace).Handle()
-
-	fatalOnError(storageConfig.WaitForEtcdReadiness(), "while waiting for etcd to be ready")
 
 	cli, err := client.New(cfg, client.Options{
 		Scheme: scheme.Scheme,
