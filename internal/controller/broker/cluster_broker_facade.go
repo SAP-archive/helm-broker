@@ -2,10 +2,12 @@ package broker
 
 import (
 	"fmt"
+	"time"
+
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	"context"
 
-	multierror "github.com/hashicorp/go-multierror"
 	"github.com/kubernetes-sigs/service-catalog/pkg/apis/servicecatalog/v1beta1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -41,24 +43,23 @@ func NewClusterBrokersFacade(client client.Client, workingNamespace, serviceName
 	}
 }
 
-// Create creates ClusterServiceBroker. Errors don't stop execution of method. AlreadyExist errors are ignored.
+// Create creates ClusterServiceBroker
 func (f *ClusterFacade) Create() error {
 	f.log.Infof("- creating ClusterServiceBroker %s", f.clusterBrokerName)
-
-	var resultErr *multierror.Error
 	svcURL := fmt.Sprintf("http://%s.%s.svc.cluster.local", f.serviceName, f.workingNamespace)
-	_, err := f.createClusterServiceBroker(svcURL)
+
+	err := wait.PollImmediate(time.Second, time.Second*30, func() (bool, error) {
+		_, err := f.createClusterServiceBroker(svcURL)
+		if err != nil && !k8serrors.IsAlreadyExists(err) {
+			f.log.Errorf("creation of ClusterServiceBroker %s results in error: [%s]", f.clusterBrokerName, err)
+			return false, nil
+		}
+		return true, nil
+	})
 	if err != nil {
-		resultErr = multierror.Append(resultErr, err)
-		f.log.Warnf("Creation of ClusterServiceBroker %s results in error: [%s]. AlreadyExist errors will be ignored.", f.clusterBrokerName, err)
+		return errors.Wrap(err, "while waiting for cluster service broker creation")
 	}
-
-	resultErr = filterOutMultiError(resultErr, ignoreAlreadyExist)
-
-	if resultErr == nil {
-		return nil
-	}
-	return resultErr
+	return nil
 }
 
 // Delete removes ClusterServiceBroker. Errors don't stop execution of method. NotFound errors are ignored.

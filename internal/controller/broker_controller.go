@@ -82,34 +82,33 @@ func (sbc *BrokerController) Start(mgr manager.Manager) error {
 // Reconcile checks if the (cluster) service broker must be removed
 func (sbc *BrokerController) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	currentNamespace := request.Namespace
-
 	sbc.namespacedBrokerFacade.SetNamespace(request.Namespace)
+
 	sbExists, err := sbc.namespacedBrokerFacade.Exist()
 	if err != nil {
 		return reconcile.Result{}, err
 	}
-	// list addons configurations
 	acList := v1alpha1.AddonsConfigurationList{}
 	err = sbc.cli.List(context.TODO(), &acList, client.InNamespace(currentNamespace))
 	if err != nil {
 		return reconcile.Result{}, err
 	}
-	anyNamespacedConfigExists := len(acList.Items) > 0
 
-	instanceByNamespacedExists, err := sbc.instanceChecker.AnyServiceInstanceExistsForNamespacedServiceBroker(currentNamespace)
+	configurationsExist := len(acList.Items) > 0
+	instancesExist, err := sbc.instanceChecker.AnyServiceInstanceExistsForNamespacedServiceBroker(currentNamespace)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
-	if sbExists && !anyNamespacedConfigExists && !instanceByNamespacedExists {
+
+	if sbExists && !configurationsExist && !instancesExist {
 		if err := sbc.namespacedBrokerFacade.Delete(); err != nil {
 			return reconcile.Result{}, err
 		}
 	}
-	if !sbExists && (anyNamespacedConfigExists || instanceByNamespacedExists) {
+	if !sbExists && (configurationsExist || instancesExist) {
 		if err := sbc.namespacedBrokerFacade.Create(); err != nil {
 			return reconcile.Result{}, err
 		}
 	}
-
 	return reconcile.Result{}, nil
 }
