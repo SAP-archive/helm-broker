@@ -10,6 +10,7 @@ RUN mkdir -p tmp
 
 FROM scratch
 
+WORKDIR /app
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY ./hb_chart_test /usr/local/bin/hb_chart_test
 

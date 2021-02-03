@@ -2,9 +2,10 @@ FROM alpine:3.13
 
 RUN apk add --no-cache ca-certificates curl git openssh mercurial
 
-COPY ./start.sh /root/start.sh
-COPY ./controller /root/controller
+WORKDIR /app
+COPY ./start.sh /app/start.sh
+COPY ./controller /app/controller
 
 LABEL source=git@github.com:kyma-project/helm-broker.git
 
-CMD ["/root/start.sh"]
+CMD ["/app/start.sh"]
