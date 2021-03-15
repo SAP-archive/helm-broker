@@ -270,7 +270,7 @@ func (c *common) OnDelete(addon *internal.CommonAddon) error {
 func (c *common) loadRepositories(repos []v1alpha1.SpecRepository) *repository.Collection {
 	repositories := repository.NewRepositoryCollection()
 	for _, specRepository := range repos {
-		c.log.Infof("- create addons for %q repository", specRepository.URL)
+		c.log.Info("creating addons for repository")
 
 		repo := repository.NewAddonsRepository(specRepository.URL)
 		if specRepository.URL == "" {
@@ -284,7 +284,7 @@ func (c *common) loadRepositories(repos []v1alpha1.SpecRepository) *repository.C
 		if err != nil {
 			repo.TemplatingError(err)
 			repositories.AddRepository(repo)
-			c.log.Errorf("while templating repository URL `%s`: %v", specRepository.URL, err)
+			c.log.Errorf("while templating repository URL: %v", err)
 			continue
 		}
 
@@ -292,7 +292,7 @@ func (c *common) loadRepositories(repos []v1alpha1.SpecRepository) *repository.C
 		if err != nil {
 			repo.FetchingError(err)
 			repositories.AddRepository(repo)
-			c.log.Errorf("while creating addons for repository from %s: %v", specRepository.URL, err)
+			c.log.Errorf("while creating addons for repository: %v", err)
 			continue
 		}
 
