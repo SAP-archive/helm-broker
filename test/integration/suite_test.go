@@ -277,6 +277,7 @@ func (ts *testSuite) repairRepoServer() {
 
 func (ts *testSuite) waitForNumberOfReleases(n int, ns string) {
 	timeoutCh := time.After(150 * time.Second)
+
 	for {
 		releases, err := ts.helmClient.ListReleases(internal.Namespace(ns))
 		if err != nil {
