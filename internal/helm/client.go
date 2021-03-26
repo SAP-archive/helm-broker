@@ -52,7 +52,6 @@ func (c *Client) Install(chrt *chart.Chart, values internal.ChartValues, release
 
 	release, err := installAction.Run(chrt, values)
 	if err != nil {
-		c.log.Errorf("while running installAction: %+v", err)
 		return nil, errors.Wrapf(err, "while installing release from chart with name [%s] in namespace [%s]", releaseName, namespace)
 	}
 
@@ -89,7 +88,7 @@ func (c *Client) ListReleases(namespace internal.Namespace) ([]*release.Release,
 func (c *Client) getConfig(namespace string) (*action.Configuration, error) {
 	actionConfig := new(action.Configuration)
 	// You can pass an empty string to all namespaces
-	err := actionConfig.Init(c.newConfigFlags(namespace), namespace, c.helmDriver, c.log.Infof)
+	err := actionConfig.Init(c.newConfigFlags(namespace), namespace, c.helmDriver, c.log.Debugf)
 	if err != nil {
 		return nil, err
 	}
