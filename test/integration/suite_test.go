@@ -349,6 +349,25 @@ func (ts *testSuite) provisionInstanceFromServiceClass(prefix, namespace string)
 		},
 	})
 	require.NoError(ts.t, err)
+
+	var serviceInstanceList v1beta1.ServiceInstanceList
+
+	err = wait.Poll(1*time.Second, 30*time.Second, func() (done bool, err error) {
+		err = ts.dynamicClient.List(context.TODO(), &serviceInstanceList)
+		if err != nil {
+			return false, err
+		}
+		if len(serviceInstanceList.Items) == 0 {
+			ts.t.Logf("serviceInstanceList is empty, current size %d. Retry...", len(serviceInstanceList.Items))
+			return false, nil
+		}
+
+		return true, nil
+	})
+
+	require.NoError(ts.t, err)
+	ts.t.Logf("serviceInstanceList is not empty, current size %d. Retry...", len(serviceInstanceList.Items))
+
 }
 
 func (ts *testSuite) provisionInstanceFromClusterServiceClass(prefix, namespace string) {
