@@ -8,13 +8,13 @@ Read this document to learn how to develop the project.
 * [Dep](https://github.com/golang/dep) 0.5
 * [Docker](https://www.docker.com/)
 
->**NOTE:** The versions of Go and Dep are compliant with the `buildpack` used by Prow. For more details, read [this](https://github.com/kyma-project/test-infra/blob/master/prow/images/buildpack-golang/README.md) document.
+>**NOTE:** The versions of Go and Dep are compliant with the `buildpack` used by Prow. For more details, read [this](https://github.com/kyma-project/test-infra/blob/main/prow/images/buildpack-golang/README.md) document.
 
 ## Run tests
 
 Before each commit, use the `before-commit.sh` script. The script runs unit tests that check your changes and build binaries. If you want to run the Helm Broker locally, read [this](/docs/installation.md) document.
 
-You can also run integration tests that check if all parts of the Helm Broker work together. 
+You can also run integration tests that check if all parts of the Helm Broker work together.
 These are the prerequisites for integration tests:
 
 - [Kubebuilder](https://github.com/kubernetes-sigs/kubebuilder) 1.0.8

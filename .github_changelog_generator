@@ -47,7 +47,7 @@ header-label=
 # - github-api [URL]                    The enterprise endpoint to use for your Github API.
 # - simple-list                         Create simple list from issues and pull requests. Default is false.
 # - future-release [RELEASE-VERSION]    Put the unreleased changes in the specified release number.
-# - release-branch [RELEASE-BRANCH]     Limit pull requests to the release branch, such as master or release
+# - release-branch [RELEASE-BRANCH]     Limit pull requests to the release branch, such as main or release
 # - http-cache                          Use HTTP Cache to cache Github API requests (useful for large repos) Default is true.
 # - cache-file [CACHE-FILE]             Filename to use for cache. Default is github-changelog-http-cache in a temporary directory.
 # - cache-log [CACHE-LOG]               Filename to use for cache log. Default is github-changelog-logger.log in a temporary directory.
