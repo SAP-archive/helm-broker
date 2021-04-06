@@ -54,7 +54,7 @@ make build
 make build-image
 ```
 
-3. Configure environent variables pointing to your registry, for example:
+3. Configure environment variables pointing to your registry, for example:
 ```bash
 export DOCKER_PUSH_REPOSITORY=eu.gcr.io/
 export DOCKER_PUSH_DIRECTORY=your-project
