@@ -78,7 +78,7 @@ The `plans` directory must contain at least one plan. Each plan must contain the
 |  **bindable**   |   No  | The field that specifies whether you can bind an instance of the plan or not. The default value is `false`. |
 |     **free**    |   No  | The attribute which specifies whether an instance of the plan is free or not. The default value is `false`.    |
 
-* `bind.yaml` file - contains information about binding in a specific plan. If you define in the `meta.yaml` file that your plan is bindable, you must also create a `bind.yaml` file. For more information, read about [binding addons](https://github.com/kyma-project/helm-broker/blob/master/docs/05-bind-addons.md).
+* `bind.yaml` file - contains information about binding in a specific plan. If you define in the `meta.yaml` file that your plan is bindable, you must also create a `bind.yaml` file. For more information, read about [binding addons](./05-bind-addons.md).
 
 * `values.yaml` file - provides the default configuration values in a given plan for the chart definition located in the `chart` directory. For more information, see the [values files](https://github.com/kubernetes/helm/blob/release-2.6/docs/chart_template_guide/values_files.md) specification.
 
