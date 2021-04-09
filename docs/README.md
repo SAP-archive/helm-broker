@@ -16,4 +16,4 @@ Here are the custom resources that Helm Broker uses:
   - [AddonsConfiguration](./13-cr-addonsconfiguration.md)
   - [ClusterAddonsConfiguration](./14-cr-clusteraddonsconfiguration.md)
 
-For more detailed information, [configuration](./12-configuration.md), and [troubleshooting](./15-troubleshooting.md), read the other docs in this directory. If you want to know more about Helm Broker release process, read [this](./release/hb-release.md) document.
+For more detailed information, [configuration](./12-configuration.md), and [troubleshooting](./15-troubleshooting.md), read other docs in this directory. If you want to know more about the project releases, read about [Helm Broker release process](./release/hb-release.md).
