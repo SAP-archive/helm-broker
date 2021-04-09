@@ -113,4 +113,4 @@ The `meta.yaml` file contains the specification of the ClusterAssetGroup or Asse
 
 >**NOTE:** Currently you can provide only one entry in the `docs` array.
 
-See the [example](https://github.com/kyma-project/addons/tree/master/addons/testing-0.0.1/docs) of the `docs` directory with documentation for the testing addon. Read also how to [provide addons documentation](https://github.com/kyma-project/helm-broker/blob/master/docs/10-addons-docs.md).
+See the [example](https://github.com/kyma-project/addons/tree/master/addons/testing-0.0.1/docs) of the `docs` directory with documentation for the testing addon. Read also how to [provide addons documentation](./10-addons-docs.md).
