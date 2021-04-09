@@ -27,7 +27,7 @@ Helm Broker implements the [Open Service Broker API](https://github.com/openserv
 > **NOTE:** The Helm Broker does not implement the OSB API update operation.
 
 
-## Next steps
+### Next steps
 
 To install Helm Broker and develop the project, read [this](./docs/01-installation.md) document. For more details, tutorials, and troubleshooting, explore the [documentation](./docs) directory.
 
