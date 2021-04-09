@@ -5,13 +5,34 @@
 
 ## Overview
 
-The Helm Broker is a [Service Broker](https://kyma-project.io/docs/master/components/service-catalog/#service-brokers-overview) which exposes Helm charts as Service Classes in the [Service Catalog](https://kyma-project.io/docs/master/components/service-catalog/#overview-overview). To do so, the Helm Broker uses the concept of [addons](https://github.com/kyma-project/addons). An addon is an abstraction layer over a Helm chart which provides all information required to convert the chart into a Service Class. To learn more about the Helm Broker, read the [documentation](https://github.com/kyma-project/helm-broker/blob/master/docs/README.md).
+Helm Broker is a [Service Broker](https://kyma-project.io/docs/master/components/service-catalog/#overview-service-brokers) that exposes Helm charts as Service Classes in [Service Catalog](https://kyma-project.io/docs/master/components/service-catalog/#overview-service-catalog). To do so, Helm Broker uses the concept of addons. An addon is an abstraction layer over a Helm chart which provides all information required to convert the chart into a Service Class.
 
-If you want to use the Helm Broker with all dependencies, try out [Kyma](https://kyma-project.io/).
+Helm Broker fetches default cluster-wide addons defined by the [helm-repos-urls](https://github.com/kyma-project/kyma/blob/main/resources/helm-broker/templates/default-addons-cfg.yaml) custom resource (CR). This CR contains URLs that point to the release of the [`addons`](https://github.com/kyma-project/addons/releases) repository compatible with a given [Kyma release](https://github.com/kyma-project/kyma/releases). You can also configure Helm Broker to fetch addons definitions from other addons repositories.
 
-### Project structure
+You can install Helm Broker either as a standalone project, or as part of [Kyma](https://kyma-project.io/). In Kyma, you can use addons to install the following Service Brokers:
 
-The repository has the following structure:
+* Azure Service Broker
+* AWS Service Broker
+* GCP Service Broker
+
+>**NOTE:** Starting from Kyma 2.0, Helm Broker will no longer be supported.
+
+To see all addons that Helm Broker provides, go to the [`addons`](https://github.com/kyma-project/addons) repository.
+
+Helm Broker implements the [Open Service Broker API](https://github.com/openservicebrokerapi/servicebroker/blob/v2.14/profile.md#service-metadata) (OSB API). To be compliant with Service Catalog version used in Kyma, Helm Broker supports only the following OSB API versions:
+- v2.13
+- v2.12
+- v2.11
+
+> **NOTE:** Helm Broker does not implement the OSB API update operation.
+
+### Next steps
+
+To install Helm Broker and develop the project, read the [installation](./docs/01-installation.md) document. For more details, tutorials, and troubleshooting, explore the [documentation](./docs) directory.
+
+## Project structure
+
+The `helm-broker` repository has the following structure:
 
 ```
   ├── .github                   # Pull request and issue templates    
@@ -21,8 +42,8 @@ The repository has the following structure:
   ├── deploy                    # Dockerfiles to build applications image
   │
   ├── docs                      # Documentation related to the project
-  │    ├── proposals                # Proposed architecture decisions
-  │    └── release                  # Release notes template
+  │    ├── assets                  # Diagrams and assets used in the documentation
+  │    └── internal                # Proposals and release-related documentation
   │
   ├── hack                      # Scripts used by the Helm Broker developers
   │    ├── boilerplate              # Header used while generating code
