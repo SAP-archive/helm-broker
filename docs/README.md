@@ -2,11 +2,7 @@
 
 ## Overview
 
-This directory contains Helm Broker documentation.
-
-The Helm Broker fetches addons which contain a set of specific [files](#details-create-addons). You must place your addons in a repository of an appropriate [format](#details-create-addons-repository). The Helm Broker fetches default cluster-wide addons defined by the [helm-repos-urls](https://github.com/kyma-project/kyma/blob/master/resources/helm-broker/templates/default-addons-cfg.yaml) custom resource (CR). This CR contains URLs that point to the release of [`addons`](https://github.com/kyma-project/addons/releases) repository compatible with a given [Kyma release](https://github.com/kyma-project/kyma/releases). You can also configure the Helm Broker to fetch addons definitions from other addons repositories.
-
-If you want to create your addons and store them in your own repository, start with these documents:
+This directory contains Helm Broker documentation. Start with the document describing [Helm Broker installation and development](./01-installation.md). Then, if you want to create your addons and store them in your own repository, read these documents:
   - [Create addons](./04-create-addons.md)
   - [Bind addons](./05-bind-addons.md)
   - [Test addons](./06-test-addons.md)
