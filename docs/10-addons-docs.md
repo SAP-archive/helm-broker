@@ -8,11 +8,11 @@ Using the Helm Broker, you can provide documentation for your addon and display 
 - Providing documentation for your addon
 - Providing documentation for objects that appear after provisioning your addon
 
->**NOTE:** Deliver documentation for your addons in Markdown files with specified metadata. For more information, read about [metadata and content](/components/service-catalog/#console-ui-views-specifications-in-the-console-ui-markdown-documents) of the Markdown files, and see the [supported types of assets](/components/rafter/#overview-overview-rafter-in-kyma).
+>**NOTE:** Deliver documentation for your addons in Markdown files with specified metadata. For more information, read about [metadata and content](https://kyma-project.io/docs/components/service-catalog/#console-ui-views-specifications-in-the-console-ui-markdown-documents) of the Markdown files, and see the [supported types of assets](/components/rafter/#overview-overview-rafter-in-kyma).
 
 ## Provide documentation for your addon
 
-To provide documentation for your addon, create the `docs` folder inside your addon's directory. Your `docs` folder must contain a [`meta.yaml`](#details-create-addons-docs-directory) file with metadata information about how documentation for the addon is uploaded. You can either provide your own documents or point to the external URL with the source documentation:
+To provide documentation for your addon, create the `docs` folder inside your addon's directory. Your `docs` folder must contain a [`meta.yaml`](https://github.com/kyma-project/helm-broker/blob/master/docs/04-create-addons.md#docs-directory) file with metadata information about how documentation for the addon is uploaded. You can either provide your own documents or point to the external URL with the source documentation:
 
 <div tabs name="provide-documentation-for-your-addon" group="provide-documentation-for-your-addon">
   <details>
@@ -35,7 +35,7 @@ In the `meta.yaml` file, provide the **url** parameter with a value that points 
 
 ## Provide documentation for objects
 
-To provide documentation for objects that appear after provisioning your addon, create the `docs.yaml` file inside the addon's chart. This file contains [ClusterAssetGroup](/components/rafter/#custom-resource-cluster-asset-group) or [AssetGroup](/components/rafter/#custom-resource-asset-group) custom resources. Each ClusterAssetGroup or AssetGroup corresponds to a single object with the same ID as the name of the specified object. Your `docs.yaml` file can contain many ClusterAssetGroups or AssetGroups.
+To provide documentation for objects that appear after provisioning your addon, create the `docs.yaml` file inside the addon's chart. This file contains [ClusterAssetGroup](https://kyma-project.io/docs/components/rafter/#custom-resource-cluster-asset-group) or [AssetGroup](https://kyma-project.io/docs/components/rafter/#custom-resource-asset-group) custom resources. Each ClusterAssetGroup or AssetGroup corresponds to a single object with the same ID as the name of the specified object. Your `docs.yaml` file can contain many ClusterAssetGroups or AssetGroups.
 
 <div tabs name="provide-documentation-for-objects" group="provide-documentation-for-your-addon">
   <details>

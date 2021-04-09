@@ -4,18 +4,18 @@ This document describes how the release flow looks like and how to create the `h
 
 ## Release process
 
-Every change in the `main` branch which passes all checks creates the `latest` tag and triggers the release.
+Every change in the `master` branch which passes all checks creates the `latest` tag and triggers the release.
 
 Every tag with the `vX.Y.Z` pattern that is pushed to the repository triggers a new release.
 
-### Create a release from the main branch
+### Create a release from the master branch
 
 Follow these steps to create a new `helm-broker` release `v0.6.0`:
 
-1. Checkout the `main` branch and pull the latest changes:
+1. Checkout the `master` branch and pull the latest changes:
 
     ```
-    git checkout main
+    git checkout master
     git pull
     ```
 2. Prepare the release:

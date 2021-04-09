@@ -1,6 +1,8 @@
-# Security
+---
+title: Security
+---
 
-This document presents the ways to secure the Helm Broker on your cluster against possibile vulnerabilities. 
+This document presents the ways to secure the Helm Broker on your cluster against possibile vulnerabilities.
 
 ## Authorize access to AddonsConfigurations
 

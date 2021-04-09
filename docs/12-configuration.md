@@ -1,17 +1,17 @@
 ---
-title: Helm Broker chart
+title: Helm Broker configuration
 type: Configuration
 ---
 
 To configure the Helm Broker chart, override the default values of its `values.yaml` file. This document describes parameters that you can configure.
 
 >**TIP:** To learn more about how to use overrides in Kyma, see the following documents:
->* [Helm overrides for Kyma installation](/root/kyma/#configuration-helm-overrides-for-kyma-installation)
->* [Top-level charts overrides](/root/kyma/#configuration-helm-overrides-for-kyma-installation-top-level-charts-overrides)
+>* [Helm overrides for Kyma installation](https://kyma-project.io/docs/root/kyma#configuration-helm-overrides-for-kyma-installation)
+>* [Top-level charts overrides](https://kyma-project.io/docs/root/kyma/#configuration-helm-overrides-for-kyma-installation-top-level-charts-overrides)
 
-## Configurable parameters
+## Helm Broker chart
 
-This table lists the configurable parameters, their descriptions, and default values:
+This table lists the configurable parameters, their descriptions, and default values for the Helm Broker chart:
 
 | Parameter | Description | Default value |
 |-----------|-------------|---------------|
@@ -26,19 +26,7 @@ This table lists the configurable parameters, their descriptions, and default va
 | **global.urlRepoPrefixes.additionalDevelopMode** | Defines a list of accepted prefixes for repository URLs when develop mode is enabled. | `'http://'` |
 | **additionalAddonsRepositories.myRepo** | Provides a map of additional ClusterAddonsConfiguration repositories to create by default. The key is used as a name and the value is used as a URL for the repository. | `github.com/myOrg/myRepo//addons/index.yaml` |
 
-
----
-title: Etcd-stateful sub-chart
-type: Configuration
----
-
-To configure the Etcd-stateful sub-chart, override the default values of its `values.yaml` file. This document describes parameters that you can configure.
-
->**TIP:** To learn more about how to use overrides in Kyma, see the following documents:
->* [Helm overrides for Kyma installation](/root/kyma/#configuration-helm-overrides-for-kyma-installation)
->* [Sub-charts overrides](/root/kyma/#configuration-helm-overrides-for-kyma-installation-sub-chart-overrides)
-
-## Configurable parameters
+## Etcd-stateful sub-chart
 
 This table lists the configurable parameters, their descriptions, and default values:
 
@@ -50,8 +38,7 @@ This table lists the configurable parameters, their descriptions, and default va
 | **etcd.resources.requests.memory** | Defines requests for memory resources. | `64Mi` |
 | **replicaCount** | Defines the size of the etcd cluster. | `1` |
 
-
-# Configuration
+## Broker container
 
 Use the following environment variables to configure the `Broker` container of the Helm Broker:
 
@@ -61,6 +48,8 @@ Use the following environment variables to configure the `Broker` container of t
 | **APP_KUBECONFIG_PATH** | No |  | Provides the path to the `kubeconfig` file that you need to run an application outside of the cluster. |
 | **APP_CONFIG_FILE_NAME** | No | | Specifies the path to the configuration `.yaml` file. |
 | **APP_HELM_DRIVER** | Yes| `secrets` | Specifies how Helm releases are stored. The possible values are `secrets` and `configmaps`. |
+
+## Controller container
 
 Use the following environment variables to configure the `Controller` container of the Helm Broker:
 

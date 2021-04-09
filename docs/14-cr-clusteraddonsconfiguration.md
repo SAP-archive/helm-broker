@@ -9,7 +9,7 @@ The `clusteraddonsconfiguration.addons.kyma-project.io` CustomResourceDefinition
 kubectl get crd clusteraddonsconfiguration.addons.kyma-project.io -o yaml
 ```
 
-> **NOTE:** Only users with the **kyma-admin** role can modify the ClusterAddonsConfiguration CR. For more information, read about [roles in Kyma](/components/security/#details-roles-in-kyma).
+> **NOTE:** Only users with the **kyma-admin** role can modify the ClusterAddonsConfiguration CR. For more information, read about [roles in Kyma](https://kyma-project.io/docs/components/security/#details-roles-in-kyma).
 
 ## Sample custom resource
 

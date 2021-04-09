@@ -1,14 +1,15 @@
-# Example usage
+---
+title: Tutorial
+---
 
-If you have installed the Helm Broker with the Service Catalog, you can add your addon repositories and provision ServiceInstances. Read [this](https://kyma-project.io/docs/master/components/helm-broker#details-create-addons-repository) document to learn how. You can find more ready-to-use addons [here](https://github.com/kyma-project/addons). Follow this example to configure the Helm Broker and provision the Redis instance:
+If you have installed the Helm Broker with the Service Catalog, you can [add your addon repositories](https://github.com/kyma-project/helm-broker/blob/master/docs/07-create-addons-repo.md) and provision ServiceInstances. You can find more ready-to-use addons [here](https://github.com/kyma-project/addons). Follow this tutorial to configure the Helm Broker and provision the Redis instance:
 
 1. Configure the Helm Broker to use the addons repository that contains the Redis addon:
 ```bash
 kubectl apply -f hack/examples/sample-addons.yaml
 ```
 
-After the Helm Broker processes the addons' configuration, you can see the Redis ClusterServiceClass:
-
+After the Helm Broker processes the addons configuration, you can see the Redis ClusterServiceClass:
 ```bash
 kubectl get clusterserviceclass
 ```

@@ -3,9 +3,7 @@ title: Create addons
 type: Details
 ---
 
-The Helm Broker fetches addons which contain a set of specific [files](#details-create-addons). You must place your addons in a repository of an appropriate [format](#details-create-addons-repository). The Helm Broker fetches default cluster-wide addons defined by the [helm-repos-urls](https://github.com/kyma-project/kyma/blob/master/resources/helm-broker/templates/default-addons-cfg.yaml) custom resource (CR). This CR contains URLs that point to the release of  [`addons`](https://github.com/kyma-project/addons/releases) repository compatible with a given [Kyma release](https://github.com/kyma-project/kyma/releases). You can also configure the Helm Broker to fetch addons definitions from other addons repositories.
-
-Addons which the Helm Broker uses must have a specific structure. These are all possible files that you can include in your addons:
+Addons which the Helm Broker uses must have a specific structure and they must be stored in a repository of a specific [format](https://github.com/kyma-project/helm-broker/blob/master/docs/07-create-addons-repo.md). These are all possible files that you can include in your addons:
 
 ```text
 sample-addon/
@@ -80,7 +78,7 @@ The `plans` directory must contain at least one plan. Each plan must contain the
 |  **bindable**   |   No  | The field that specifies whether you can bind an instance of the plan or not. The default value is `false`. |
 |     **free**    |   No  | The attribute which specifies whether an instance of the plan is free or not. The default value is `false`.    |
 
-* `bind.yaml` file - contains information about binding in a specific plan. If you define in the `meta.yaml` file that your plan is bindable, you must also create a `bind.yaml` file. For more information, read about [binding addons](#details-bind-addons).
+* `bind.yaml` file - contains information about binding in a specific plan. If you define in the `meta.yaml` file that your plan is bindable, you must also create a `bind.yaml` file. For more information, read about [binding addons](https://github.com/kyma-project/helm-broker/blob/master/docs/05-bind-addons.md).
 
 * `values.yaml` file - provides the default configuration values in a given plan for the chart definition located in the `chart` directory. For more information, see the [values files](https://github.com/kubernetes/helm/blob/release-2.6/docs/chart_template_guide/values_files.md) specification.
 
@@ -95,7 +93,7 @@ The `plans` directory must contain at least one plan. Each plan must contain the
 ## docs directory
 
 In the `docs` directory, provide documentation for your addon. The documentation can include Markdown documents, AsyncAPI, OData, and OpenAPI specification files. Create the `assets` directory inside the `docs` directory to store assets, such as images. The `docs` directory must contain a `meta.yaml` file, which provides information on how documentation for the addon is uploaded.
-Because you can install the Helm Broker as a ClusterServiceBroker or as a ServiceBroker, documentation for addons is provided using either [ClusterAssetGroups](/components/rafter/#custom-resource-cluster-asset-group) or [AssetGroups](/components/rafter/#custom-resource-asset-group) custom resources, respectively.
+Because you can install the Helm Broker as a ClusterServiceBroker or as a ServiceBroker, documentation for addons is provided using either [ClusterAssetGroups](https://kyma-project.io/docs/components/rafter#custom-resource-cluster-asset-group) or [AssetGroups](https://kyma-project.io/docs/components/rafter#custom-resource-asset-group) custom resources, respectively.
 <!-- Check if the links work once Rafter is already in Kyma. -->
 
 The `meta.yaml` file contains the specification of the ClusterAssetGroup or AssetGroup. The example structure of the `meta.yaml` file looks as follows:
@@ -115,4 +113,4 @@ The `meta.yaml` file contains the specification of the ClusterAssetGroup or Asse
 
 >**NOTE:** Currently you can provide only one entry in the `docs` array.
 
-See the [example](https://github.com/kyma-project/addons/tree/master/addons/testing-0.0.1/docs) of the `docs` directory with documentation for the testing addon. Read also how to [provide addons documentation](#details-provide-service-classes-documentation).
+See the [example](https://github.com/kyma-project/addons/tree/master/addons/testing-0.0.1/docs) of the `docs` directory with documentation for the testing addon. Read also how to [provide addons documentation](https://github.com/kyma-project/helm-broker/blob/master/docs/10-addons-docs.md).

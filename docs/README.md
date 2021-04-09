@@ -1,19 +1,31 @@
 # Documentation
 
 ## Overview
-This directory contains the following documents that relate to the project:
 
-- [Installation](https://github.com/kyma-project/helm-broker/blob/master/docs/installation.md) describes how to install the Helm Broker.
-- [Configuration](https://github.com/kyma-project/helm-broker/blob/master/docs/configuration.md) describes the environment variables you can configure.
-- [Development](https://github.com/kyma-project/helm-broker/blob/master/docs/development.md) describes how to develop the project.
-- [Releasing](https://github.com/kyma-project/helm-broker/blob/master/docs/releasing.md) describes the Helm Broker release process.
-- [Example usage](https://github.com/kyma-project/helm-broker/blob/master/docs/example-usage.md) describes how to provision a Redis instance using the Helm Broker and addons.
+This directory contains Helm Broker documentation.
 
+The Helm Broker fetches addons which contain a set of specific [files](#details-create-addons). You must place your addons in a repository of an appropriate [format](#details-create-addons-repository). The Helm Broker fetches default cluster-wide addons defined by the [helm-repos-urls](https://github.com/kyma-project/kyma/blob/master/resources/helm-broker/templates/default-addons-cfg.yaml) custom resource (CR). This CR contains URLs that point to the release of [`addons`](https://github.com/kyma-project/addons/releases) repository compatible with a given [Kyma release](https://github.com/kyma-project/kyma/releases). You can also configure the Helm Broker to fetch addons definitions from other addons repositories.
+
+If you want to create your addons and store them in your own repository, start with these documents:
+  - [Create addons](./04-create-addons.md)
+  - [Bind addons](./05-bind-addons.md)
+  - [Test addons](./06-test-addons.md)
+  - [Create addons repository](./07-create-addons-repo.md)
+
+If you want to learn more about the architecture, read these docs:
+  - [Architecture](./02-architecture.md)
+  - [Architecture deep dive](./03-architecture-deep-dive.md)
+
+Here are the custom resources that Helm Broker uses:
+  - [AddonsConfiguration](./13-cr-addonsconfiguration.md)
+  - [ClusterAddonsConfiguration](./14-cr-clusteraddonsconfiguration.md)
+
+For more detailed information, [configuration](./12-configuration.md), and [troubleshooting](./14-troubleshooting.md), read the other docs in this directory. If you want to know more about Helm Broker release process, read [this](./release/hb-release.md) document.
 
 
 ### Project structure
 
-The repository has the following structure:
+The `helm-broker` repository has the following structure:
 
 ```
   ├── .github                   # Pull request and issue templates    
@@ -23,8 +35,8 @@ The repository has the following structure:
   ├── deploy                    # Dockerfiles to build applications image
   │
   ├── docs                      # Documentation related to the project
-  │    ├── proposals                # Proposed architecture decisions
-  │    └── release                  # Release notes template
+  │    ├── assets                  # Diagrams and assets used in the documentation
+  │    └── internal                # Proposals and release-related documentation
   │
   ├── hack                      # Scripts used by the Helm Broker developers
   │    ├── boilerplate              # Header used while generating code
