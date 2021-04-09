@@ -3,7 +3,7 @@ title: Provide documentation for your addon
 type: Details
 ---
 
-Using the Helm Broker, you can provide documentation for your addon and display it in the Console UI. There are two cases in which you may want to use this feature:
+Using Helm Broker, you can provide documentation for your addon and display it in the Console UI. There are two cases in which you may want to use this feature:
 
 - Providing documentation for your addon
 - Providing documentation for objects that appear after provisioning your addon
@@ -12,7 +12,7 @@ Using the Helm Broker, you can provide documentation for your addon and display 
 
 ## Provide documentation for your addon
 
-To provide documentation for your addon, create the `docs` folder inside your addon's directory. Your `docs` folder must contain a [`meta.yaml`](https://github.com/kyma-project/helm-broker/blob/master/docs/04-create-addons.md#docs-directory) file with metadata information about how documentation for the addon is uploaded. You can either provide your own documents or point to the external URL with the source documentation:
+To provide documentation for your addon, create the `docs` folder inside your addon's directory. Your `docs` folder must contain a [`meta.yaml`](./04-create-addons.md#docs-directory) file with metadata information about how documentation for the addon is uploaded. You can either provide your own documents or point to the external URL with the source documentation:
 
 <div tabs name="provide-documentation-for-your-addon" group="provide-documentation-for-your-addon">
   <details>
@@ -43,7 +43,7 @@ To provide documentation for objects that appear after provisioning your addon, 
   Provide your own documentation
   </summary>
 
-Store documentation for each object in the `docs/{object_name}` directory. In the `docs.yaml` file, set the **url** parameter to the `{{ .Values.addonsRepositoryURL }}` variable, which points to your addon compressed to a `.tgz` file. During the provisioning process, the Helm Broker pushes this variable into the chart. The **filter** parameter in the ClusterAssetGroup or AssetGroup definition must point to the `docs/{object_name}` directory that contains the documentation.
+Store documentation for each object in the `docs/{object_name}` directory. In the `docs.yaml` file, set the **url** parameter to the `{{ .Values.addonsRepositoryURL }}` variable, which points to your addon compressed to a `.tgz` file. During the provisioning process, Helm Broker pushes this variable into the chart. The **filter** parameter in the ClusterAssetGroup or AssetGroup definition must point to the `docs/{object_name}` directory that contains the documentation.
 
   </details>
   <details>

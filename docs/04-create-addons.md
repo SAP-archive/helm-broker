@@ -3,7 +3,7 @@ title: Create addons
 type: Details
 ---
 
-Addons which the Helm Broker uses must have a specific structure and they must be stored in a repository of a specific [format](https://github.com/kyma-project/helm-broker/blob/master/docs/07-create-addons-repo.md). These are all possible files that you can include in your addons:
+Addons that Helm Broker uses must have a specific structure and they must be stored in a repository of a specific [format](./07-create-addons-repo.md). These are all possible files that you can include in your addons:
 
 ```text
 sample-addon/
@@ -55,13 +55,13 @@ The `meta.yaml` file contains information about the addon. Define the following 
 |       **requires**      |   No  | The list of permissions the user must grant to the instances of this service. |
 | **provisionOnlyOnce**   |   No  | The field that specifies whether the addon can be provisioned only once in a given Namespace. The default value is `false`. |
 
-> **NOTE**: The **provisionOnlyOnce** and **local** keys are reserved and cannot be added to the **labels** entry, since the Helm Broker overrides them at runtime. The Helm Broker always adds the `local:true` label and it adds the `provisionOnlyOnce:true` label only if **provisionOnlyOnce** is set to `true`.
+> **NOTE**: The **provisionOnlyOnce** and **local** keys are reserved and cannot be added to the **labels** entry, since Helm Broker overrides them at runtime. Helm Broker always adds the `local:true` label and it adds the `provisionOnlyOnce:true` label only if **provisionOnlyOnce** is set to `true`.
 
 ## chart directory
 
 In the `chart` directory, create a folder with the same name as your chart. Put all the files related to your chart in this folder. The system supports Helm version 2.6.
 
-> **NOTE:** The Helm Broker uses the [helm wait](https://github.com/kubernetes/helm/blob/release-2.6/docs/using_helm.md#helpful-options-for-installupgraderollback) option to ensure that all the resources that a chart creates are available. If you set your Deployment **replicas** to `1`, you must set **maxUnavailable** to `0` as a part of the rolling update strategy.
+> **NOTE:** Helm Broker uses the [helm wait](https://github.com/kubernetes/helm/blob/release-2.6/docs/using_helm.md#helpful-options-for-installupgraderollback) option to ensure that all the resources that a chart creates are available. If you set your Deployment **replicas** to `1`, you must set **maxUnavailable** to `0` as a part of the rolling update strategy.
 
 ## plans directory
 
@@ -93,7 +93,7 @@ The `plans` directory must contain at least one plan. Each plan must contain the
 ## docs directory
 
 In the `docs` directory, provide documentation for your addon. The documentation can include Markdown documents, AsyncAPI, OData, and OpenAPI specification files. Create the `assets` directory inside the `docs` directory to store assets, such as images. The `docs` directory must contain a `meta.yaml` file, which provides information on how documentation for the addon is uploaded.
-Because you can install the Helm Broker as a ClusterServiceBroker or as a ServiceBroker, documentation for addons is provided using either [ClusterAssetGroups](https://kyma-project.io/docs/components/rafter#custom-resource-cluster-asset-group) or [AssetGroups](https://kyma-project.io/docs/components/rafter#custom-resource-asset-group) custom resources, respectively.
+Because you can install Helm Broker as a ClusterServiceBroker or as a ServiceBroker, documentation for addons is provided using either [ClusterAssetGroups](https://kyma-project.io/docs/components/rafter#custom-resource-cluster-asset-group) or [AssetGroups](https://kyma-project.io/docs/components/rafter#custom-resource-asset-group) custom resources, respectively.
 <!-- Check if the links work once Rafter is already in Kyma. -->
 
 The `meta.yaml` file contains the specification of the ClusterAssetGroup or AssetGroup. The example structure of the `meta.yaml` file looks as follows:

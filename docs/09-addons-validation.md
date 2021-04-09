@@ -11,8 +11,8 @@ Run the Checker locally to test if your addons are valid:
 go run components/helm-broker/cmd/checker/main.go {PATH_TO_YOUR_ADDONS}
 ```
 
-If any addon does not meet the requirements, the Helm Broker does not expose it as a Service Class. This situation is displayed in logs.
-To check logs from the Helm Broker, run these commands:
+If any addon does not meet the requirements, Helm Broker does not expose it as a Service Class. This situation is displayed in logs.
+To check logs from Helm Broker, run these commands:
 
 ```
 export HELM_BROKER_POD_NAME=kubectl get pod -n kyma-system -l app=helm-broker

@@ -15,7 +15,7 @@ Follow these steps to install Helm Broker locally.
 
 ### Install Helm Broker with Service Catalog
 
-To run the Helm Broker, you need a Kubernetes cluster with Service Catalog. Run the `./hack/run-dev-kind.sh` script, or follow these steps to set up the Helm Broker on Kind with all necessary dependencies:
+To run Helm Broker, you need a Kubernetes cluster with Service Catalog. Run the `./hack/run-dev-kind.sh` script, or follow these steps to set up Helm Broker on Kind with all necessary dependencies:
 
 1. Create a local cluster on Kind:
 ```bash
@@ -40,7 +40,7 @@ helm install charts/helm-broker helm-broker --namespace helm-broker
 
 ### Install Helm Broker as a standalone component
 
-Follow these steps to run the Helm Broker without building a binary file:
+Follow these steps to run Helm Broker without building a binary file:
 
 1. Start Minikube:
 ```bash
@@ -91,7 +91,7 @@ APP_DEVELOP_MODE=true \
 go run cmd/controller/main.go -metrics-addr ":8081"
 ```
 
->**NOTE:** Not all features are available when you run Helm Broker locally. All features that perform actions with Tiller do not work. Moreover, the Controller performs operations on ClusterServiceBroker/ServiceBroker resources, which needs the Service Catalog to work properly.
+>**NOTE:** Not all features are available when you run Helm Broker locally. All features that perform actions with Tiller do not work. Moreover, the Controller performs operations on ClusterServiceBroker/ServiceBroker resources, which needs Service Catalog to work properly.
 
 You can run the Controller and the Broker configured with the in-memory storage, but then the Broker cannot read data stored by the Controller. To run the Broker and the Controller without etcd, run these commands:
 
@@ -127,7 +127,7 @@ Follow these steps to develop the project.
 ### Run tests
 
 Before each commit, use the `before-commit.sh` script. The script runs unit tests that check your changes and build binaries.
-You can also run integration tests that check if all parts of the Helm Broker work together.
+You can also run integration tests that check if all parts of Helm Broker work together.
 These are the prerequisites for integration tests:
 
 - [Kubebuilder](https://github.com/kubernetes-sigs/kubebuilder) 1.0.8
@@ -177,7 +177,7 @@ export DOCKER_TAG=latest
 make push-image
 ```
 
-5. Install the Helm Broker with your custom image using the following command:
+5. Install Helm Broker with your custom image using the following command:
 ```bash
 helm install charts/helm-broker \
  --name helm-broker \
@@ -188,7 +188,7 @@ helm install charts/helm-broker \
  --set global.helm_controller.version=${DOCKER_TAG}
 ```
 
-If you already have the Helm Broker installed, you can upgrade it to use new images:
+If you already have Helm Broker installed, you can upgrade it to use new images:
 ```bash
 helm upgrade helm-broker charts/helm-broker \
  --set global.helm_broker.image="${DOCKER_PUSH_REPOSITORY}${DOCKER_PUSH_DIRECTORY}/helm-broker" \

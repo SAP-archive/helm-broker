@@ -3,7 +3,7 @@ title: ClusterAddonsConfiguration
 type: Custom Resource
 ---
 
-The `clusteraddonsconfiguration.addons.kyma-project.io` CustomResourceDefinition (CRD) is a detailed description of the kind of data and the format used to define cluster-wide addons fetched by the Helm Broker. To get the up-to-date CRD and show the output in the `yaml` format, run this command:
+The `clusteraddonsconfiguration.addons.kyma-project.io` CustomResourceDefinition (CRD) is a detailed description of the kind of data and the format used to define cluster-wide addons fetched by Helm Broker. To get the up-to-date CRD and show the output in the `yaml` format, run this command:
 
 ```
 kubectl get crd clusteraddonsconfiguration.addons.kyma-project.io -o yaml
@@ -13,7 +13,7 @@ kubectl get crd clusteraddonsconfiguration.addons.kyma-project.io -o yaml
 
 ## Sample custom resource
 
-This is a sample ClusterAddonsConfiguration which provides cluster-wide addons. If any of the **status** fields of the CR is marked as `Failed`, none of the addons registered with the CR is available in the Service Catalog.
+This is a sample ClusterAddonsConfiguration which provides cluster-wide addons. If any of the **status** fields of the CR is marked as `Failed`, none of the addons registered with the CR is available in Service Catalog.
 
 >**NOTE:** All CRs must have the `addons.kyma-project.io` finalizer which prevents the CR from deletion until the Controller completes the deletion logic successfully. If you don't set a finalizer, the Controller sets it automatically.
 

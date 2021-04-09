@@ -81,7 +81,7 @@ credentialFrom:
     name: redis-v2-secrets
 ```
 
-In this example, the Helm Broker returns the following values:
+In this example, Helm Broker returns the following values:
 - A `HOST` key with the defined inlined value.
 - A `PORT` key with the value from the field specified by the JSONPath expressions. The `redis-svc` Service runs this expression.
 - A `REDIS_PASSWORD` key with a value selected by the `redis-password` key from the `redis-secrets` Secret.

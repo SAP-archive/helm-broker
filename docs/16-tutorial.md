@@ -9,7 +9,7 @@ If you have installed Helm Broker with Service Catalog, you can [add your addon 
 kubectl apply -f hack/examples/sample-addons.yaml
 ```
 
-After the Helm Broker processes the addons configuration, you can see the Redis ClusterServiceClass:
+After Helm Broker processes the addons configuration, you can see the Redis ClusterServiceClass:
 ```bash
 kubectl get clusterserviceclass
 ```
