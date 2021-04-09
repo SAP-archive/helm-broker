@@ -122,7 +122,7 @@ Follow these steps to develop the project.
 * [Dep](https://github.com/golang/dep) 0.5
 * [Docker](https://www.docker.com/)
 
->**NOTE:** The versions of Go and Dep are compliant with the `buildpack` used by Prow. For more details, read [this](https://github.com/kyma-project/test-infra/blob/main/prow/images/buildpack-golang/README.md) document.
+>**NOTE:** The versions of Go and Dep are compliant with the [`buildpack`](https://github.com/kyma-project/test-infra/blob/main/prow/images/buildpack-golang/README.md) used by Prow.
 
 ### Run tests
 
