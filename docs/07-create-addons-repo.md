@@ -31,7 +31,7 @@ entries:
 
 ## Supported protocols
 
-Expose your addons repository so that you can provide URLs in the [AddonsConfiguration](https://github.com/kyma-project/helm-broker/blob/master/docs/13-cr-addonsconfiguration.md) (AC) and [ClusterAddonsConfiguration](https://github.com/kyma-project/helm-broker/blob/master/docs/14-cr-clusteraddonsconfiguration.md) (CAC) custom resources. The Helm Broker supports exposing addons using the following protocols:
+Expose your addons repository so that you can provide URLs in the [AddonsConfiguration](./13-cr-addonsconfiguration.md) (AC) and [ClusterAddonsConfiguration](./14-cr-clusteraddonsconfiguration.md) (CAC) custom resources. Helm Broker supports exposing addons using the following protocols:
 
 <div tabs>
   <details>
