@@ -5,7 +5,7 @@
 # For more details, read the following article on GitHub: https://help.github.com/articles/about-codeowners/.
 
 # These are the default owners for the whole content of the `helm-broker` repository. The default owners are automatically added as reviewers when you open a pull request, unless different owners are specified in the file.
-* @polskikiel @piotrmiskiewicz @PK85 @jasiu001 @adamwalach @ksputo @crabtree @kjaksik
+* @piotrmiskiewicz @PK85 @jasiu001 @adamwalach @ksputo @crabtree
 
 # All .md files
-*.md @kazydek @klaudiagrz @mmitoraj @majakurcius @alexandra-simeonova @superojla
+*.md @kazydek @klaudiagrz @mmitoraj @majakurcius @alexandra-simeonova @NHingerl
