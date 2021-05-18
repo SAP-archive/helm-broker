@@ -35,7 +35,7 @@ git clone git@github.com:kyma-project/helm-broker.git
 
 4. Install the Helm Broker chart from the cloned repository:
 ```bash
-helm install charts/helm-broker helm-broker --namespace helm-broker
+helm install helm-broker ./charts/helm-broker --namespace helm-broker
 ```
 
 ### Install Helm Broker as a standalone component
