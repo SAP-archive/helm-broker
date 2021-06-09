@@ -1,5 +1,6 @@
 FROM alpine:3.13.5
 
+RUN apk add --no-cache mercurial --repository=http://dl-cdn.alpinelinux.org/alpine/edge/main
 RUN apk add --no-cache openssh=8.6_p1-r0 --repository=http://dl-cdn.alpinelinux.org/alpine/edge/main
 RUN apk add --no-cache ca-certificates curl git
 
