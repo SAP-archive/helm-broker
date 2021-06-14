@@ -27,7 +27,6 @@ require (
 	github.com/minio/minio-go/v6 v6.0.56
 	github.com/nwaples/rardecode v1.1.0 // indirect
 	github.com/oklog/ulid v1.3.1
-	github.com/opencontainers/runc v1.0.0-rc95 // indirect
 	github.com/pborman/uuid v1.2.0
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.7.1
@@ -50,5 +49,6 @@ require (
 
 replace (
 	github.com/docker/distribution => github.com/docker/distribution v0.0.0-20191216044856-a8371794149d
-	github.com/docker/docker => github.com/moby/moby v17.12.0-ce-rc1.0.20200618181300-9dc6525e6118+incompatible
+	github.com/docker/docker => github.com/moby/moby v20.10.7+incompatible
+	github.com/opencontainers/runc => github.com/opencontainers/runc v1.0.0-rc95
 )
