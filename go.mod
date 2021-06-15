@@ -35,7 +35,7 @@ require (
 	github.com/urfave/negroni v1.0.0
 	github.com/vrischmann/envconfig v1.2.0
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
-	go.etcd.io/etcd v0.5.0-alpha.5.0.20200910180754-dd1b699fc489
+	go.etcd.io/etcd v3.4.16+incompatible
 	gopkg.in/yaml.v2 v2.3.0
 	helm.sh/helm/v3 v3.5.3
 	k8s.io/api v0.20.2
