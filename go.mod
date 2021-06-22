@@ -1,6 +1,6 @@
 module github.com/kyma-project/helm-broker
 
-go 1.13
+go 1.16
 
 require (
 	github.com/Masterminds/semver v1.5.0
@@ -9,11 +9,9 @@ require (
 	github.com/asaskevich/govalidator v0.0.0-20200428143746-21a406dcc535
 	github.com/dsnet/compress v0.0.1 // indirect
 	github.com/fatih/structs v1.1.0
-	github.com/frankban/quicktest v1.10.0 // indirect
 	github.com/ghodss/yaml v1.0.0
-	github.com/go-logr/logr v0.2.0
+	github.com/go-logr/logr v0.4.0
 	github.com/golang/protobuf v1.4.3
-	github.com/golang/snappy v0.0.1 // indirect
 	github.com/gorilla/mux v1.7.4
 	github.com/hashicorp/go-cleanhttp v0.5.1
 	github.com/hashicorp/go-getter v1.4.1
@@ -24,21 +22,20 @@ require (
 	github.com/kyma-project/rafter v0.0.0-20200413150919-1a89277ac3d8
 	github.com/lithammer/dedent v1.1.0
 	github.com/mcuadros/go-defaults v1.2.0
-	github.com/meatballhat/negroni-logrus v1.1.0
+	github.com/meatballhat/negroni-logrus v0.0.0-20201129033903-bc51654b0848
 	github.com/mholt/archiver v3.1.1+incompatible
 	github.com/minio/minio-go/v6 v6.0.56
 	github.com/nwaples/rardecode v1.1.0 // indirect
 	github.com/oklog/ulid v1.3.1
 	github.com/pborman/uuid v1.2.0
-	github.com/pierrec/lz4 v2.5.2+incompatible // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.7.1
-	github.com/sirupsen/logrus v1.7.0
+	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.0
 	github.com/urfave/negroni v1.0.0
 	github.com/vrischmann/envconfig v1.2.0
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
-	go.etcd.io/etcd v0.5.0-alpha.5.0.20200910180754-dd1b699fc489
+	go.etcd.io/etcd v3.4.16+incompatible
 	gopkg.in/yaml.v2 v2.3.0
 	helm.sh/helm/v3 v3.5.3
 	k8s.io/api v0.20.2
@@ -52,8 +49,6 @@ require (
 
 replace (
 	github.com/docker/distribution => github.com/docker/distribution v0.0.0-20191216044856-a8371794149d
-	github.com/docker/docker => github.com/moby/moby v17.12.0-ce-rc1.0.20200618181300-9dc6525e6118+incompatible
-	github.com/go-logr/logr => github.com/go-logr/logr v0.3.0
-	gopkg.in/yaml.v2 => gopkg.in/yaml.v2 v2.2.8
-	sigs.k8s.io/structured-merge-diff/v3 => sigs.k8s.io/structured-merge-diff/v3 v3.0.0
+	github.com/docker/docker => github.com/moby/moby v20.10.7+incompatible
+	github.com/opencontainers/runc => github.com/opencontainers/runc v1.0.0-rc95
 )
