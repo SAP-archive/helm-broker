@@ -36,5 +36,5 @@ fi
 
 for FILE in toCopy/*; do
     echo "Uploading asset: $FILE to url: $ASSET_UPLOAD_URL?name=${FILE}"
-    curl -s --data-binary @${FILE} -H "Content-Type: application/octet-stream" -X POST "$ASSET_UPLOAD_URL?name=$(basename ${FILE})&access_token=${GITHUB_TOKEN}" > /dev/null
+    curl -s --data-binary @${FILE} -H "Content-Type: application/octet-stream" -H "Authorization: token ${GITHUB_TOKEN}" -X POST "$ASSET_UPLOAD_URL?name=$(basename ${FILE})" > /dev/null
 done
