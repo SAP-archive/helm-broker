@@ -10,15 +10,22 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/kubernetes/scheme"
 	cli "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/kubernetes/scheme"
+)
+
+const (
+	targetPodsLabelKey           = "chart"
+	targetPodsLabelValue         = "azure-service-broker-0.0.1"
+	targetContainerName          = "open-service-broker-azure"
+	externalAzureBrokerImagePath = "eu.gcr.io/kyma-project/external/azure-service-broker:v1.5.0"
 )
 
 type handler struct {
-	client cli.Client
+	client  cli.Client
 	decoder *admission.Decoder
 	log     log.FieldLogger
 }
@@ -30,7 +37,7 @@ func NewWebhookHandler(k8sCli cli.Client, log log.FieldLogger) *handler {
 	}
 }
 
-func (h *handler) Handle(ctx context.Context, req admission.Request) admission.Response{
+func (h *handler) Handle(ctx context.Context, req admission.Request) admission.Response {
 	pod := &corev1.Pod{}
 	if err := MatchKinds(pod, req.Kind); err != nil {
 		h.log.Errorf("kind does not match: %s", err)
@@ -43,8 +50,12 @@ func (h *handler) Handle(ctx context.Context, req admission.Request) admission.R
 	}
 
 	labels := pod.Labels
-	if labels["chart"] == "azure-service-broker-0.0.1" {
-		_ = mutatePod(pod)
+	if labels[targetPodsLabelKey] == targetPodsLabelValue {
+		err := mutatePod(pod)
+		if err != nil {
+			h.log.Errorf("cannot mutate Pod: %s", err)
+			return admission.Errored(http.StatusInternalServerError, err)
+		}
 	}
 
 	rawPod, err := json.Marshal(pod)
@@ -59,9 +70,9 @@ func (h *handler) Handle(ctx context.Context, req admission.Request) admission.R
 
 func mutatePod(pod *corev1.Pod) error {
 	for i, ctr := range pod.Spec.Containers {
-		if ctr.Name == "open-service-broker-azure" {
-			if ctr.Image != "eu.gcr.io/kyma-project/external/azure-service-broker:v1.5.0" {
-				ctr.Image = "eu.gcr.io/kyma-project/external/azure-service-broker:v1.5.0"
+		if ctr.Name == targetContainerName {
+			if ctr.Image != externalAzureBrokerImagePath {
+				ctr.Image = externalAzureBrokerImagePath
 				pod.Spec.Containers[i] = ctr
 			}
 		}

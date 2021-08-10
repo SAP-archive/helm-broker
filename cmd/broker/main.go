@@ -76,7 +76,7 @@ func main() {
 	fatalOnError(errors.Wrap(err, "while creating new manager"))
 
 	mgr.GetWebhookServer().Register(
-		"/pod-mutating",
+		"/hb-pod-mutating",
 		&k8sWebhook.Admission{Handler: webhook.NewWebhookHandler(mgr.GetClient(), log.WithField("webhook", "pod-mutating"))})
 
 	fatalOnError(errors.Wrap(mgr.Start(ctrl.SetupSignalHandler()), "unable to run the manager"))
