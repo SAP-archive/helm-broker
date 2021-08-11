@@ -30,7 +30,8 @@ func SetupAndStartController(cfg *rest.Config, ctrCfg *config.ControllerConfig, 
 	lg.Info("Setting up manager")
 	var mgr manager.Manager
 	fatalOnError(waitAtMost(func() (bool, error) {
-		newMgr, err := manager.New(cfg, manager.Options{MetricsBindAddress: metricsAddr})
+		newMgr, err := manager.New(cfg, manager.Options{MetricsBindAddress: metricsAddr,
+			CertDir: "/var/run/webhook"})
 		if err != nil {
 			return false, err
 		}
