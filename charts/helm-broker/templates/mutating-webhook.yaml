@@ -34,6 +34,7 @@ webhooks:
         name: {{ template "fullname" . }}-webhook
         namespace: {{ .Release.Namespace }}
         path: "/hb-pod-mutating"
+        port: 9443
     admissionReviewVersions: ["v1beta1"]
     sideEffects: None
     timeoutSeconds: 5
