@@ -17,8 +17,6 @@ import (
 	"github.com/kyma-project/helm-broker/internal/helm"
 	"github.com/kyma-project/helm-broker/internal/platform/logger"
 	"github.com/kyma-project/helm-broker/internal/storage"
-	"github.com/kyma-project/helm-broker/internal/webhook"
-	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 	"k8s.io/client-go/kubernetes"
@@ -27,8 +25,6 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
-	ctrl "sigs.k8s.io/controller-runtime"
-	k8sWebhook "sigs.k8s.io/controller-runtime/pkg/webhook"
 )
 
 var (
@@ -66,18 +62,18 @@ func main() {
 		bind.NewRenderer(), bind.NewResolver(clientset.CoreV1()), helmClient, log)
 
 	// create mutating webhook endpoint
-	mgr, err := ctrl.NewManager(k8sConfig, ctrl.Options{
-		Scheme:  scheme,
-		Port:    9443,
-		CertDir: "/var/run/webhook",
-	})
-	fatalOnError(errors.Wrap(err, "while creating new manager"))
+	//mgr, err := ctrl.NewManager(k8sConfig, ctrl.Options{
+	//	Scheme:  scheme,
+	//	Port:    9443,
+	//	CertDir: "/var/run/webhook",
+	//})
+	//fatalOnError(errors.Wrap(err, "while creating new manager"))
+	//
+	//mgr.GetWebhookServer().Register(
+	//	"/hb-pod-mutating",
+	//	&k8sWebhook.Admission{Handler: webhook.NewWebhookHandler(mgr.GetClient(), log.WithField("webhook", "pod-mutating"))})
 
-	mgr.GetWebhookServer().Register(
-		"/hb-pod-mutating",
-		&k8sWebhook.Admission{Handler: webhook.NewWebhookHandler(mgr.GetClient(), log.WithField("webhook", "pod-mutating"))})
-
-	fatalOnError(errors.Wrap(mgr.Start(ctrl.SetupSignalHandler()), "unable to run the manager"))
+	//fatalOnError(errors.Wrap(mgr.Start(ctrl.SetupSignalHandler()), "unable to run the manager"))
 
 	go health.NewBrokerProbes(fmt.Sprintf(":%d", cfg.StatusPort), storageConfig.ExtractEtcdURL()).Handle()
 	go runMetricsServer(fmt.Sprintf(":%d", cfg.MetricsPort))

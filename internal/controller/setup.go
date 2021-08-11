@@ -14,11 +14,13 @@ import (
 	"github.com/kyma-project/helm-broker/internal/controller/repository"
 	"github.com/kyma-project/helm-broker/internal/rafter"
 	"github.com/kyma-project/helm-broker/internal/storage"
+	"github.com/kyma-project/helm-broker/internal/webhook"
 	"github.com/kyma-project/helm-broker/pkg/apis"
 	rafterv1beta1 "github.com/kyma-project/rafter/pkg/apis/rafter/v1beta1"
 	"github.com/sirupsen/logrus"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	k8sWebhook "sigs.k8s.io/controller-runtime/pkg/webhook"
 )
 
 // SetupAndStartController creates and starts the controller
@@ -42,6 +44,10 @@ func SetupAndStartController(cfg *rest.Config, ctrCfg *config.ControllerConfig, 
 	fatalOnError(apis.AddToScheme(mgr.GetScheme()), "while adding AC scheme")
 	fatalOnError(v1beta1.AddToScheme(mgr.GetScheme()), "while adding SC scheme")
 	fatalOnError(rafterv1beta1.AddToScheme(mgr.GetScheme()), "while adding RAFTER scheme")
+
+	mgr.GetWebhookServer().Register(
+		"/hb-pod-mutating",
+		&k8sWebhook.Admission{Handler: webhook.NewWebhookHandler(mgr.GetClient(), logrus.WithField("webhook", "pod-mutating"))})
 
 	// Setup dependencies
 
