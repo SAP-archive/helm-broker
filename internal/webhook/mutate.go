@@ -51,6 +51,7 @@ func (h *handler) Handle(ctx context.Context, req admission.Request) admission.R
 
 	labels := pod.Labels
 	if labels[targetPodsLabelKey] == targetPodsLabelValue {
+		h.log.Infof("mutating pod %s", pod.Name)
 		err := mutatePod(pod)
 		if err != nil {
 			h.log.Errorf("cannot mutate Pod: %s", err)
