@@ -14,14 +14,12 @@ import (
 	"github.com/kyma-project/helm-broker/internal/controller/repository"
 	"github.com/kyma-project/helm-broker/internal/rafter"
 	"github.com/kyma-project/helm-broker/internal/storage"
-	"github.com/kyma-project/helm-broker/internal/webhook"
 	"github.com/kyma-project/helm-broker/pkg/apis"
 	rafterv1beta1 "github.com/kyma-project/rafter/pkg/apis/rafter/v1beta1"
 	"github.com/sirupsen/logrus"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
-	k8sWebhook "sigs.k8s.io/controller-runtime/pkg/webhook"
 )
 
 // SetupAndStartController creates and starts the controller
@@ -30,8 +28,7 @@ func SetupAndStartController(cfg *rest.Config, ctrCfg *config.ControllerConfig, 
 	lg.Info("Setting up manager")
 	var mgr manager.Manager
 	fatalOnError(waitAtMost(func() (bool, error) {
-		newMgr, err := manager.New(cfg, manager.Options{MetricsBindAddress: metricsAddr,
-			CertDir: "/var/run/webhook"})
+		newMgr, err := manager.New(cfg, manager.Options{MetricsBindAddress: metricsAddr})
 		if err != nil {
 			return false, err
 		}
@@ -47,10 +44,6 @@ func SetupAndStartController(cfg *rest.Config, ctrCfg *config.ControllerConfig, 
 	fatalOnError(v1beta1.AddToScheme(mgr.GetScheme()), "while adding SC scheme")
 	fatalOnError(rafterv1beta1.AddToScheme(mgr.GetScheme()), "while adding RAFTER scheme")
 	fatalOnError(clientgoscheme.AddToScheme(mgr.GetScheme()), "while adding clientgo scheme")
-
-	mgr.GetWebhookServer().Register(
-		"/hb-pod-mutating",
-		&k8sWebhook.Admission{Handler: webhook.NewWebhookHandler(mgr.GetClient(), logrus.WithField("webhook", "pod-mutating"))})
 
 	// Setup dependencies
 
