@@ -18,6 +18,7 @@ import (
 	"github.com/kyma-project/helm-broker/pkg/apis"
 	rafterv1beta1 "github.com/kyma-project/rafter/pkg/apis/rafter/v1beta1"
 	"github.com/sirupsen/logrus"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	k8sWebhook "sigs.k8s.io/controller-runtime/pkg/webhook"
@@ -44,6 +45,7 @@ func SetupAndStartController(cfg *rest.Config, ctrCfg *config.ControllerConfig, 
 	fatalOnError(apis.AddToScheme(mgr.GetScheme()), "while adding AC scheme")
 	fatalOnError(v1beta1.AddToScheme(mgr.GetScheme()), "while adding SC scheme")
 	fatalOnError(rafterv1beta1.AddToScheme(mgr.GetScheme()), "while adding RAFTER scheme")
+	fatalOnError(clientgoscheme.AddToScheme(mgr.GetScheme()), "while adding clientgo scheme")
 
 	mgr.GetWebhookServer().Register(
 		"/hb-pod-mutating",
