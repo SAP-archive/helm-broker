@@ -17,6 +17,8 @@ import (
 	"github.com/kyma-project/helm-broker/pkg/apis"
 	rafterv1beta1 "github.com/kyma-project/rafter/pkg/apis/rafter/v1beta1"
 	"github.com/sirupsen/logrus"
+	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
+	corev1 "k8s.io/api/core/v1"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -45,6 +47,8 @@ func SetupAndStartController(cfg *rest.Config, ctrCfg *config.ControllerConfig, 
 	fatalOnError(v1beta1.AddToScheme(mgr.GetScheme()), "while adding SC scheme")
 	fatalOnError(rafterv1beta1.AddToScheme(mgr.GetScheme()), "while adding RAFTER scheme")
 	fatalOnError(clientgoscheme.AddToScheme(mgr.GetScheme()), "while adding clientgo scheme")
+	fatalOnError(corev1.AddToScheme(mgr.GetScheme()), "while adding corev1 scheme")
+	fatalOnError(admissionregistrationv1.AddToScheme(mgr.GetScheme()), "while adding corev1 scheme")
 
 	// Setup dependencies
 
