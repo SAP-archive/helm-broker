@@ -38,6 +38,7 @@ func NewWebhookHandler(k8sCli cli.Client, log log.FieldLogger) *handler {
 }
 
 func (h *handler) Handle(ctx context.Context, req admission.Request) admission.Response {
+	h.log.Infof("webhook: handling request %s", req.Name)
 	pod := &corev1.Pod{}
 	if err := MatchKinds(pod, req.Kind); err != nil {
 		h.log.Errorf("kind does not match: %s", err)
