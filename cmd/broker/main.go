@@ -69,8 +69,8 @@ func main() {
 	// create mutating webhook endpoint
 	mgr, err := ctrl.NewManager(k8sConfig, ctrl.Options{
 		Scheme:             scheme,
-		MetricsBindAddress: "",
-		Port:               cfg.MetricsPort,
+		MetricsBindAddress: fmt.Sprintf(":%d", cfg.MetricsPort),
+		Port:               cfg.Port,
 		CertDir:            "/var/run/webhook",
 	})
 	fatalOnError(errors.Wrap(err, "while creating new manager"))
