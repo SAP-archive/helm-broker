@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/gorilla/mux"
 	"github.com/kyma-project/helm-broker/internal/bind"
 	"github.com/kyma-project/helm-broker/internal/broker"
 	"github.com/kyma-project/helm-broker/internal/config"
@@ -18,8 +19,6 @@ import (
 	"github.com/kyma-project/helm-broker/internal/storage"
 	"github.com/kyma-project/helm-broker/internal/webhook"
 	"github.com/pkg/errors"
-
-	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 	"k8s.io/client-go/kubernetes"
@@ -68,9 +67,9 @@ func main() {
 
 	// create mutating webhook endpoint
 	mgr, err := ctrl.NewManager(k8sConfig, ctrl.Options{
-		Scheme:             scheme,
-		Port:               cfg.Port,
-		CertDir:            "/var/run/webhook",
+		Scheme:  scheme,
+		Port:    cfg.Port,
+		CertDir: "/var/run/webhook",
 	})
 	fatalOnError(errors.Wrap(err, "while creating new manager"))
 
