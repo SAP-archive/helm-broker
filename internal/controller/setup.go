@@ -17,7 +17,6 @@ import (
 	"github.com/kyma-project/helm-broker/pkg/apis"
 	rafterv1beta1 "github.com/kyma-project/rafter/pkg/apis/rafter/v1beta1"
 	"github.com/sirupsen/logrus"
-	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
@@ -28,9 +27,7 @@ func SetupAndStartController(cfg *rest.Config, ctrCfg *config.ControllerConfig, 
 	lg.Info("Setting up manager")
 	var mgr manager.Manager
 	fatalOnError(waitAtMost(func() (bool, error) {
-		newMgr, err := manager.New(cfg, manager.Options{Port: 8443,
-			MetricsBindAddress: metricsAddr,
-			CertDir:            "/var/run/webhook"})
+		newMgr, err := manager.New(cfg, manager.Options{MetricsBindAddress: metricsAddr})
 		if err != nil {
 			return false, err
 		}
@@ -45,9 +42,6 @@ func SetupAndStartController(cfg *rest.Config, ctrCfg *config.ControllerConfig, 
 	fatalOnError(apis.AddToScheme(mgr.GetScheme()), "while adding AC scheme")
 	fatalOnError(v1beta1.AddToScheme(mgr.GetScheme()), "while adding SC scheme")
 	fatalOnError(rafterv1beta1.AddToScheme(mgr.GetScheme()), "while adding RAFTER scheme")
-	fatalOnError(clientgoscheme.AddToScheme(mgr.GetScheme()), "while adding clientgo scheme")
-	//fatalOnError(corev1.AddToScheme(mgr.GetScheme()), "while adding corev1 scheme")
-	//fatalOnError(admissionregistrationv1.AddToScheme(mgr.GetScheme()), "while adding corev1 scheme")
 
 	// Setup dependencies
 

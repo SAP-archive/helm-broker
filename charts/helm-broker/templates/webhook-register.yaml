@@ -1,5 +1,5 @@
-{{- $ca := genCA "helm-broker-webhook-ca" 3650 }}
-{{- $cn := printf "%s" (include "fullname" .) }}
+{{- $cn := printf "%s-webhook" (include "fullname" .) }}
+{{- $ca := genCA (printf "%s-%s" $cn "ca") 3650 }}
 {{- $altName1 := printf "%s.%s" $cn .Release.Namespace }}
 {{- $altName2 := printf "%s.%s.svc" $cn .Release.Namespace }}
 {{- $cert := genSignedCert $cn nil (list $altName1 $altName2) 3650 $ca }}
@@ -20,7 +20,7 @@ metadata:
   name: {{ template "fullname" . }}-mutating-webhook
   namespace: {{ .Release.Namespace }}
 webhooks:
-  - name: "azure-service-broker.image-swap.kyma-project.io"
+  - name: mutating.helm-broker.kyma-project.io
     rules:
       - apiGroups: [""]
         apiVersions: ["v1"]
@@ -34,10 +34,10 @@ webhooks:
     clientConfig:
       caBundle: {{ b64enc $ca.Cert }}
       service:
-        name: {{ template "fullname" . }}
+        name: {{ template "fullname" . }}-webhook
         namespace: {{ .Release.Namespace }}
         path: /hb-pod-mutating
-        port: {{ .Values.ctrl.internalPort }}
+        port: {{ .Values.webhook.service.port }}
     admissionReviewVersions: ["v1beta1", "v1"]
     sideEffects: None
     timeoutSeconds: 30

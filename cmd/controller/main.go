@@ -4,11 +4,6 @@ import (
 	"flag"
 	"fmt"
 
-	"github.com/kyma-project/helm-broker/internal/webhook"
-	"k8s.io/client-go/kubernetes/scheme"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	k8sWebhook "sigs.k8s.io/controller-runtime/pkg/webhook"
-
 	envs "github.com/kyma-project/helm-broker/internal/config"
 	"github.com/kyma-project/helm-broker/internal/controller"
 	"github.com/kyma-project/helm-broker/internal/health"
@@ -16,6 +11,8 @@ import (
 	"github.com/kyma-project/helm-broker/internal/platform/logger"
 	"github.com/kyma-project/helm-broker/internal/rafter"
 	"github.com/kyma-project/helm-broker/internal/storage"
+	"k8s.io/client-go/kubernetes/scheme"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
@@ -46,10 +43,6 @@ func main() {
 	mgr := controller.SetupAndStartController(cfg, ctrCfg, metricsAddr, sFact, uploadClient, lg)
 
 	fatalOnError(storageConfig.WaitForEtcdReadiness(lg), "while waiting for etcd to be ready")
-
-	mgr.GetWebhookServer().Register(
-		"/hb-pod-mutating",
-		&k8sWebhook.Admission{Handler: webhook.NewWebhookHandler(mgr.GetClient(), logrus.WithField("webhook", "pod-mutating"))})
 
 	// TODO: switch to native implementation after merge: https://github.com/kubernetes-sigs/controller-runtime/pull/419
 	go health.NewControllerProbes(fmt.Sprintf(":%d", ctrCfg.StatusPort), storageConfig.ExtractEtcdURL(), mgr.GetClient(), ctrCfg.Namespace).Handle()

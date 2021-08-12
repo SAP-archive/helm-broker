@@ -50,20 +50,6 @@ func main() {
 	srv := broker.New(sFact.Addon(), sFact.Chart(), sFact.InstanceOperation(), sFact.BindOperation(), sFact.Instance(), sFact.InstanceBindData(),
 		bind.NewRenderer(), bind.NewResolver(clientset.CoreV1()), helmClient, log)
 
-	// create mutating webhook endpoint
-	//mgr, err := ctrl.NewManager(k8sConfig, ctrl.Options{
-	//	Scheme:  scheme,
-	//	Port:    9443,
-	//	CertDir: "/var/run/webhook",
-	//})
-	//fatalOnError(errors.Wrap(err, "while creating new manager"))
-	//
-	//mgr.GetWebhookServer().Register(
-	//	"/hb-pod-mutating",
-	//	&k8sWebhook.Admission{Handler: webhook.NewWebhookHandler(mgr.GetClient(), log.WithField("webhook", "pod-mutating"))})
-
-	//fatalOnError(errors.Wrap(mgr.Start(ctrl.SetupSignalHandler()), "unable to run the manager"))
-
 	go health.NewBrokerProbes(fmt.Sprintf(":%d", cfg.StatusPort), storageConfig.ExtractEtcdURL()).Handle()
 	go runMetricsServer(fmt.Sprintf(":%d", cfg.MetricsPort))
 
