@@ -12,6 +12,7 @@ APP_NAME = helm-broker
 TOOLS_NAME = helm-broker-tools
 TESTS_NAME = helm-broker-tests
 CONTROLLER_NAME = helm-controller
+WEBHOOK_NAME = helm-broker-webhook
 
 # VERIFY_IGNORE is a grep pattern to exclude files and directories from verification
 VERIFY_IGNORE := /vendor\|/automock
@@ -158,10 +159,12 @@ build-image: pull-licenses
 	cp targz deploy/tools/targz
 	cp indexbuilder deploy/tools/indexbuilder
 	cp controller deploy/controller/controller
+	cp webhook deploy/webhook/webhook
 	cp hb_chart_test deploy/tests/hb_chart_test
 
 	docker build -t $(APP_NAME) deploy/broker
 	docker build -t $(CONTROLLER_NAME) deploy/controller
+	docker build -t $(WEBHOOK_NAME) deploy/webhook
 	docker build -t $(TOOLS_NAME) deploy/tools
 	docker build -t $(TESTS_NAME) deploy/tests
 
@@ -172,6 +175,9 @@ push-image:
 
 	docker tag $(CONTROLLER_NAME) $(REPO)$(CONTROLLER_NAME):$(TAG)
 	docker push $(REPO)$(CONTROLLER_NAME):$(TAG)
+
+	docker tag $(WEBHOOK_NAME) $(REPO)$(WEBHOOK_NAME):$(TAG)
+    docker push $(REPO)$(WEBHOOK_NAME):$(TAG)
 
 	docker tag $(TOOLS_NAME) $(REPO)$(TOOLS_NAME):$(TAG)
 	docker push $(REPO)$(TOOLS_NAME):$(TAG)
@@ -192,6 +198,7 @@ ci-release: build build-image push-image charts-test release
 clean:
 	rm -f broker
 	rm -f controller
+	rm -f webhook
 	rm -f targz
 	rm -f indexbuilder
 	rm -f hb_chart_test
