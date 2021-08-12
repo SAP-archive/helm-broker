@@ -159,7 +159,6 @@ build-image: pull-licenses
 	cp targz deploy/tools/targz
 	cp indexbuilder deploy/tools/indexbuilder
 	cp controller deploy/controller/controller
-	cp controller deploy/controller/controller
 	cp webhook deploy/webhook/webhook
 	cp hb_chart_test deploy/tests/hb_chart_test
 
