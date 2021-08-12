@@ -43,7 +43,7 @@ broker:
 webhook:
   image: "eu.gcr.io/kyma-project/helm-broker-webhook:PR-168"
   imagePullPolicy: Always
-  securityContext: { runAsUser: 1001 }
+  securityContext: {runAsUser: 1001}
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -67,7 +67,7 @@ webhook:
       cpu: 100m
       memory: 30Mi
 
-defautlAddonsURL: "https://github.com/kyma-project/addons/releases/download/0.10.0/index.yaml"
+defaultAddonsURL: "https://github.com/kyma-project/addons/releases/download/0.15.0/index.yaml"
 
 global:
   containerRegistry:
