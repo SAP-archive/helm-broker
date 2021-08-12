@@ -19,7 +19,6 @@ import (
 	"github.com/sirupsen/logrus"
 	admissionregistrationv1 "k8s.io/api/admissionregistration/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -32,7 +31,6 @@ func SetupAndStartController(cfg *rest.Config, ctrCfg *config.ControllerConfig, 
 	var mgr manager.Manager
 	fatalOnError(waitAtMost(func() (bool, error) {
 		newMgr, err := manager.New(cfg, manager.Options{Port: 8443,
-			Scheme:             runtime.NewScheme(),
 			MetricsBindAddress: metricsAddr,
 			CertDir:            "/var/run/webhook"})
 		if err != nil {
