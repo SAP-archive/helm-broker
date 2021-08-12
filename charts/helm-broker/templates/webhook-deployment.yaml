@@ -44,7 +44,7 @@ spec:
           privileged: false
           allowPrivilegeEscalation: false
         volumeMounts:
-        - name: {{ template "fullname" . }}-webhook-cert
+        - name: helm-broker-webhook-cert
           mountPath: /var/run/webhook
           readOnly: true
         {{- if .Values.webhook.healthcheck.enabled }}
@@ -72,7 +72,7 @@ spec:
       volumes:
       - name: helm-broker-webhook-cert
         secret:
-          secretName: {{ template "fullname" . }}-webhook-cert
+          secretName: helm-broker-webhook-cert
           items:
           - key: tls.crt
             path: tls.crt
