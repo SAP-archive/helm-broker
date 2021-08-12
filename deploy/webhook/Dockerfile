@@ -4,8 +4,8 @@ RUN apk --no-cache add ca-certificates
 FROM scratch
 
 COPY --from=certs /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
-COPY ./helm-broker-webhook /root/helm-broker-webhook
+COPY ./webhook /root/webhook
 
 LABEL source=git@github.com:kyma-project/helm-broker.git
 
-ENTRYPOINT ["/root/helm-broker-webhook"]
+ENTRYPOINT ["/root/webhook"]
