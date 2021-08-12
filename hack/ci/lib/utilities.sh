@@ -131,7 +131,8 @@ readonly KIND_CLUSTER_NAME="kind-ci"
 kind::create_cluster() {
     shout "- Create k8s cluster..."
     kind create cluster --name=${KIND_CLUSTER_NAME} --image=kindest/node:${KUBERNETES_VERSION} --wait=5m
-    export KUBECONFIG="$(kind get kubeconfig-path --name=${KIND_CLUSTER_NAME})"
+    kind get kubeconfig --name=${KIND_CLUSTER_NAME} > kubeconfig.yaml
+    export KUBECONFIG=$(pwd)/kubeconfig.yaml
 }
 
 kind::delete_cluster() {
