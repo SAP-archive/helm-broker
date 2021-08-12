@@ -18,8 +18,6 @@ import (
 )
 
 const (
-	targetPodsLabelKey           = "chart"
-	targetPodsLabelValue         = "azure-service-broker-0.0.1"
 	targetContainerName          = "open-service-broker-azure"
 	externalAzureBrokerImagePath = "eu.gcr.io/kyma-project/external/azure-service-broker:v1.5.0"
 )
@@ -38,7 +36,7 @@ func NewWebhookHandler(k8sCli cli.Client, log log.FieldLogger) *handler {
 }
 
 func (h *handler) Handle(ctx context.Context, req admission.Request) admission.Response {
-	h.log.Infof("webhook: handling request %s", req.Name)
+	h.log.Infof("webhook: handling request %q", req.UID)
 	pod := &corev1.Pod{}
 	if err := MatchKinds(pod, req.Kind); err != nil {
 		h.log.Errorf("kind does not match: %s", err)
@@ -50,14 +48,11 @@ func (h *handler) Handle(ctx context.Context, req admission.Request) admission.R
 		return admission.Errored(http.StatusBadRequest, err)
 	}
 
-	labels := pod.Labels
-	if labels[targetPodsLabelKey] == targetPodsLabelValue {
-		h.log.Infof("mutating pod %s", pod.Name)
-		err := mutatePod(pod)
-		if err != nil {
-			h.log.Errorf("cannot mutate Pod: %s", err)
-			return admission.Errored(http.StatusInternalServerError, err)
-		}
+	h.log.Infof("mutating pod %s", pod.ObjectMeta.Name)
+	err := h.mutatePod(pod)
+	if err != nil {
+		h.log.Errorf("cannot mutate Pod: %s", err)
+		return admission.Errored(http.StatusInternalServerError, err)
 	}
 
 	rawPod, err := json.Marshal(pod)
@@ -70,10 +65,12 @@ func (h *handler) Handle(ctx context.Context, req admission.Request) admission.R
 	return admission.PatchResponseFromRaw(req.Object.Raw, rawPod)
 }
 
-func mutatePod(pod *corev1.Pod) error {
+func (h *handler) mutatePod(pod *corev1.Pod) error {
 	for i, ctr := range pod.Spec.Containers {
 		if ctr.Name == targetContainerName {
+			h.log.Infof("found container %s using image %q", ctr.Name, ctr.Image)
 			if ctr.Image != externalAzureBrokerImagePath {
+				h.log.Infof("swapping image %q with %q", ctr.Image, externalAzureBrokerImagePath)
 				ctr.Image = externalAzureBrokerImagePath
 				pod.Spec.Containers[i] = ctr
 			}
