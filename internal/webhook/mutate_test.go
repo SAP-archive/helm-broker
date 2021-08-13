@@ -52,6 +52,12 @@ func TestHandler_Handle(t *testing.T) {
 	// filtering out status cause k8s api-server will discard this too
 	patches := filterOutStatusPatch(response.Patches)
 	assert.Len(t, patches, 1)
+
+	for _, patch := range patches {
+		assert.Equal(t, "replace", patch.Operation)
+		assert.Contains(t, []string{"/spec/containers/1/image"}, patch.Path)
+		assert.Equal(t, patch.Value, externalAzureBrokerImagePath)
+	}
 }
 
 func rawPod() []byte {
