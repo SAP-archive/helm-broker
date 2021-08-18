@@ -9,7 +9,7 @@ export GO111MODULE=on
 ##
 # GO BUILD
 ##
-binaries=("broker" "controller" "indexbuilder" "targz")
+binaries=("broker" "controller" "indexbuilder" "targz" "webhook")
 buildEnv=""
 if [ "$1" == "$CI_FLAG" ]; then
 	# build binary statically for linux architecture

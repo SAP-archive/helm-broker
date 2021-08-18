@@ -53,6 +53,7 @@ chart::install_and_test() {
     kind::load_image helm-broker-tests:latest
     kind::load_image helm-controller:latest
     kind::load_image helm-broker:latest
+    kind::load_image helm-broker-webhook:latest
 
     shout '- Installing and testing Helm Broker chart...'
     docker_ct_exec ct install --charts ${CONTAINER_REPO_ROOT_DIR}/charts/helm-broker/
