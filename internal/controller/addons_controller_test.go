@@ -17,6 +17,7 @@ import (
 	"github.com/kyma-project/helm-broker/internal/storage"
 	"github.com/kyma-project/helm-broker/pkg/apis"
 	"github.com/kyma-project/helm-broker/pkg/apis/addons/v1alpha1"
+	k8sv1 "sigs.k8s.io/controller-runtime/pkg/config/v1alpha1"
 
 	"github.com/Masterminds/semver"
 	"github.com/go-logr/logr"
@@ -73,7 +74,7 @@ func TestReconcileAddonsConfiguration_AddAddonsProcess(t *testing.T) {
 				ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, ts.templateService, tmpDir, time.Second, spy.NewLogDummy())
 
 			// THEN
-			result, err := reconciler.Reconcile(reconcile.Request{NamespacedName: types.NamespacedName{Namespace: fixAddonsCfg.Namespace, Name: fixAddonsCfg.Name}})
+			result, err := reconciler.Reconcile(context.TODO(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: fixAddonsCfg.Namespace, Name: fixAddonsCfg.Name}})
 			assert.NoError(t, err)
 			assert.False(t, result.Requeue)
 
@@ -113,7 +114,7 @@ func TestReconcileAddonsConfiguration_AddAddonsProcess_ErrorIfBrokerExist(t *tes
 		ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, ts.templateService, tmpDir, time.Second, spy.NewLogDummy())
 
 	// THEN
-	result, err := reconciler.Reconcile(reconcile.Request{NamespacedName: types.NamespacedName{Namespace: fixAddonsCfg.Namespace, Name: fixAddonsCfg.Name}})
+	result, err := reconciler.Reconcile(context.TODO(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: fixAddonsCfg.Namespace, Name: fixAddonsCfg.Name}})
 	assert.Error(t, err)
 	assert.False(t, result.Requeue)
 
@@ -152,7 +153,7 @@ func TestReconcileAddonsConfiguration_UpdateAddonsProcess(t *testing.T) {
 		ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, ts.templateService, tmpDir, time.Second, spy.NewLogDummy())
 
 	// THEN
-	result, err := reconciler.Reconcile(reconcile.Request{NamespacedName: types.NamespacedName{Namespace: fixAddonsCfg.Namespace, Name: fixAddonsCfg.Name}})
+	result, err := reconciler.Reconcile(context.TODO(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: fixAddonsCfg.Namespace, Name: fixAddonsCfg.Name}})
 	assert.NoError(t, err)
 	assert.False(t, result.Requeue)
 }
@@ -184,7 +185,7 @@ func TestReconcileAddonsConfiguration_UpdateAddonsProcess_ConflictingAddons(t *t
 		ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, ts.templateService, tmpDir, time.Second, spy.NewLogDummy())
 
 	// THEN
-	result, err := reconciler.Reconcile(reconcile.Request{NamespacedName: types.NamespacedName{Namespace: fixAddonsCfg.Namespace, Name: fixAddonsCfg.Name}})
+	result, err := reconciler.Reconcile(context.TODO(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: fixAddonsCfg.Namespace, Name: fixAddonsCfg.Name}})
 	assert.NoError(t, err)
 	assert.False(t, result.Requeue)
 
@@ -208,7 +209,7 @@ func TestReconcileAddonsConfiguration_DeleteAddonsProcess(t *testing.T) {
 		ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, ts.templateService, tmpDir, time.Second, spy.NewLogDummy())
 
 	// THEN
-	result, err := reconciler.Reconcile(reconcile.Request{NamespacedName: types.NamespacedName{Namespace: fixAddonsCfg.Namespace, Name: fixAddonsCfg.Name}})
+	result, err := reconciler.Reconcile(context.TODO(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: fixAddonsCfg.Namespace, Name: fixAddonsCfg.Name}})
 	assert.NoError(t, err)
 	assert.False(t, result.Requeue)
 
@@ -232,7 +233,7 @@ func TestReconcileAddonsConfiguration_DeleteAddonsProcess_ReconcileOtherAddons(t
 		ts.brokerFacade, ts.docsProvider, ts.brokerSyncer, ts.templateService, tmpDir, time.Second, spy.NewLogDummy())
 
 	// THEN
-	result, err := reconciler.Reconcile(reconcile.Request{NamespacedName: types.NamespacedName{Namespace: fixAddonsCfg.Namespace, Name: fixAddonsCfg.Name}})
+	result, err := reconciler.Reconcile(context.TODO(), reconcile.Request{NamespacedName: types.NamespacedName{Namespace: fixAddonsCfg.Namespace, Name: fixAddonsCfg.Name}})
 	assert.NoError(t, err)
 	assert.False(t, result.Requeue)
 
@@ -528,6 +529,14 @@ type fakeManager struct {
 	sch    *runtime.Scheme
 }
 
+func (f fakeManager) Start(ctx context.Context) error {
+	panic("implement me")
+}
+
+func (f fakeManager) GetControllerOptions() k8sv1.ControllerConfigurationSpec {
+	panic("implement me")
+}
+
 func (f fakeManager) Elected() <-chan struct{} {
 	panic("implement me")
 }
@@ -561,10 +570,6 @@ func (fakeManager) Add(manager.Runnable) error {
 }
 
 func (fakeManager) SetFields(interface{}) error {
-	return nil
-}
-
-func (fakeManager) Start(<-chan struct{}) error {
 	return nil
 }
 

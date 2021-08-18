@@ -40,7 +40,7 @@ func NewReconcileClusterAddonsConfiguration(mgr manager.Manager, addonGetterFact
 }
 
 // Reconcile reads that state of the cluster for a ClusterAddonsConfiguration object and makes changes based on the state read
-func (r *ReconcileClusterAddonsConfiguration) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+func (r *ReconcileClusterAddonsConfiguration) Reconcile(ctx context.Context, request reconcile.Request) (reconcile.Result, error) {
 	addon := &v1alpha1.ClusterAddonsConfiguration{}
 	err := r.Get(context.TODO(), request.NamespacedName, addon)
 	if err != nil {

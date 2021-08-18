@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gomodules.xyz/jsonpatch/v2"
-	"k8s.io/api/admission/v1beta1"
+	v1 "k8s.io/api/admission/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -21,9 +21,9 @@ func TestHandler_Handle(t *testing.T) {
 	// given
 
 	request := admission.Request{
-		AdmissionRequest: v1beta1.AdmissionRequest{
+		AdmissionRequest: v1.AdmissionRequest{
 			UID:       "1234-abcd",
-			Operation: v1beta1.Create,
+			Operation: v1.Create,
 			Name:      "test-pod",
 			Namespace: "namespace",
 			Kind: metav1.GroupVersionKind{

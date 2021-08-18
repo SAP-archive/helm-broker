@@ -65,8 +65,8 @@ func TestClusterBrokerControllerReconcile_BlockDeletionByExistingInstances(t *te
 	assert.NoError(t, err)
 }
 
-func fixRequest() reconcile.Request {
-	return reconcile.Request{
+func fixRequest() (context.Context, reconcile.Request) {
+	return context.TODO(), reconcile.Request{
 		NamespacedName: types.NamespacedName{
 			Name:      readyAddonsConfigName,
 			Namespace: "default",
