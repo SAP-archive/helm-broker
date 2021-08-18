@@ -50,6 +50,6 @@ require (
 
 replace (
 	github.com/docker/distribution => github.com/docker/distribution v0.0.0-20191216044856-a8371794149d
-	github.com/docker/docker => github.com/moby/moby v20.10.7+incompatible
+	github.com/docker/docker => github.com/moby/moby v20.10.8+incompatible
 	github.com/opencontainers/runc => github.com/opencontainers/runc v1.0.0-rc95
 )
