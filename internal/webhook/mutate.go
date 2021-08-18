@@ -18,7 +18,9 @@ import (
 )
 
 const (
-	targetContainerName          = "open-service-broker-azure"
+	// deprecatedAzureBrokerImagePath is the missing image deleted from DockerHub, used in kyma-project/addons v0.14.0
+	deprecatedAzureBrokerImagePath = "microsoft/azure-service-broker:v1.5.0"
+	// externalAzureBrokerImagePath is mirrored microsoft/azure-service-broker:v1.5.0 pushed to kyma-project gcr
 	externalAzureBrokerImagePath = "eu.gcr.io/kyma-project/external/azure-service-broker:v1.5.0"
 )
 
@@ -67,13 +69,11 @@ func (h *handler) Handle(ctx context.Context, req admission.Request) admission.R
 
 func (h *handler) mutatePod(pod *corev1.Pod) error {
 	for i, ctr := range pod.Spec.Containers {
-		if ctr.Name == targetContainerName {
-			h.log.Infof("found container %s using image %q", ctr.Name, ctr.Image)
-			if ctr.Image != externalAzureBrokerImagePath {
-				h.log.Infof("swapping image %q with %q", ctr.Image, externalAzureBrokerImagePath)
-				ctr.Image = externalAzureBrokerImagePath
-				pod.Spec.Containers[i] = ctr
-			}
+		h.log.Infof("found container %s using image %q", ctr.Name, ctr.Image)
+		if ctr.Image == deprecatedAzureBrokerImagePath {
+			h.log.Infof("swapping image %q with %q", ctr.Image, externalAzureBrokerImagePath)
+			ctr.Image = externalAzureBrokerImagePath
+			pod.Spec.Containers[i] = ctr
 		}
 	}
 	return nil
