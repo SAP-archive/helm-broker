@@ -69,7 +69,7 @@ goimports:
 .PHONY: check-imports-local
 check-imports-local:
 	@if [ -n "$$(goimports -l $$($(FILES_TO_CHECK)))" ]; then \
-		echo "✗ some files are not properly formatted or contain not formatted imports. To repair run make imports"; \
+		echo "✗ some files are not properly formatted or contain not formatted imports. To repair run make goimports"; \
 		goimports -l $$($(FILES_TO_CHECK)); \
 		exit 1; \
 	fi;
