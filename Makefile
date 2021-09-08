@@ -172,7 +172,6 @@ build-image: pull-licenses
 push-image:
 	docker tag $(APP_NAME) $(REPO)$(APP_NAME):$(TAG)
 	docker push $(REPO)$(APP_NAME):$(TAG)
-	cosign version
 ifeq ($(JOB_TYPE), postsubmit)
 	@echo "Sign image with Cosign"
 	cosign version
