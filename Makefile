@@ -172,18 +172,54 @@ build-image: pull-licenses
 push-image:
 	docker tag $(APP_NAME) $(REPO)$(APP_NAME):$(TAG)
 	docker push $(REPO)$(APP_NAME):$(TAG)
+	cosign version
+ifeq ($(JOB_TYPE), postsubmit)
+	@echo "Sign image with Cosign"
+	cosign version
+	cosign sign -key ${KMS_KEY_URL} $(REPO)$(APP_NAME):$(TAG)
+else
+	@echo "Image signing skipped"
+endif
 
 	docker tag $(CONTROLLER_NAME) $(REPO)$(CONTROLLER_NAME):$(TAG)
 	docker push $(REPO)$(CONTROLLER_NAME):$(TAG)
+ifeq ($(JOB_TYPE), postsubmit)
+	@echo "Sign image with Cosign"
+	cosign version
+	cosign sign -key ${KMS_KEY_URL} $(REPO)$(CONTROLLER_NAME):$(TAG)
+else
+	@echo "Image signing skipped"
+endif
 
 	docker tag $(WEBHOOK_NAME) $(REPO)$(WEBHOOK_NAME):$(TAG)
 	docker push $(REPO)$(WEBHOOK_NAME):$(TAG)
+ifeq ($(JOB_TYPE), postsubmit)
+	@echo "Sign image with Cosign"
+	cosign version
+	cosign sign -key ${KMS_KEY_URL} $(REPO)$(WEBHOOK_NAME):$(TAG)
+else
+	@echo "Image signing skipped"
+endif
 
 	docker tag $(TOOLS_NAME) $(REPO)$(TOOLS_NAME):$(TAG)
 	docker push $(REPO)$(TOOLS_NAME):$(TAG)
+ifeq ($(JOB_TYPE), postsubmit)
+	@echo "Sign image with Cosign"
+	cosign version
+	cosign sign -key ${KMS_KEY_URL} $(REPO)$(TOOLS_NAME):$(TAG)
+else
+	@echo "Image signing skipped"
+endif
 
 	docker tag $(TESTS_NAME) $(REPO)$(TESTS_NAME):$(TAG)
 	docker push $(REPO)$(TESTS_NAME):$(TAG)
+ifeq ($(JOB_TYPE), postsubmit)
+	@echo "Sign image with Cosign"
+	cosign version
+	cosign sign -key ${KMS_KEY_URL} $(REPO)$(TESTS_NAME):$(TAG)
+else
+	@echo "Image signing skipped"
+endif
 
 .PHONY: ci-pr
 ci-pr: build build-image push-image
