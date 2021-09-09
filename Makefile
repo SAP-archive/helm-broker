@@ -69,7 +69,7 @@ goimports:
 .PHONY: check-imports-local
 check-imports-local:
 	@if [ -n "$$(goimports -l $$($(FILES_TO_CHECK)))" ]; then \
-		echo "✗ some files are not properly formatted or contain not formatted imports. To repair run make imports"; \
+		echo "✗ some files are not properly formatted or contain not formatted imports. To repair run make goimports"; \
 		goimports -l $$($(FILES_TO_CHECK)); \
 		exit 1; \
 	fi;
@@ -172,18 +172,53 @@ build-image: pull-licenses
 push-image:
 	docker tag $(APP_NAME) $(REPO)$(APP_NAME):$(TAG)
 	docker push $(REPO)$(APP_NAME):$(TAG)
+ifeq ($(JOB_TYPE), postsubmit)
+	@echo "Sign image with Cosign"
+	cosign version
+	cosign sign -key ${KMS_KEY_URL} $(REPO)$(APP_NAME):$(TAG)
+else
+	@echo "Image signing skipped"
+endif
 
 	docker tag $(CONTROLLER_NAME) $(REPO)$(CONTROLLER_NAME):$(TAG)
 	docker push $(REPO)$(CONTROLLER_NAME):$(TAG)
+ifeq ($(JOB_TYPE), postsubmit)
+	@echo "Sign image with Cosign"
+	cosign version
+	cosign sign -key ${KMS_KEY_URL} $(REPO)$(CONTROLLER_NAME):$(TAG)
+else
+	@echo "Image signing skipped"
+endif
 
 	docker tag $(WEBHOOK_NAME) $(REPO)$(WEBHOOK_NAME):$(TAG)
 	docker push $(REPO)$(WEBHOOK_NAME):$(TAG)
+ifeq ($(JOB_TYPE), postsubmit)
+	@echo "Sign image with Cosign"
+	cosign version
+	cosign sign -key ${KMS_KEY_URL} $(REPO)$(WEBHOOK_NAME):$(TAG)
+else
+	@echo "Image signing skipped"
+endif
 
 	docker tag $(TOOLS_NAME) $(REPO)$(TOOLS_NAME):$(TAG)
 	docker push $(REPO)$(TOOLS_NAME):$(TAG)
+ifeq ($(JOB_TYPE), postsubmit)
+	@echo "Sign image with Cosign"
+	cosign version
+	cosign sign -key ${KMS_KEY_URL} $(REPO)$(TOOLS_NAME):$(TAG)
+else
+	@echo "Image signing skipped"
+endif
 
 	docker tag $(TESTS_NAME) $(REPO)$(TESTS_NAME):$(TAG)
 	docker push $(REPO)$(TESTS_NAME):$(TAG)
+ifeq ($(JOB_TYPE), postsubmit)
+	@echo "Sign image with Cosign"
+	cosign version
+	cosign sign -key ${KMS_KEY_URL} $(REPO)$(TESTS_NAME):$(TAG)
+else
+	@echo "Image signing skipped"
+endif
 
 .PHONY: ci-pr
 ci-pr: build build-image push-image
