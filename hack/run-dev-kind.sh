@@ -50,7 +50,7 @@ helm::check_helm() {
 install::helm_broker() {
   shout '- Provisioning Helm Broker chart...'
 
-  ${HELM_BINARY} install ${HB_CHART_NAME} ${REPO_ROOT_DIR}/charts/helm-broker --namespace ${HB_NAMESPACE} --wait --create-namespace
+  ${HELM_BINARY} install ${HB_CHART_NAME} ${REPO_ROOT_DIR}/charts/helm-broker --namespace ${HB_NAMESPACE} --create-namespace
 }
 
 # Installs service catalog on cluster.
