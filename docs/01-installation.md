@@ -25,7 +25,7 @@ kind create cluster
 2. Install Service Catalog as a Helm chart:
 ```bash
 helm repo add svc-cat https://kubernetes-sigs.github.io/service-catalog
-helm install catalog svc-cat/catalog --namespace catalog --set asyncBindingOperationsEnabled=true
+helm install catalog svc-cat/catalog --namespace catalog --set asyncBindingOperationsEnabled=true --wait --create-namespace
 ```
 
 3. Clone the Helm Broker repository:
@@ -35,7 +35,7 @@ git clone git@github.com:kyma-project/helm-broker.git
 
 4. Install the Helm Broker chart from the cloned repository:
 ```bash
-helm install charts/helm-broker helm-broker --namespace helm-broker
+helm install helm-broker charts/helm-broker --namespace helm-broker --create-namespace
 ```
 
 ### Install Helm Broker as a standalone component
