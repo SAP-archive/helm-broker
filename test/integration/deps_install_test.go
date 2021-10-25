@@ -19,6 +19,9 @@ func EnsureHgInstalled() {
 		err = foundExecutable("apt-get")
 		panicOnError(err, "while checking if apt-get executable exists")
 
+		err = exec.Command("apt-get", "update").Run()
+		panicOnError(err, "while update apt-get")
+
 		err = exec.Command("apt-get", "--assume-yes", "install", "mercurial").Run()
 		panicOnError(err, "while installing mercurial via apt-get")
 	}
