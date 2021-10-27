@@ -500,7 +500,7 @@ func (srv *Server) getServiceBindingLastOperationAction(w http.ResponseWriter, r
 
 	sReq := osb.BindingLastOperationRequest{
 		InstanceID: sanitize.HTML(instanceID),
-		BindingID:  sanitize.HTML	(bindingID),
+		BindingID:  sanitize.HTML(bindingID),
 	}
 	if svcIDRaw := q.Get("service_id"); svcIDRaw != "" {
 		svcID := sanitize.HTML(svcIDRaw)
