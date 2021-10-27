@@ -16,6 +16,7 @@ require (
 	github.com/hashicorp/go-cleanhttp v0.5.1
 	github.com/hashicorp/go-getter v1.4.1
 	github.com/imdario/mergo v0.3.11
+	github.com/kennygrant/sanitize v1.2.4 // indirect
 	github.com/kubernetes-sigs/go-open-service-broker-client v0.0.0-20200527163240-4406bd2cb6b8
 	github.com/kubernetes-sigs/service-catalog v0.3.0
 	github.com/kyma-project/kyma v0.5.1-0.20200317154738-0bb20217c2cb

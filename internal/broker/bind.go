@@ -3,6 +3,7 @@ package broker
 import (
 	"context"
 	"fmt"
+	"github.com/kennygrant/sanitize"
 	"net/http"
 	"sync"
 
@@ -143,7 +144,8 @@ func (svc *bindService) GetLastBindOperation(ctx context.Context, osbCtx OsbCont
 	}
 
 	if iID.IsZero() || bID.IsZero() || opID.IsZero() {
-		return nil, errors.Errorf("all parameters: instance, binding and operation id must be set. InstanceID: %q | BindingID: %q | OperationID: %q", iID, bID, opID)
+		return nil, errors.Errorf("all parameters: instance, binding and operation id must be set. InstanceID: %q | BindingID: %q | OperationID: %q",
+				sanitize.HTML(string(iID)), sanitize.HTML(string(bID)), sanitize.HTML(string(opID)))
 	}
 
 	op, err := svc.bindOperationStorage.Get(iID, bID, opID)
