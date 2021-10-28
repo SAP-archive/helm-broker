@@ -17,6 +17,8 @@ import (
 	osb "github.com/kubernetes-sigs/go-open-service-broker-client/v2"
 
 	"github.com/kyma-project/helm-broker/internal"
+
+	"github.com/kennygrant/sanitize"
 )
 
 //go:generate mockery -name=catalogGetter -output=automock -outpkg=automock -case=underscore
@@ -497,15 +499,15 @@ func (srv *Server) getServiceBindingLastOperationAction(w http.ResponseWriter, r
 	q := r.URL.Query()
 
 	sReq := osb.BindingLastOperationRequest{
-		InstanceID: string(instanceID),
-		BindingID:  string(bindingID),
+		InstanceID: sanitize.HTML(instanceID),
+		BindingID:  sanitize.HTML(bindingID),
 	}
 	if svcIDRaw := q.Get("service_id"); svcIDRaw != "" {
-		svcID := svcIDRaw
+		svcID := sanitize.HTML(svcIDRaw)
 		sReq.ServiceID = &svcID
 	}
 	if planIDRaw := q.Get("plan_id"); planIDRaw != "" {
-		planID := planIDRaw
+		planID := sanitize.HTML(planIDRaw)
 		sReq.PlanID = &planID
 	}
 	if opIDRaw := q.Get("operation"); opIDRaw != "" {
@@ -566,7 +568,7 @@ func writeResponse(w http.ResponseWriter, code int, object interface{}) {
 
 func (srv *Server) writeErrorResponse(w http.ResponseWriter, code int, errorMsg, desc string) {
 	if srv.logger != nil {
-		srv.logger.Warnf("Server responds with error: [HTTP %d]: [%s] [%s]", code, errorMsg, desc)
+		srv.logger.Warnf("Server responds with error: [HTTP %d]: [%s] [%s]", code, sanitize.HTML(errorMsg), desc)
 	}
 	writeErrorResponse(w, code, errorMsg, desc)
 }
@@ -584,11 +586,11 @@ func writeErrorResponse(w http.ResponseWriter, code int, errorMsg, desc string) 
 	}{}
 
 	if errorMsg != "" {
-		dto.Error = errorMsg
+		dto.Error = sanitize.HTML(errorMsg)
 	}
 
 	if desc != "" {
-		dto.Desc = desc
+		dto.Desc = sanitize.HTML(desc)
 	}
 	writeResponse(w, code, &dto)
 }
