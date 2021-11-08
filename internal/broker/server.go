@@ -563,7 +563,7 @@ func writeResponse(w http.ResponseWriter, code int, object interface{}) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
-	w.Write(sanitize.HTML(string(data)))
+	w.Write([]byte(sanitize.HTML(string(data))))
 }
 
 func (srv *Server) writeErrorResponse(w http.ResponseWriter, code int, errorMsg, desc string) {
