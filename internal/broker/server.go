@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -260,18 +261,25 @@ func (srv *Server) provisionAction(w http.ResponseWriter, r *http.Request) {
 	srv.writeResponse(w, http.StatusAccepted, egDTO)
 }
 
+func (srv *Server) sanitizeParameter(p string) string {
+	s := strings.ReplaceAll(p, "\n", "")
+	s = strings.ReplaceAll(s, "\r", "")
+	s = sanitize.HTML(s)
+	return s
+}
+
 func (srv *Server) deprovisionAction(w http.ResponseWriter, r *http.Request) {
 	osbCtx, _ := osbContextFromContext(r.Context())
 
-	instanceID := mux.Vars(r)["instance_id"]
+	instanceID := srv.sanitizeParameter(mux.Vars(r)["instance_id"])
 
 	q := r.URL.Query()
 
-	svcIDRaw := q.Get("service_id")
-	planIDRaw := q.Get("plan_id")
+	svcIDRaw := srv.sanitizeParameter(q.Get("service_id"))
+	planIDRaw := srv.sanitizeParameter(q.Get("plan_id"))
 	sReq := osb.DeprovisionRequest{
 		AcceptsIncomplete: true,
-		InstanceID:        string(instanceID),
+		InstanceID:        instanceID,
 		ServiceID:         svcIDRaw,
 		PlanID:            planIDRaw,
 	}
@@ -316,7 +324,7 @@ func (srv *Server) deprovisionAction(w http.ResponseWriter, r *http.Request) {
 func (srv *Server) getServiceInstanceLastOperationAction(w http.ResponseWriter, r *http.Request) {
 	osbCtx, _ := osbContextFromContext(r.Context())
 
-	instanceID := mux.Vars(r)["instance_id"]
+	instanceID := srv.sanitizeParameter(mux.Vars(r)["instance_id"])
 	var operationID internal.OperationID
 
 	q := r.URL.Query()
@@ -324,15 +332,15 @@ func (srv *Server) getServiceInstanceLastOperationAction(w http.ResponseWriter, 
 	sReq := osb.LastOperationRequest{
 		InstanceID: string(instanceID),
 	}
-	if svcIDRaw := q.Get("service_id"); svcIDRaw != "" {
+	if svcIDRaw := srv.sanitizeParameter(q.Get("service_id")); svcIDRaw != "" {
 		svcID := svcIDRaw
 		sReq.ServiceID = &svcID
 	}
-	if planIDRaw := q.Get("plan_id"); planIDRaw != "" {
+	if planIDRaw := srv.sanitizeParameter(q.Get("plan_id")); planIDRaw != "" {
 		planID := planIDRaw
 		sReq.PlanID = &planID
 	}
-	if opIDRaw := q.Get("operation"); opIDRaw != "" {
+	if opIDRaw := srv.sanitizeParameter(q.Get("operation")); opIDRaw != "" {
 		operationID = internal.OperationID(opIDRaw)
 		opKey := osb.OperationKey(opIDRaw)
 		sReq.OperationKey = &opKey
@@ -374,7 +382,7 @@ func (srv *Server) getServiceInstanceLastOperationAction(w http.ResponseWriter, 
 func (srv *Server) bindAction(w http.ResponseWriter, r *http.Request) {
 	osbCtx, _ := osbContextFromContext(r.Context())
 
-	instanceID := mux.Vars(r)["instance_id"]
+	instanceID := srv.sanitizeParameter(mux.Vars(r)["instance_id"])
 
 	var params BindParametersDTO
 	err := httpBodyToDTO(r, &params)
@@ -389,7 +397,7 @@ func (srv *Server) bindAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	bindIDRaw := mux.Vars(r)["binding_id"]
+	bindIDRaw := srv.sanitizeParameter(mux.Vars(r)["binding_id"])
 
 	sReq := osb.BindRequest{
 		AcceptsIncomplete: true,
@@ -450,8 +458,8 @@ func (srv *Server) unBindAction(w http.ResponseWriter, r *http.Request) {
 func (srv *Server) getServiceBinding(w http.ResponseWriter, r *http.Request) {
 	osbCtx, _ := osbContextFromContext(r.Context())
 
-	instanceID := mux.Vars(r)["instance_id"]
-	bindingID := mux.Vars(r)["binding_id"]
+	instanceID := srv.sanitizeParameter(mux.Vars(r)["instance_id"])
+	bindingID := srv.sanitizeParameter(mux.Vars(r)["binding_id"])
 
 	sReq := osb.GetBindingRequest{
 		InstanceID: instanceID,
@@ -492,8 +500,8 @@ func (srv *Server) getServiceBinding(w http.ResponseWriter, r *http.Request) {
 func (srv *Server) getServiceBindingLastOperationAction(w http.ResponseWriter, r *http.Request) {
 	osbCtx, _ := osbContextFromContext(r.Context())
 
-	instanceID := mux.Vars(r)["instance_id"]
-	bindingID := mux.Vars(r)["binding_id"]
+	instanceID := srv.sanitizeParameter(mux.Vars(r)["instance_id"])
+	bindingID := srv.sanitizeParameter(mux.Vars(r)["binding_id"])
 	var operationID internal.OperationID
 
 	q := r.URL.Query()
