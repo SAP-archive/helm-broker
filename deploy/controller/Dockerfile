@@ -1,4 +1,4 @@
-FROM alpine:3.14.2
+FROM alpine:3.14.3
 
 RUN apk add --no-cache ca-certificates curl
 RUN apk add --no-cache mercurial>=5.7-r0 --repository=http://dl-cdn.alpinelinux.org/alpine/edge/main
