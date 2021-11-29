@@ -7,16 +7,18 @@ require (
 	github.com/Masterminds/sprig v2.22.0+incompatible // indirect
 	github.com/alecthomas/jsonschema v0.0.0-20200123075451-43663a393755
 	github.com/asaskevich/govalidator v0.0.0-20200428143746-21a406dcc535
+	github.com/containerd/containerd v1.4.12 // indirect
 	github.com/dsnet/compress v0.0.1 // indirect
 	github.com/fatih/structs v1.1.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-logr/logr v0.4.0
+	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.2
 	github.com/gorilla/mux v1.7.4
 	github.com/hashicorp/go-cleanhttp v0.5.1
 	github.com/hashicorp/go-getter v1.4.1
 	github.com/imdario/mergo v0.3.11
-	github.com/kennygrant/sanitize v1.2.4 // indirect
+	github.com/kennygrant/sanitize v1.2.4
 	github.com/kubernetes-sigs/go-open-service-broker-client v0.0.0-20200527163240-4406bd2cb6b8
 	github.com/kubernetes-sigs/service-catalog v0.3.0
 	github.com/kyma-project/kyma v0.5.1-0.20200317154738-0bb20217c2cb
