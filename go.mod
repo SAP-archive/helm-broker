@@ -1,6 +1,6 @@
 module github.com/kyma-project/helm-broker
 
-go 1.16
+go 1.17
 
 require (
 	github.com/Masterminds/semver v1.5.0
