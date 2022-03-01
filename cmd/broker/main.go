@@ -101,6 +101,5 @@ func newRestClientConfig(kubeConfigPath string) (*rest.Config, error) {
 	if kubeConfigPath != "" {
 		return clientcmd.BuildConfigFromFlags("", kubeConfigPath)
 	}
-
 	return rest.InClusterConfig()
 }
